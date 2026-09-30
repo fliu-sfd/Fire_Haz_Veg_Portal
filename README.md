@@ -2,30 +2,26 @@
 
 ## Overview
 
-This capstone project digitizes the Scottsdale Fire Department's hazardous
-vegetation assessment workflow. It replaces the paper-based inspection and
+A capstone project to digitize the Scottsdale Fire Department's hazardous
+vegetation assessment workflow, replacing a paper-based inspection and
 homeowner notification process with a web-based portal for hazard tracking,
 photo verification, and resolution status.
 
 ## Sponsor
 
-Scottsdale Fire Department: Frank Liu, Mike Tobin, and Mele Koneya
+Scottsdale Fire Department: Michael Tobin and Franklin Liu
 
 ## Team
 
-ASU MS Software Engineering Capstone, Team 4:
+ASU MS Software Engineering Capstone, Team 4
 
-- Tejas Shah
-- Dhyey Patel
-- Ronak Radadiya
-- Kshitij Dumbre
-- Hruday Pabbisetty
+Tejas Shah, Dhyey Patel, Ronak Radadiya, Kshitij Dumbre, Hruday Pabbisetty
 
 ## Status
 
 Requirements gathering is complete. The team is moving into design and
-development this sprint. Sample sponsor data in CSV and GeoJSON formats has
-been received or is pending for prototype work.
+development this sprint. Sample data has been received and is being reviewed
+for the prototype.
 
 ## Tech Stack
 
