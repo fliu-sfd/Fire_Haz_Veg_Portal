@@ -22,8 +22,8 @@ Then run migrations from `backend/`:
 uv run alembic upgrade head
 ```
 
-See [`../docs/database.md`](../docs/database.md) for why we chose Postgres,
-the default dev credentials, and how to reset the database.
+See [`../docs/database.md`](../docs/database.md) for credentials, schema,
+and how to reset the database.
 
 ## Setup with uv
 
