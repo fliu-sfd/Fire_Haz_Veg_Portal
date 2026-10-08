@@ -25,4 +25,8 @@ for the prototype.
 
 ## Tech Stack
 
-To be determined as development begins.
+- Backend: Python 3.11+ with FastAPI
+- Frontend: To be determined
+
+Backend setup and development instructions are available in
+[`backend/README.md`](backend/README.md).
