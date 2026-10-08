@@ -26,7 +26,10 @@ for the prototype.
 ## Tech Stack
 
 - Backend: Python 3.11+ with FastAPI
-- Frontend: To be determined
+- Frontend: Next.js App Router with React, TypeScript, and Tailwind CSS
 
 Backend setup and development instructions are available in
 [`backend/README.md`](backend/README.md).
+
+Frontend setup and team conventions are available in
+[`frontend/README.md`](frontend/README.md).
