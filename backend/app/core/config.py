@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     environment: Literal["development", "test", "production"] = "development"
 
+    database_url: str = "postgresql+psycopg://fhv:fhv_dev_pw@localhost:5432/fire_hazard_veg"
+    test_database_url: str = (
+        "postgresql+psycopg://fhv:fhv_dev_pw@localhost:5432/fire_hazard_veg_test"
+    )
+    db_echo: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

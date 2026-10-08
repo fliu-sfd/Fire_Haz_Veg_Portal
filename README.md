@@ -26,6 +26,7 @@ for the prototype.
 ## Tech Stack
 
 - Backend: Python 3.11+ with FastAPI
+- Database: PostgreSQL 16 + PostGIS (SQLAlchemy 2, Alembic), see [`docs/database.md`](docs/database.md)
 - Frontend: Next.js App Router with React, TypeScript, and Tailwind CSS
 
 Backend setup and development instructions are available in
