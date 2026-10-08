@@ -65,7 +65,7 @@ export function AuthPageShell({
             </ul>
           </div>
 
-          <p className="hidden text-xs leading-5 text-blue-100 lg:block">City of Scottsdale fire-prevention workflow prototype</p>
+          <p className="hidden text-xs leading-5 text-blue-100 lg:block">Supporting Scottsdale&apos;s fire-prevention workflow</p>
         </aside>
 
         <div className="flex items-center justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14 xl:px-20">

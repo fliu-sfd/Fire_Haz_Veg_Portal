@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Vegetation Assessment", template: "%s | Vegetation Assessment" },
-  description: "Wildland fire prevention vegetation assessment portal — Team 4 capstone.",
+  description: "Review vegetation assessments, complete corrective work, and share property progress with fire-prevention staff.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -16,7 +16,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteHeader />
         <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">{children}</main>
         <footer className="mt-8 bg-city-dark text-white">
-          <div className="mx-auto max-w-6xl px-4 py-6 text-sm sm:px-6">Team 4 · Vegetation Assessment Portal</div>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm sm:px-6">
+            <span>Vegetation Assessment Portal</span>
+            <span className="text-city-light">Scottsdale Fire Prevention</span>
+          </div>
         </footer>
       </body>
     </html>
