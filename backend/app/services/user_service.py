@@ -1,13 +1,23 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password
+from app.core.security import burn_password_check, hash_password, verify_password
 from app.models import User, UserRole
-from app.schemas.auth import SignupRequest
+from app.schemas.auth import LoginRequest, SignupRequest
 
 
 class EmailAlreadyRegisteredError(Exception):
+    pass
+
+
+class InvalidCredentialsError(Exception):
+    pass
+
+
+class InactiveAccountError(Exception):
     pass
 
 
@@ -33,5 +43,25 @@ def create_resident(db: Session, data: SignupRequest) -> User:
         # two signups with the same email raced past the check above
         db.rollback()
         raise EmailAlreadyRegisteredError from exc
+    db.refresh(user)
+    return user
+
+
+def authenticate(db: Session, data: LoginRequest) -> User:
+    """Check credentials and record the login.
+
+    Inactive accounts are only revealed after a correct password.
+    """
+    user = get_user_by_email(db, data.email)
+    if user is None:
+        burn_password_check()
+        raise InvalidCredentialsError
+    if not verify_password(data.password, user.password_hash):
+        raise InvalidCredentialsError
+    if not user.is_active:
+        raise InactiveAccountError
+
+    user.last_login_at = datetime.now(UTC)
+    db.commit()
     db.refresh(user)
     return user
