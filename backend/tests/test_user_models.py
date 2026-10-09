@@ -1,42 +1,12 @@
 import pytest
-from sqlalchemy import create_engine, select, text
-from sqlalchemy.exc import IntegrityError, OperationalError
-from sqlalchemy.orm import Session
+from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 
-from app.core.config import settings
-from app.db.base import Base
 from app.models import FirefighterProfile, ResidentProfile, User, UserRole
 
 pytestmark = pytest.mark.db
 
 FAKE_HASH = "$2b$12$notarealhashjustfortestingxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-
-@pytest.fixture(scope="module")
-def test_engine():
-    eng = create_engine(settings.test_database_url)
-    try:
-        with eng.begin() as conn:
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto"))
-    except OperationalError:
-        pytest.skip("test database not available")
-    Base.metadata.drop_all(eng)
-    Base.metadata.create_all(eng)
-    yield eng
-    Base.metadata.drop_all(eng)
-    eng.dispose()
-
-
-@pytest.fixture
-def db(test_engine):
-    # each test runs inside a transaction that gets rolled back
-    conn = test_engine.connect()
-    trans = conn.begin()
-    sess = Session(bind=conn, join_transaction_mode="create_savepoint")
-    yield sess
-    sess.close()
-    trans.rollback()
-    conn.close()
 
 
 def make_user(email="jane@example.com", role=UserRole.RESIDENT, **kw):

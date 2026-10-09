@@ -53,6 +53,7 @@ documentation is available at `http://127.0.0.1:8000/docs`.
 - `GET /` - API name and version
 - `GET /api/v1/health` - health check
 - `GET /api/v1/health/db` - database + PostGIS check (503 if unreachable)
+- `POST /api/v1/auth/signup` - resident self-signup (201, 409 if email taken, 422 on invalid input)
 
 ## Quality checks
 
