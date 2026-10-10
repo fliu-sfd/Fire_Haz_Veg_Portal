@@ -1,3 +1,3 @@
 export default function Loading() {
-  return <p role="status" className="text-slate-600">Loading page…</p>;
+  return <p role="status" className="text-city-dark">Loading page…</p>;
 }

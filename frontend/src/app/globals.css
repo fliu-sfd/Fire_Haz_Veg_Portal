@@ -1,7 +1,41 @@
 @import "tailwindcss";
 
-@theme { --font-sans: Arial, Helvetica, sans-serif; }
+@theme {
+  --font-sans: "Public Sans Variable", "Public Sans", Arial, Helvetica, sans-serif;
 
-body { font-family: Arial, Helvetica, sans-serif; }
-button:not(:disabled), a { cursor: pointer; }
-:focus-visible { outline: 3px solid #15803d; outline-offset: 4px; }
+  /* City of Scottsdale-inspired design tokens */
+  --color-denim: #0074ba;
+  --color-civic-blue: #004f7e;
+  --color-deep-blue: #003859;
+  --color-silver-spur: #808285;
+  --color-city-light: #eaebec;
+  --color-city-gray: #f6f6f7;
+  --color-city-dark: #2d3b44;
+  --color-charcoal: #1a2328;
+  --color-fire-red: #b44c3f;
+  --color-warning-yellow: #ffcd53;
+  --color-city-orange: #ff943b;
+  --color-success-green: #849c3b;
+  --color-success-dark: #65772d;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-denim);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-civic-blue);
+  color: white;
+}

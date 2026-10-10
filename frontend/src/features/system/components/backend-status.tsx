@@ -27,13 +27,13 @@ export function BackendStatus() {
 
   return (
     <Card title="Backend connection example">
-      <p className="mb-4 text-sm text-slate-600">Use this example to verify the frontend can reach FastAPI.</p>
+      <p className="mb-4 text-sm text-city-dark">Use this example to verify the frontend can reach FastAPI.</p>
       <Button onClick={checkConnection} disabled={state.kind === "loading"}>
         {state.kind === "loading" ? "Checking…" : "Check connection"}
       </Button>
       <div aria-live="polite" role="status" className="mt-3 text-sm">
-        {state.kind === "success" && <p className="text-green-800">Backend responded: {state.status}</p>}
-        {state.kind === "error" && <p className="text-red-800">Couldn’t reach the health endpoint. Check that FastAPI is running, the API URL is correct, and CORS allows this frontend.</p>}
+        {state.kind === "success" && <p className="font-medium text-success-dark">Backend responded: {state.status}</p>}
+        {state.kind === "error" && <p className="font-medium text-fire-red">Couldn’t reach the health endpoint. Check that FastAPI is running, the API URL is correct, and CORS allows this frontend.</p>}
       </div>
     </Card>
   );
