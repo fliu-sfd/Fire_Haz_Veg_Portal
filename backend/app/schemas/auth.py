@@ -114,6 +114,21 @@ class SignupRequest(BaseModel):
         return self
 
 
+class LoginRequest(BaseModel):
+    """Format checks only - strength rules apply at signup, not login."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr = Field(max_length=EMAIL_MAX_LENGTH)
+    # not trimmed: spaces are part of the password
+    password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: object) -> object:
+        return v.strip().lower() if isinstance(v, str) else v
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
