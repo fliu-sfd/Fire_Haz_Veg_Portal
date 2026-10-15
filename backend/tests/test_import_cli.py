@@ -63,6 +63,14 @@ def test_missing_file_gives_error_message_and_exit_code_1(tmp_path, capsys):
     assert "error:" in capsys.readouterr().err
 
 
+def test_file_that_is_not_a_zip_gives_error_message(tmp_path, capsys):
+    broken = tmp_path / "broken.gdb.zip"
+    broken.write_text("this is not a zip file")
+    code = main([str(broken), "--year", "2026"])
+    assert code == 1
+    assert "error:" in capsys.readouterr().err
+
+
 @pytest.mark.db
 def test_real_run_prints_summary_and_writes_rows(db, tmp_path):
     buf = io.StringIO()

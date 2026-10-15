@@ -1,5 +1,7 @@
-# Local development database: PostgreSQL 16 with the PostGIS extension.
-# Start it with:  docker compose up -d db
+# Local development stack.
+#   docker compose up -d db   database only (run the API yourself with uv)
+#   docker compose up --build database + API; the API applies migrations and
+#                             imports the NAOS file from ./data if it is there
 services:
   db:
     image: postgis/postgis:16-3.4
@@ -20,5 +22,24 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build: ./backend
+    container_name: fhv-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-fhv}:${POSTGRES_PASSWORD:-fhv_dev_pw}@db:5432/${POSTGRES_DB:-fire_hazard_veg}
+      PHOTO_STORAGE_DIR: /app/photo_storage
+      AUTO_IMPORT: ${AUTO_IMPORT:-true}
+      NAOS_SEASON_YEAR: ${NAOS_SEASON_YEAR:-2026}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - photos:/app/photo_storage
+      - ${NAOS_DATA_DIR:-./data}:/data:ro
+
 volumes:
   pgdata:
+  photos:

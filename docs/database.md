@@ -128,6 +128,31 @@ photos: read 136, inserted 136, skipped 0, orphaned 0
 A photo whose point is missing is counted as orphaned, not saved, and gets a `warning:`
 line. Photos are written under `PHOTO_STORAGE_DIR` as `crew/<assessment id>/<photo id>.jpg`.
 
+### Automatic import with Docker
+
+`docker compose up --build` starts the database and the API. Each time the API container
+starts it applies the migrations, then imports the file it finds in `./data` (any
+`*.gdb.zip`), then starts the API on port 8000. Because the import skips what is already
+loaded, restarting is safe.
+
+1. Put `Community_NAOS_Inspections.gdb.zip` in the repo's `data/` folder. Do not commit it:
+   it is City data (about 80 MB).
+2. Run `docker compose up --build` from the repo root.
+3. Watch the `fhv-api` log for `points: read 7040, inserted 7040, skipped 0`.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `NAOS_DATA_DIR` | `./data` | folder on your computer that holds the file |
+| `NAOS_SEASON_YEAR` | `2026` | season the file belongs to |
+| `AUTO_IMPORT` | `true` | set to `false` to skip the import |
+| `API_PORT` | `8000` | port the API is published on |
+
+With no file in the folder the import is skipped and the API starts normally. If the import
+fails, the log shows the error and the API still starts. Photos live in the `photos` Docker
+volume; `docker compose down -v` removes the database and the photos together.
+
+`docker compose up -d db` still starts only the database, for working with `uv run` as before.
+
 To run the test that uses the real file, point `NAOS_GDB_PATH` at it:
 
 ```bash

@@ -8,6 +8,7 @@ The path can be the zipped geodatabase or the unzipped .gdb folder.
 
 import argparse
 import sys
+import zipfile
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TextIO
@@ -105,7 +106,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 LocalDiskStore(settings.photo_storage_dir),
                 sys.stdout,
             )
-    except (FileNotFoundError, ValueError) as err:
+    except (FileNotFoundError, ValueError, zipfile.BadZipFile) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
     return 0
