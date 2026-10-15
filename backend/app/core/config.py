@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "fhv_access_token"
     auth_cookie_secure: bool = False  # True in production (HTTPS only)
     auth_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
+    photo_storage_dir: str = "./photo_storage"
 
     # browser origins allowed to call the API with cookies (JSON list in .env)
     cors_origins: list[str] = ["http://localhost:3000"]
