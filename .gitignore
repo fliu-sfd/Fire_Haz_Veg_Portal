@@ -26,3 +26,6 @@ build/
 # Logs
 *.log
 npm-debug.log*
+
+# Crew photos saved by the local photo store
+photo_storage/

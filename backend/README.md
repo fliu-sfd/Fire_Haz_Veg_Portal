@@ -22,6 +22,10 @@ Then run migrations from `backend/`:
 uv run alembic upgrade head
 ```
 
+To run the API in Docker as well, with migrations and the NAOS import done on
+start, use `docker compose up --build` (details in the import section of
+[`../docs/database.md`](../docs/database.md)).
+
 See [`../docs/database.md`](../docs/database.md) for credentials, schema,
 and how to reset the database.
 
