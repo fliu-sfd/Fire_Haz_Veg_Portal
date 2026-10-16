@@ -1,5 +1,11 @@
 # Authentication Backend Handoff
 
+> Historical planning document. The resident authentication flow is now implemented.
+> The current contract is defined by `backend/app/schemas/auth.py`: resident signup uses
+> `full_name`, `email`, `property_address`, `asset_id`, and `password`; the browser-only
+> password confirmation is not sent. Use the generated FastAPI OpenAPI schema as the
+> authoritative API reference.
+
 ## Purpose
 
 This document defines the backend work required to connect the current homeowner registration, staff registration, and shared sign-in interfaces to the FastAPI application.

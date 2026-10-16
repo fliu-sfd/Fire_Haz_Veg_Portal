@@ -28,6 +28,7 @@ Reset: `docker compose down -v && docker compose up -d db`
 ```mermaid
 erDiagram
     users ||--o| resident_profiles : has
+    users ||--o{ resident_assets : can_access
     users ||--o| firefighter_profiles : has
     assessments ||--o{ crew_photos : has
 
@@ -51,6 +52,12 @@ erDiagram
         char state
         varchar zip_code
         varchar hoa_name
+    }
+    resident_assets {
+        uuid id PK
+        uuid user_id FK
+        varchar asset_id "verified against assessments"
+        timestamptz created_at
     }
     firefighter_profiles {
         uuid user_id PK, FK
@@ -87,7 +94,7 @@ erDiagram
     }
 ```
 
-Profiles are deleted with their user. Admins have no profile.
+Profiles and resident asset links are deleted with their user. Admins have no profile.
 
 `assessments` holds one row per inspected point from the City's yearly file. The same
 `asset_id` shows up many times, so it is never a key; a row is identified by
@@ -103,6 +110,7 @@ or stored.
 | `0001` | enable `postgis`, `pgcrypto` |
 | `0002` | `users`, `resident_profiles`, `firefighter_profiles` |
 | `0003` | `assessments`, `crew_photos` |
+| `0004` | `resident_assets`; make resident ZIP optional because the imported address is stored as one value |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
 

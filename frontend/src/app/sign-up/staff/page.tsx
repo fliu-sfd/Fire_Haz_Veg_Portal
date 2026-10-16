@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FormAlert } from "@/components/ui/form-alert";
 import { AuthPageShell } from "@/features/auth/components/auth-page-shell";
-import { StaffSignUpForm } from "@/features/auth/components/staff-sign-up-form";
 
 export const metadata: Metadata = {
   title: "Department sign up",
-  description: "Create an authorized department account for the Vegetation Assessment portal.",
+  description: "Department account access for the Vegetation Assessment portal.",
 };
 
 export default function StaffSignUpPage() {
   return (
     <AuthPageShell
-      eyebrow="Department registration"
-      title="Create a staff account"
-      description="Register for firefighter or administrator access using your work email and department-issued access code."
+      eyebrow="Department access"
+      title="Staff accounts are managed internally"
+      description="Fire personnel should use an existing department account or contact an administrator for access."
       panelTitle="Coordinate prevention work with confidence."
       panelDescription="Department accounts provide one place to review inspections, homeowner updates, and vegetation assessment progress."
       highlights={[
@@ -28,7 +28,12 @@ export default function StaffSignUpPage() {
         </p>
       }
     >
-      <StaffSignUpForm />
+      <FormAlert variant="info" title="Department-managed access">
+        This resident portal does not offer public staff registration.
+      </FormAlert>
+      <Link href="/sign-in" className="mt-6 inline-flex rounded bg-denim px-5 py-3 font-bold text-white transition-colors hover:bg-deep-blue">
+        Go to staff sign in
+      </Link>
     </AuthPageShell>
   );
 }

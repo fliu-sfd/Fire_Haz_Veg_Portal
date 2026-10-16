@@ -8,6 +8,7 @@ test("sends JSON and preserves custom headers", async (t) => {
     assert.equal(options.method, "POST");
     assert.equal(options.headers.get("Content-Type"), "application/json");
     assert.equal(options.headers.get("X-Request-ID"), "example");
+    assert.equal(options.credentials, "include");
     assert.equal(options.body, JSON.stringify({ address: "Example address" }));
     return Response.json({ id: "123" });
   });

@@ -13,7 +13,7 @@ export default function HomeownerSignUpPage() {
     <AuthPageShell
       eyebrow="Homeowner registration"
       title="Create your property account"
-      description="Use the Property ID from your assessment notice to securely connect your account to the correct property."
+      description="Use the property address and Asset ID from your assessment notice to securely connect your account."
       panelTitle="Your property work, all in one place."
       panelDescription="Create an account to understand the vegetation hazards identified during inspection and share progress with the fire-prevention team."
       highlights={[

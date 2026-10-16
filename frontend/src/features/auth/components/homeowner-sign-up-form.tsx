@@ -1,40 +1,58 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
 import { TextField } from "@/components/ui/text-field";
 import { PasswordField } from "@/features/auth/components/password-field";
+import { authErrorMessage, registerHomeowner } from "@/features/auth/api";
 
 export function HomeownerSignUpForm() {
+  const router = useRouter();
   const [passwordError, setPasswordError] = useState<string>();
-  const [showPrototypeNotice, setShowPrototypeNotice] = useState(false);
+  const [submitError, setSubmitError] = useState<string>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const password = formData.get("password");
-    const confirmation = formData.get("passwordConfirmation");
+    const confirmation = formData.get("password_confirmation");
 
     if (password !== confirmation) {
       setPasswordError("Passwords do not match.");
-      setShowPrototypeNotice(false);
       return;
     }
 
     setPasswordError(undefined);
-    setShowPrototypeNotice(true);
+    setSubmitError(undefined);
+    setIsSubmitting(true);
+    try {
+      await registerHomeowner({
+        full_name: String(formData.get("full_name") ?? ""),
+        email: String(formData.get("email") ?? ""),
+        property_address: String(formData.get("property_address") ?? ""),
+        asset_id: String(formData.get("asset_id") ?? ""),
+        password: String(password ?? ""),
+      });
+      router.replace("/homeowner");
+    } catch (error) {
+      setSubmitError(authErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormAlert variant="info" title="Homeowner account">
-        Your role is assigned automatically. Use the Property ID provided with your vegetation assessment.
+        Your role is assigned automatically. Use the address and Asset ID from your assessment notice.
       </FormAlert>
 
       <TextField
         id="homeowner-full-name"
-        name="fullName"
+        name="full_name"
         label="Full name"
         autoComplete="name"
         required
@@ -51,9 +69,18 @@ export function HomeownerSignUpForm() {
       />
 
       <TextField
-        id="property-id"
-        name="propertyId"
-        label="Property ID"
+        id="property-address"
+        name="property_address"
+        label="Property address"
+        hint="Enter the address shown on your assessment notice."
+        autoComplete="street-address"
+        required
+      />
+
+      <TextField
+        id="asset-id"
+        name="asset_id"
+        label="Asset ID"
         hint="Enter the ID exactly as it appears on your assessment notice."
         autoComplete="off"
         spellCheck={false}
@@ -64,38 +91,38 @@ export function HomeownerSignUpForm() {
         id="homeowner-password"
         name="password"
         label="Create a password"
-        hint="Use at least 8 characters."
+        hint="Use at least 12 characters with upper- and lowercase letters, a number, and a symbol."
         autoComplete="new-password"
-        minLength={8}
+        minLength={12}
         required
       />
 
       <PasswordField
         id="homeowner-password-confirmation"
-        name="passwordConfirmation"
+        name="password_confirmation"
         label="Confirm password"
         autoComplete="new-password"
-        minLength={8}
+        minLength={12}
         error={passwordError}
         onChange={() => passwordError && setPasswordError(undefined)}
         required
       />
 
-      {showPrototypeNotice ? (
-        <FormAlert variant="info" title="Registration service coming next">
-          This interface is ready, but no information was submitted because the authentication API is not connected yet.
+      {submitError ? (
+        <FormAlert variant="error" title="We could not create your account">
+          {submitError}
         </FormAlert>
       ) : null}
 
-      <Button type="submit" className="flex min-h-12 w-full items-center justify-center gap-2 text-base">
-        Create homeowner account
+      <Button disabled={isSubmitting} type="submit" className="flex min-h-12 w-full items-center justify-center gap-2 text-base">
+        {isSubmitting ? "Creating account…" : "Create homeowner account"}
         <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M4 10h12m-4-4 4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </Button>
 
       <p className="text-center text-xs leading-5 text-city-dark">
-        Your account will be connected only to the property associated with the supplied ID.
+        Your address and Asset ID must match an imported assessment before an account is created.
       </p>
     </form>
   );

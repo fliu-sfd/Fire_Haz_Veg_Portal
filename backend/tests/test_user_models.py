@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 
-from app.models import FirefighterProfile, ResidentProfile, User, UserRole
+from app.models import FirefighterProfile, ResidentAsset, ResidentProfile, User, UserRole
 
 pytestmark = pytest.mark.db
 
@@ -67,6 +67,14 @@ def test_resident_with_profile(db):
 
     assert u.resident_profile.city == "Scottsdale"
     assert u.resident_profile.state == "AZ"
+
+
+def test_resident_can_link_multiple_assets(db):
+    u = make_user("multi@example.com")
+    u.resident_assets = [ResidentAsset(asset_id="A-1001"), ResidentAsset(asset_id="A-1002")]
+    db.add(u)
+    db.flush()
+    assert [link.asset_id for link in u.resident_assets] == ["A-1001", "A-1002"]
 
 
 def test_firefighter_employee_id_unique(db):

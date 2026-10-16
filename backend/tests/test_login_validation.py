@@ -14,6 +14,11 @@ def test_password_not_trimmed_or_strength_checked() -> None:
     assert LoginRequest(email="a@example.com", password=" weak ").password == " weak "
 
 
+def test_remember_me_defaults_false_and_accepts_boolean() -> None:
+    assert LoginRequest(email="a@example.com", password="x").remember_me is False
+    assert LoginRequest(email="a@example.com", password="x", remember_me=True).remember_me is True
+
+
 @pytest.mark.parametrize(
     ("data", "field"),
     [

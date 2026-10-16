@@ -10,12 +10,11 @@ def signup(**overrides) -> SignupRequest:
     data = {
         "full_name": "Jane Doe",
         "email": "jane@example.com",
+        "property_address": "7575 E Main St",
+        "asset_id": "A-1001",
         "password": GOOD_PASSWORD,
-        "confirm_password": GOOD_PASSWORD,
     }
     data.update(overrides)
-    if "password" in overrides and "confirm_password" not in overrides:
-        data["confirm_password"] = overrides["password"]
     return SignupRequest(**data)
 
 
@@ -33,7 +32,8 @@ def test_valid_signup_minimal() -> None:
     req = signup()
     assert req.full_name == "Jane Doe"
     assert req.email == "jane@example.com"
-    assert req.phone is None
+    assert req.property_address == "7575 E Main St"
+    assert req.asset_id == "A-1001"
 
 
 # --- full name ---
@@ -106,19 +106,6 @@ def test_password_strength_rules(password: str, message: str) -> None:
     assert message in error_for("password", password=password)
 
 
-def test_password_mismatch() -> None:
-    msg = error_for("confirm_password", confirm_password="Wildfire#Safe2027")
-    assert "do not match" in msg
-
-
-def test_mismatch_not_reported_when_password_itself_invalid() -> None:
-    with pytest.raises(ValidationError) as exc:
-        signup(password="weak", confirm_password="different")
-    locs = [e["loc"] for e in exc.value.errors()]
-    assert ("password",) in locs
-    assert ("confirm_password",) not in locs
-
-
 @pytest.mark.parametrize("password", ["Jane#Secure2026x", "MyDOE!Password99", "Xx#JaneDoe#2026"])
 def test_password_must_not_contain_name(password: str) -> None:
     with pytest.raises(ValidationError, match="must not contain your name or email"):
@@ -130,50 +117,32 @@ def test_password_must_not_contain_email_local_part() -> None:
         signup(email="firewatch@example.com", password="Big#FireWatch2026")
 
 
-# --- phone ---
+# --- property verification fields ---
 
 
-@pytest.mark.parametrize(
-    "phone",
-    [
-        "4805551234",
-        "(480) 555-1234",
-        "480-555-1234",
-        "480.555.1234",
-        "+1 480 555 1234",
-        "1-480-555-1234",
-        "  +14805551234  ",
-    ],
-)
-def test_phone_normalized_to_e164(phone: str) -> None:
-    assert signup(phone=phone).phone == "+14805551234"
+def test_property_address_is_trimmed_and_spaces_collapsed() -> None:
+    assert signup(property_address="  7575   E Main St  ").property_address == "7575 E Main St"
 
 
-@pytest.mark.parametrize("phone", ["", "   ", None])
-def test_phone_blank_is_none(phone: str | None) -> None:
-    assert signup(phone=phone).phone is None
+@pytest.mark.parametrize("address", ["", "   ", "123"])
+def test_property_address_rejects_short_values(address: str) -> None:
+    error_for("property_address", property_address=address)
 
 
-@pytest.mark.parametrize(
-    "phone",
-    [
-        "480555123",  # 9 digits
-        "24805551234",  # 11 digits not starting with 1
-        "0805551234",  # area code starts with 0
-        "1805551234x",  # letter
-        "180555123",
-        "4801551234",  # exchange starts with 1
-        "+44 20 7946 0958",  # non-US
-        "480-555-12345",
-    ],
-)
-def test_phone_rejects_invalid(phone: str) -> None:
-    error_for("phone", phone=phone)
+def test_asset_id_is_trimmed_and_uppercased() -> None:
+    assert signup(asset_id="  a-1001 ").asset_id == "A-1001"
+
+
+@pytest.mark.parametrize("asset_id", ["", "A 1001", "A/1001", "A.1001"])
+def test_asset_id_rejects_invalid_values(asset_id: str) -> None:
+    error_for("asset_id", asset_id=asset_id)
 
 
 # --- unknown fields ---
 
 
-@pytest.mark.parametrize("field", ["role", "is_active", "email_verified"])
+@pytest.mark.parametrize(
+    "field", ["role", "is_active", "email_verified", "confirm_password", "phone"]
+)
 def test_extra_fields_rejected(field: str) -> None:
     error_for(field, **{field: "admin"})

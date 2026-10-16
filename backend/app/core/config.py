@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = DEV_JWT_SECRET
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    remembered_access_token_expire_minutes: int = 60 * 24 * 30
     auth_cookie_name: str = "fhv_access_token"
     auth_cookie_secure: bool = False  # True in production (HTTPS only)
     auth_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
