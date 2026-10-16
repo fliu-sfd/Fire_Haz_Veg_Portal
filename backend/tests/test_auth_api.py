@@ -46,6 +46,7 @@ def test_login_sets_httponly_cookie_and_returns_user(client, db, user) -> None:
     assert body["id"] == str(user.id)
     assert body["email"] == EMAIL
     assert body["role"] == "resident"
+    assert body["property_ids"] == []
     assert not {"password", "password_hash", "access_token"} & body.keys()
 
     assert f"{COOKIE}=" in set_cookie
@@ -70,6 +71,12 @@ def test_wrong_password_and_unknown_email_get_same_401(client, user) -> None:
 
 def test_password_is_case_sensitive(client, user) -> None:
     assert login(client, password=PASSWORD.lower()).status_code == 401
+
+
+def test_remember_me_uses_extended_cookie_lifetime(client, user) -> None:
+    resp = client.post(LOGIN, json={"email": EMAIL, "password": PASSWORD, "remember_me": True})
+    expected = settings.remembered_access_token_expire_minutes * 60
+    assert f"Max-Age={expected}" in resp.headers["set-cookie"]
 
 
 def test_inactive_user_gets_403_only_with_correct_password(client, db, user) -> None:

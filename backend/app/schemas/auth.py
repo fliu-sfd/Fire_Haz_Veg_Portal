@@ -8,7 +8,6 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
-    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -20,13 +19,12 @@ FULL_NAME_MAX_LENGTH = 120  # users.full_name column
 EMAIL_MAX_LENGTH = 254
 PASSWORD_MIN_LENGTH = 12
 PASSWORD_MAX_LENGTH = 128
+ASSET_ID_MAX_LENGTH = 32
+PROPERTY_ADDRESS_MAX_LENGTH = 255
 
 # letter runs ([^\W\d_] = any unicode letter) joined by space, apostrophe, hyphen or period:
 # "Mary-Jane O'Neil", "J. R. Smith", "José Núñez"
 _NAME_RE = re.compile(r"[^\W\d_]+(?:[ '.\-]+[^\W\d_]+)*\.?")
-_PHONE_CHARS_RE = re.compile(r"\+?[\d\s().\-]+")
-# NANP: area code and exchange can't start with 0 or 1
-_US_PHONE_RE = re.compile(r"[2-9]\d{2}[2-9]\d{6}")
 
 
 class SignupRequest(BaseModel):
@@ -36,9 +34,9 @@ class SignupRequest(BaseModel):
 
     full_name: str
     email: EmailStr = Field(max_length=EMAIL_MAX_LENGTH)
+    property_address: str
+    asset_id: str
     password: str
-    confirm_password: str
-    phone: str | None = None
 
     @field_validator("full_name")
     @classmethod
@@ -78,30 +76,29 @@ class SignupRequest(BaseModel):
             raise ValueError("Password must contain a special character")
         return v
 
-    @field_validator("confirm_password")
+    @field_validator("property_address")
     @classmethod
-    def passwords_match(cls, v: str, info: ValidationInfo) -> str:
-        # password missing from info.data means it already failed; don't pile on
-        if "password" in info.data and v != info.data["password"]:
-            raise ValueError("Passwords do not match")
+    def clean_property_address(cls, v: str) -> str:
+        v = " ".join(v.split())
+        if len(v) < 5:
+            raise ValueError("Property address must be at least 5 characters")
+        if len(v) > PROPERTY_ADDRESS_MAX_LENGTH:
+            raise ValueError(
+                f"Property address must be at most {PROPERTY_ADDRESS_MAX_LENGTH} characters"
+            )
         return v
 
-    @field_validator("phone", mode="before")
+    @field_validator("asset_id")
     @classmethod
-    def normalize_us_phone(cls, v: object) -> object:
-        if v is None or not isinstance(v, str):
-            return v
-        v = v.strip()
+    def clean_asset_id(cls, v: str) -> str:
+        v = v.strip().upper()
         if not v:
-            return None
-        if not _PHONE_CHARS_RE.fullmatch(v):
-            raise ValueError("Phone number contains invalid characters")
-        digits = re.sub(r"\D", "", v)
-        if len(digits) == 11 and digits.startswith("1"):
-            digits = digits[1:]
-        if not _US_PHONE_RE.fullmatch(digits):
-            raise ValueError("Enter a valid 10-digit US phone number")
-        return f"+1{digits}"
+            raise ValueError("Asset ID is required")
+        if len(v) > ASSET_ID_MAX_LENGTH:
+            raise ValueError(f"Asset ID must be at most {ASSET_ID_MAX_LENGTH} characters")
+        if not re.fullmatch(r"[A-Z0-9_-]+", v):
+            raise ValueError("Asset ID may only contain letters, numbers, hyphens and underscores")
+        return v
 
     @model_validator(mode="after")
     def password_not_personal(self) -> Self:
@@ -122,6 +119,7 @@ class LoginRequest(BaseModel):
     email: EmailStr = Field(max_length=EMAIL_MAX_LENGTH)
     # not trimmed: spaces are part of the password
     password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)
+    remember_me: bool = False
 
     @field_validator("email", mode="before")
     @classmethod
@@ -138,3 +136,4 @@ class UserOut(BaseModel):
     phone: str | None
     role: UserRole
     created_at: datetime
+    property_ids: list[str] = Field(default_factory=list)

@@ -29,13 +29,13 @@ def burn_password_check() -> None:
     verify_password("not-the-password", _dummy_hash())
 
 
-def create_access_token(user_id: uuid.UUID) -> str:
+def create_access_token(user_id: uuid.UUID, expire_minutes: int | None = None) -> str:
     now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "type": "access",
         "iat": now,
-        "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
+        "exp": now + timedelta(minutes=expire_minutes or settings.access_token_expire_minutes),
     }
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
