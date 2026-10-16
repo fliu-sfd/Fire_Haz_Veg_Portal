@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     String,
+    UniqueConstraint,
     func,
     text,
 )
@@ -66,6 +67,9 @@ class User(Base):
     resident_profile: Mapped["ResidentProfile | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
+    resident_assets: Mapped[list["ResidentAsset"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
     firefighter_profile: Mapped["FirefighterProfile | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
@@ -85,10 +89,34 @@ class ResidentProfile(Base):
     street_address: Mapped[str] = mapped_column(String(255))
     city: Mapped[str] = mapped_column(String(80), server_default="Scottsdale")
     state: Mapped[str] = mapped_column(String(2), server_default="AZ")
-    zip_code: Mapped[str] = mapped_column(String(10))
+    zip_code: Mapped[str | None] = mapped_column(String(10))
     hoa_name: Mapped[str | None] = mapped_column(String(120))  # for community/NAOS areas
 
     user: Mapped[User] = relationship(back_populates="resident_profile")
+
+
+class ResidentAsset(Base):
+    """An assessment asset a resident is authorized to view.
+
+    Asset ids repeat across inspection seasons, so this intentionally stores the
+    verified external id instead of pointing at one assessment row.
+    """
+
+    __tablename__ = "resident_assets"
+    __table_args__ = (
+        UniqueConstraint("user_id", "asset_id", name="uq_resident_assets_user_asset"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    asset_id: Mapped[str] = mapped_column(String(32), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship(back_populates="resident_assets")
 
 
 class FirefighterProfile(Base):
