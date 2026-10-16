@@ -63,7 +63,7 @@ application.add_middleware(
 )
 ```
 
-The browser calls FastAPI directly, so configure its CORS origins for each frontend environment. If Next.js starts on a different port, adjust the allowed origin. Authentication is intentionally pending agreement with the city; the staff page is public and contains no real data. Implement authorization in FastAPI as well as frontend access controls before connecting real property records. Cookie authentication will also require explicit credentials and CORS configuration.
+The browser calls FastAPI directly, so configure its CORS origins for each frontend environment. If Next.js starts on a different port, adjust the allowed origin. The shared API client sends credentials so the HttpOnly authentication cookie works across the local frontend and backend origins.
 
 Example service patterns (paths and types must match your agreed backend contract):
 
@@ -112,7 +112,7 @@ The API tests cover JSON requests, multipart uploads, validation errors, non-JSO
 
 Included: responsive shared layout, navigation, placeholder homeowner/staff pages, common UI components, loading/error/404 states, typed API client, and backend connection example.
 
-Still to implement as separate tasks: authentication, QR access, actual assessment data, forms, photo workflows, remote reviews, property history, and ArcGIS integration. No backend or mock property records are included.
+Resident signup and sign-in are connected to FastAPI. Signup verifies the submitted property address and Asset ID against imported assessment data before creating an account-to-asset link. Still to implement as separate tasks: QR access, assessment-detail APIs, homeowner photo workflows, remote reviews, and property history.
 
 At setup, npm audit reported five high-severity findings in the ESLint development dependency chain (`braces` through `micromatch`/`fast-glob`). Its suggested fix downgrades Next.js ESLint configuration to version 14; that incompatible downgrade was not applied. Review patched upstream releases as they become available.
 

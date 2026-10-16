@@ -26,6 +26,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
+    credentials: options.credentials ?? "include",
     cache: "no-store",
     signal: options.signal ?? AbortSignal.timeout(10_000),
   });

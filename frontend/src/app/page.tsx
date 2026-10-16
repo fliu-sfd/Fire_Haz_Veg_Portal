@@ -68,21 +68,13 @@ export default function HomePage() {
         </ol>
       </section>
 
-      <section className="grid overflow-hidden rounded border border-city-light bg-white shadow-[0_12px_32px_rgba(26,35,40,0.08)] md:grid-cols-2">
+      <section className="overflow-hidden rounded border border-city-light bg-white shadow-[0_12px_32px_rgba(26,35,40,0.08)]">
         <div className="p-7 sm:p-10">
           <p className="text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">For homeowners</p>
           <h2 className="mt-3 text-2xl font-light text-charcoal">Manage your property assessment</h2>
-          <p className="mt-3 leading-7 text-city-dark">Create an account using the Property ID included with your assessment notice.</p>
+          <p className="mt-3 max-w-2xl leading-7 text-city-dark">Create an account using the property address and Asset ID included with your assessment notice.</p>
           <Link href="/sign-up/homeowner" className="mt-6 inline-flex font-bold text-denim underline-offset-4 hover:underline">
             Get started →
-          </Link>
-        </div>
-        <div className="border-t border-city-light bg-city-gray p-7 sm:p-10 md:border-l md:border-t-0">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">For fire personnel</p>
-          <h2 className="mt-3 text-2xl font-light text-charcoal">Continue department work</h2>
-          <p className="mt-3 leading-7 text-city-dark">Authorized staff can sign in to review assessments and property updates.</p>
-          <Link href="/sign-in" className="mt-6 inline-flex font-bold text-denim underline-offset-4 hover:underline">
-            Staff sign in →
           </Link>
         </div>
       </section>
