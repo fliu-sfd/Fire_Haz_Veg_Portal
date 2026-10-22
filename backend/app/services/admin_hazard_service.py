@@ -25,6 +25,8 @@ from app.schemas.admin_hazards import (
     HazardListParams,
     HazardOut,
     HazardState,
+    HazardStateCounts,
+    HazardSummary,
     PropertyType,
 )
 from app.services.text_search import LIKE_ESCAPE, like_pattern
@@ -175,13 +177,35 @@ def _conditions(hazards: Subquery, params: HazardListParams) -> dict[str, Column
     return conditions
 
 
+def _summary(
+    db: Session, hazards: Subquery, conditions: dict[str, ColumnElement[bool]]
+) -> HazardSummary:
+    def all_but(name: str) -> list[ColumnElement[bool]]:
+        return [condition for key, condition in conditions.items() if key != name]
+
+    by_state = db.execute(
+        select(hazards.c.state, func.count()).where(*all_but("state")).group_by(hazards.c.state)
+    ).all()
+    attention = db.scalar(
+        select(func.count())
+        .select_from(hazards)
+        .where(*all_but("needs_attention"), needs_attention(hazards))
+    )
+    return HazardSummary(
+        by_state=HazardStateCounts(**{state: count for state, count in by_state}),
+        needs_attention=attention or 0,
+    )
+
+
 def list_hazards(db: Session, params: HazardListParams) -> HazardList:
     season = latest_season(db)
     if season is None:
-        return HazardList(season_year=None, total=0, items=[])
+        empty = HazardSummary(by_state=HazardStateCounts(), needs_attention=0)
+        return HazardList(season_year=None, total=0, summary=empty, items=[])
 
     hazards = _hazards(season)
-    filters = list(_conditions(hazards, params).values())
+    conditions = _conditions(hazards, params)
+    filters = list(conditions.values())
     total = db.scalar(select(func.count()).select_from(hazards).where(*filters)) or 0
     reason_columns = [check(hazards).label(reason.value) for reason, check in ATTENTION_CHECKS]
     rows = db.execute(
@@ -194,6 +218,7 @@ def list_hazards(db: Session, params: HazardListParams) -> HazardList:
     return HazardList(
         season_year=season,
         total=total,
+        summary=_summary(db, hazards, conditions),
         items=[
             HazardOut.model_validate(
                 {

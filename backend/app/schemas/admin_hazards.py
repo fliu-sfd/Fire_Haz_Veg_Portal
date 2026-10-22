@@ -82,9 +82,25 @@ class HazardOut(BaseModel):
     longitude: float
 
 
+class HazardStateCounts(BaseModel):
+    open: int = 0
+    pending_review: int = 0
+    closed: int = 0
+
+
+class HazardSummary(BaseModel):
+    """Counts over every match, before the item cap."""
+
+    # every filter except state, so each tile shows what choosing that state would give
+    by_state: HazardStateCounts
+    # every filter except needs_attention itself
+    needs_attention: int
+
+
 class HazardList(BaseModel):
     season_year: int | None
     total: int
+    summary: HazardSummary
     items: list[HazardOut]
 
 

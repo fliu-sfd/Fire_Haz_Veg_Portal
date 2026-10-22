@@ -12,6 +12,7 @@ pytestmark = pytest.mark.db
 
 URL = "/api/v1/admin/hazards"
 FILTERS_URL = "/api/v1/admin/hazards/filters"
+EMPTY_SUMMARY = {"by_state": {"open": 0, "pending_review": 0, "closed": 0}, "needs_attention": 0}
 FAKE_HASH = "$argon2id$not-a-real-hash"
 ALLOWED_FIELDS = {
     "asset_id",
@@ -185,7 +186,12 @@ def test_only_latest_season_is_used(admin_client, db) -> None:
 
 
 def test_empty_database_returns_empty_shape(admin_client) -> None:
-    assert admin_client.get(URL).json() == {"season_year": None, "total": 0, "items": []}
+    assert admin_client.get(URL).json() == {
+        "season_year": None,
+        "total": 0,
+        "summary": EMPTY_SUMMARY,
+        "items": [],
+    }
     assert admin_client.get(FILTERS_URL).json() == {
         "season_year": None,
         "crews": [],
