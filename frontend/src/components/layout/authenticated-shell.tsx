@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  authErrorMessage,
-  getCurrentAccount,
-  signOut,
-  type Account,
-} from "@/features/auth/api";
+import { useSWRConfig } from "swr";
+import { authErrorMessage, signOut } from "@/features/auth/api";
+import { useCurrentAccount } from "@/features/auth/hooks/use-current-account";
+import { areaRedirect, homePathFor } from "@/features/auth/utils/access";
 
 type AuthenticatedShellProps = {
   children: ReactNode;
@@ -17,59 +15,46 @@ type AuthenticatedShellProps = {
 export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [account, setAccount] = useState<Account>();
-  const [error, setError] = useState<string>();
+  const { mutate } = useSWRConfig();
+  const { account, errorMessage } = useCurrentAccount();
+  const [signOutError, setSignOutError] = useState<string>();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const redirectTo = account ? areaRedirect(account.role, pathname) : null;
+  const error = signOutError ?? errorMessage;
 
   useEffect(() => {
-    let active = true;
+    if (errorMessage) router.replace("/sign-in");
+  }, [errorMessage, router]);
 
-    getCurrentAccount()
-      .then((current) => {
-        if (!active) return;
-        if (current.role === "resident" && pathname.startsWith("/dashboard")) {
-          router.replace("/homeowner");
-          return;
-        }
-        if (current.role !== "resident" && pathname.startsWith("/homeowner")) {
-          router.replace("/dashboard");
-          return;
-        }
-        setAccount(current);
-      })
-      .catch((reason: unknown) => {
-        if (!active) return;
-        setError(authErrorMessage(reason));
-        router.replace("/sign-in");
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname, router]);
+  useEffect(() => {
+    if (redirectTo) router.replace(redirectTo);
+  }, [redirectTo, router]);
 
   async function handleSignOut() {
     setIsSigningOut(true);
+    setSignOutError(undefined);
     try {
       await signOut();
+      // Drop every cached response so the next person on this browser never sees this user's data.
+      await mutate(() => true, undefined, { revalidate: false });
       router.replace("/sign-in");
     } catch (reason) {
-      setError(authErrorMessage(reason));
+      setSignOutError(authErrorMessage(reason));
       setIsSigningOut(false);
     }
   }
 
-  if (!account) {
+  if (!account || redirectTo) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-city-gray px-6">
         <p role="status" className="text-city-dark">
-          {error ?? "Loading your account…"}
+          {isSigningOut ? "Signing out…" : error ?? "Loading your account…"}
         </p>
       </main>
     );
   }
 
-  const homeHref = account.role === "resident" ? "/homeowner" : "/dashboard";
+  const homeHref = homePathFor(account.role);
   const initials = account.fullName
     .split(" ")
     .map((part) => part[0])
