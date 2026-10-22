@@ -3,10 +3,9 @@ import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StateGlyph } from "@/features/hazards/components/state-glyph";
 import type { HazardState } from "@/features/hazards/types";
+import { ATTENTION_HELP } from "@/features/hazards/utils/display";
 import type { SummaryTile } from "@/features/hazards/utils/summary";
 import { cn } from "@/lib/utils";
-
-export const ATTENTION_HELP = "Missing a photo or a comment";
 
 type HazardSummaryStripProps = {
   /** Null until the first response; later loads keep the previous numbers. */

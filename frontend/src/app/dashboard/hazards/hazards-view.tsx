@@ -72,6 +72,12 @@ export function HazardsView() {
           onPropertyTypeChange={page.setPropertyType}
           onRemoveChip={page.removeChip}
           onClearFilters={page.clearFilters}
+          search={page.search}
+          dateFilter={page.dateFilter}
+          photoFilter={page.photoFilter}
+          onPhotoFilterChange={page.setPhotoFilter}
+          needsAttention={page.query.needsAttention}
+          onToggleNeedsAttention={page.toggleNeedsAttention}
           summary={
             <>
               <p aria-live="polite" aria-atomic="true">

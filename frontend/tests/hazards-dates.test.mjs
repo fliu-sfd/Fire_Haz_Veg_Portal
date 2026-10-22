@@ -5,6 +5,7 @@ import {
   dateRangeProblem,
   formatDateRange,
   isCalendarDate,
+  matchingPreset,
   presetRange,
   relativeAge,
   todayInReportingZone,
@@ -59,4 +60,12 @@ test("relative age text", () => {
   assert.equal(relativeAge(12), "12 days ago");
   assert.equal(relativeAge(1200), "1,200 days ago");
   assert.equal(relativeAge(null), "Not recorded");
+});
+
+test("recognizes which preset a range came from", () => {
+  const now = new Date("2026-06-10T18:00:00Z");
+  assert.equal(matchingPreset({ from: null, to: null }, now), null);
+  assert.equal(matchingPreset({ from: "2026-06-04", to: "2026-06-10" }, now), "last7");
+  assert.equal(matchingPreset({ from: null, to: "2026-05-10" }, now), "older30");
+  assert.equal(matchingPreset({ from: "2026-06-01", to: "2026-06-10" }, now), "custom");
 });

@@ -7,14 +7,25 @@ import { useHazardQueryState } from "@/features/hazards/hooks/use-hazard-query-s
 import { useHazardSelection } from "@/features/hazards/hooks/use-hazard-selection";
 import { useHazards } from "@/features/hazards/hooks/use-hazards";
 import type { Hazard, HazardState, WorkspaceView } from "@/features/hazards/types";
-import { filterChips, resultSummary, type FilterChip } from "@/features/hazards/utils/display";
+import { presetRange, matchingPreset, type DatePreset } from "@/features/hazards/utils/dates";
+import {
+  filterChips,
+  hasPhotoOf,
+  photoFilterOf,
+  resultSummary,
+  type FilterChip,
+  type PhotoFilter,
+} from "@/features/hazards/utils/display";
 import { accessProblem } from "@/features/hazards/utils/errors";
 import { statesAfterTileClick, summaryTiles } from "@/features/hazards/utils/summary";
 import {
   activeFilterCount,
   hazardsQueryToApiParams,
+  normalizeSearch,
+  SEARCH_MAX_LENGTH,
   withKnownCrews,
 } from "@/features/hazards/utils/query-params";
+import { useUrlSearchInput } from "@/hooks/use-url-search-input";
 
 const NO_HAZARDS: Hazard[] = [];
 
@@ -37,12 +48,22 @@ export function useHazardsPage() {
   }, [problem, router]);
 
   const { toggleStatus, resetStatuses, toggleCrewCode, resetCrews, setPropertyType, resetFilters } = filtersState;
-  const { setStatuses, setNeedsAttention } = filtersState;
+  const { setStatuses, setNeedsAttention, setSearch, setDateRange, setHasPhoto } = filtersState;
+  const search = useUrlSearchInput(query.q, setSearch, normalizeSearch);
 
   function removeChip(chip: FilterChip) {
     if (chip.kind === "state") resetStatuses();
     else if (chip.kind === "crew") toggleCrewCode(chip.crew);
-    else setPropertyType(null);
+    else if (chip.kind === "propertyType") setPropertyType(null);
+    else if (chip.kind === "search") search.clear();
+    else if (chip.kind === "dates") setDateRange(null, null);
+    else if (chip.kind === "photo") setHasPhoto(null);
+    else setNeedsAttention(false);
+  }
+
+  function clearFilters() {
+    search.clear();
+    resetFilters();
   }
 
   const data = hazards.data;
@@ -86,7 +107,25 @@ export function useHazardsPage() {
     resetCrews,
     setPropertyType,
     removeChip,
-    clearFilters: resetFilters,
+    clearFilters,
+    search: {
+      value: search.input,
+      maxLength: SEARCH_MAX_LENGTH,
+      onChange: search.setInput,
+      onClear: search.clear,
+    },
+    dateFilter: {
+      range: { from: query.inspectedFrom, to: query.inspectedTo },
+      activePreset: matchingPreset({ from: query.inspectedFrom, to: query.inspectedTo }),
+      onPreset: (preset: DatePreset) => {
+        const range = presetRange(preset);
+        setDateRange(range.from, range.to);
+      },
+      onCustom: setDateRange,
+      onClear: () => setDateRange(null, null),
+    },
+    photoFilter: photoFilterOf(query.hasPhoto),
+    setPhotoFilter: (filter: PhotoFilter) => setHasPhoto(hasPhotoOf(filter)),
     hazards: items,
     hasData: Boolean(data),
     summaryTiles: data ? summaryTiles(data.summary, total, query) : null,

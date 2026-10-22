@@ -43,6 +43,22 @@ export function presetRange(preset: DatePreset, now: Date = new Date()): DateRan
   return { from: null, to: addDays(today, -31) };
 }
 
+/** Which preset the range came from, so the menu can mark it; "custom" for any other range. */
+export function matchingPreset(range: DateRange, now: Date = new Date()): DatePreset | "custom" | null {
+  if (!range.from && !range.to) return null;
+  const preset = DATE_PRESETS.find(({ id }) => {
+    const candidate = presetRange(id, now);
+    return candidate.from === range.from && candidate.to === range.to;
+  });
+  return preset?.id ?? "custom";
+}
+
+export const DATE_RANGE_MESSAGES: Record<Exclude<DateRangeProblem, null>, string> = {
+  invalid_from: "Enter a real date for From.",
+  invalid_to: "Enter a real date for To.",
+  reversed: "From must be on or before To.",
+};
+
 export type DateRangeProblem = "invalid_from" | "invalid_to" | "reversed" | null;
 
 export function dateRangeProblem(from: string, to: string): DateRangeProblem {
