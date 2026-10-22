@@ -10,6 +10,9 @@ const hazard = {
   inspectedAt: "2026-06-24T00:00:00Z",
   comments: null,
   siteAddress: null,
+  photoCount: 0,
+  ageDays: 3,
+  attentionReasons: ["no_photo"],
   latitude: 33.7,
   longitude: -111.9,
 };
@@ -36,4 +39,6 @@ test("sameHazard compares every shown field", () => {
   assert.equal(sameHazard(hazard, { ...hazard }), true);
   assert.equal(sameHazard(hazard, { ...hazard, comments: "new" }), false);
   assert.equal(sameHazard(hazard, { ...hazard, latitude: 33.71 }), false);
+  assert.equal(sameHazard(hazard, { ...hazard, photoCount: 1 }), false);
+  assert.equal(sameHazard(hazard, { ...hazard, attentionReasons: [] }), false);
 });

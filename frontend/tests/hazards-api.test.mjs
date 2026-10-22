@@ -13,11 +13,15 @@ const validHazard = {
   inspected_at: "2026-06-24T00:00:00Z",
   comments: "Brush needs to be trimmed",
   site_address: null,
+  photo_count: 2,
+  age_days: 12,
+  attention_reasons: ["no_comment"],
   latitude: 33.7,
   longitude: -111.9,
 };
 
-const validList = { season_year: 2026, total: 1, items: [validHazard] };
+const validSummary = { by_state: { open: 1, pending_review: 0, closed: 0 }, needs_attention: 1 };
+const validList = { season_year: 2026, total: 1, summary: validSummary, items: [validHazard] };
 const validFilters = { season_year: 2026, crews: ["611A", "611B"], property_types: ["naos"] };
 
 function mockFetch(t, response = Response.json(validList)) {
@@ -49,6 +53,7 @@ test("listHazards maps snake_case fields to camelCase", async (t) => {
   assert.deepEqual(await listHazards(DEFAULT_HAZARDS_QUERY), {
     seasonYear: 2026,
     total: 1,
+    summary: { byState: { open: 1, pending_review: 0, closed: 0 }, needsAttention: 1 },
     items: [{
       assetId: "1686017",
       state: "open",
@@ -57,6 +62,9 @@ test("listHazards maps snake_case fields to camelCase", async (t) => {
       inspectedAt: "2026-06-24T00:00:00Z",
       comments: "Brush needs to be trimmed",
       siteAddress: null,
+      photoCount: 2,
+      ageDays: 12,
+      attentionReasons: ["no_comment"],
       latitude: 33.7,
       longitude: -111.9,
     }],
@@ -64,9 +72,11 @@ test("listHazards maps snake_case fields to camelCase", async (t) => {
 });
 
 test("parseHazardList accepts the empty shape", () => {
-  assert.deepEqual(parseHazardList({ season_year: null, total: 0, items: [] }), {
+  const summary = { by_state: { open: 0, pending_review: 0, closed: 0 }, needs_attention: 0 };
+  assert.deepEqual(parseHazardList({ season_year: null, total: 0, summary, items: [] }), {
     seasonYear: null,
     total: 0,
+    summary: { byState: { open: 0, pending_review: 0, closed: 0 }, needsAttention: 0 },
     items: [],
   });
 });

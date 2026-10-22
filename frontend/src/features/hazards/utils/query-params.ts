@@ -1,7 +1,8 @@
-import type { HazardState, HazardsQuery, PropertyType } from "@/features/hazards/types";
+import type { AttentionReason, HazardState, HazardsQuery, PropertyType } from "@/features/hazards/types";
 
 export const HAZARD_STATES: readonly HazardState[] = ["open", "pending_review", "closed"];
 export const PROPERTY_TYPES: readonly PropertyType[] = ["naos", "residential"];
+export const ATTENTION_REASONS: readonly AttentionReason[] = ["no_photo", "no_comment"];
 // The backend rejects longer crew codes with a 422.
 export const CREW_CODE_MAX_LENGTH = 16;
 
@@ -17,6 +18,10 @@ export function isHazardState(value: unknown): value is HazardState {
 
 export function isPropertyType(value: unknown): value is PropertyType {
   return PROPERTY_TYPES.includes(value as PropertyType);
+}
+
+export function isAttentionReason(value: unknown): value is AttentionReason {
+  return ATTENTION_REASONS.includes(value as AttentionReason);
 }
 
 function normalizeStates(states: readonly unknown[]): HazardState[] {

@@ -33,6 +33,9 @@ export function sameHazard(a: Hazard, b: Hazard): boolean {
     a.inspectedAt === b.inspectedAt &&
     a.comments === b.comments &&
     a.siteAddress === b.siteAddress &&
+    a.photoCount === b.photoCount &&
+    a.ageDays === b.ageDays &&
+    a.attentionReasons.join() === b.attentionReasons.join() &&
     a.latitude === b.latitude &&
     a.longitude === b.longitude
   );
