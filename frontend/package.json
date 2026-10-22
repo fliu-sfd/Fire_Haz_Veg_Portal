@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/*.test.mjs"
+    "test": "node --experimental-strip-types --import ./tests/setup/resolve-aliases.mjs --test tests/*.test.mjs"
   },
   "dependencies": {
     "@fontsource-variable/public-sans": "^5.3.0",
