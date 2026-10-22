@@ -1,36 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
-import {
-  authErrorMessage,
-  getCurrentAccount,
-  type Account,
-} from "@/features/auth/api";
+import { useCurrentAccount } from "@/features/auth/hooks/use-current-account";
+import { useRequireRole } from "@/features/auth/hooks/use-require-role";
 
 export function HomeownerAccount() {
   const router = useRouter();
-  const [account, setAccount] = useState<Account>();
-  const [error, setError] = useState<string>();
-
-  useEffect(() => {
-    let active = true;
-    getCurrentAccount()
-      .then((current) => {
-        if (!active) return;
-        if (current.role !== "resident") {
-          router.replace("/dashboard");
-          return;
-        }
-        setAccount(current);
-      })
-      .catch((reason: unknown) => {
-        if (active) setError(authErrorMessage(reason));
-      });
-    return () => { active = false; };
-  }, [router]);
+  const { account, errorMessage: error } = useCurrentAccount();
+  const { status } = useRequireRole("resident", "/dashboard");
 
   if (error) {
     return (
@@ -41,7 +20,7 @@ export function HomeownerAccount() {
     );
   }
 
-  if (!account) {
+  if (!account || status !== "allowed") {
     return <p role="status" className="text-center text-city-dark">Loading your property account…</p>;
   }
 

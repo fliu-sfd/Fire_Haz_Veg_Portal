@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/* The portal has no dark theme. Without this, shadcn's dark: classes follow the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Public Sans Variable", "Public Sans", Arial, Helvetica, sans-serif;
@@ -17,6 +21,49 @@
   --color-city-orange: #ff943b;
   --color-success-green: #849c3b;
   --color-success-dark: #65772d;
+
+  --animate-indeterminate: indeterminate 1.1s ease-in-out infinite;
+
+  @keyframes indeterminate {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(300%);
+    }
+  }
+}
+
+/* shadcn/ui semantic tokens, mapped onto the City palette above. */
+@theme inline {
+  --color-background: var(--color-city-gray);
+  --color-foreground: var(--color-charcoal);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-charcoal);
+  --color-popover: #ffffff;
+  --color-popover-foreground: var(--color-charcoal);
+  --color-primary: var(--color-denim);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-city-light);
+  --color-secondary-foreground: var(--color-city-dark);
+  --color-muted: var(--color-city-gray);
+  /* Not a City token: silver-spur fails 4.5:1 on white, this slate passes. */
+  --color-muted-foreground: #56636c;
+  --color-accent: #e8f2f9;
+  --color-accent-foreground: var(--color-deep-blue);
+  --color-destructive: var(--color-fire-red);
+  --color-border: var(--color-city-light);
+  /* Form controls need 3:1 against white, which city-light does not reach. */
+  --color-input: var(--color-silver-spur);
+  --color-ring: var(--color-denim);
+}
+
+@layer base {
+  /* shadcn components expect a themed default border; scoping it to their
+     data-slot keeps Tailwind's currentColor default on existing pages. */
+  [data-slot] {
+    border-color: var(--color-border);
+  }
 }
 
 body {

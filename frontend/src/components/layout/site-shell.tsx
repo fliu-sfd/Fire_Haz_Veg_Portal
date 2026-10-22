@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { AuthenticatedShell } from "@/components/layout/authenticated-shell";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SWRProvider } from "@/components/providers/swr-provider";
 
 type SiteShellProps = {
   children: ReactNode;
@@ -15,7 +16,11 @@ export function SiteShell({ children }: SiteShellProps) {
     pathname.startsWith("/homeowner") || pathname.startsWith("/dashboard");
 
   if (isAuthenticatedPage) {
-    return <AuthenticatedShell>{children}</AuthenticatedShell>;
+    return (
+      <SWRProvider>
+        <AuthenticatedShell>{children}</AuthenticatedShell>
+      </SWRProvider>
+    );
   }
 
   return (

@@ -21,19 +21,29 @@ Open http://localhost:3000. The UI runs without a backend; the connection check 
 src/
   app/                          Next.js routes and layouts
     page.tsx                    Overview and connection example
-    homeowner/page.tsx          Homeowner workflow starter
-    dashboard/page.tsx          Staff workflow starter
+    homeowner/page.tsx          Homeowner portal
+    dashboard/page.tsx          Staff portal
+    dashboard/users/            Admin users list (page.tsx + client wiring)
     loading.tsx                 Shared loading state
     error.tsx                   Shared error boundary
     not-found.tsx               404 page
   components/
-    layout/site-header.tsx      Responsive shared navigation
-    ui/                         Reusable Button and Card
+    layout/                     Public header, signed-in shell, sidebar
+      nav-config.ts             Grouped, role-based sidebar navigation
+    providers/swr-provider.tsx  SWR defaults for the signed-in area
+    ui/                         Custom Button/Card/fields plus shadcn/ui primitives
   features/
-    system/api.ts               Typed health endpoint service
-    system/components/          Interactive connection example
-  lib/api/client.ts             Shared fetch client and ApiError
-tests/api-client.test.mjs       API client tests
+    admin/                      Admin pages
+      api.ts, types.ts          listUsers and response parsing
+      utils/                    Pure helpers: URL params, columns, formatting, errors
+      hooks/                    useUsers, useUsersQueryState, useColumnVisibility, useUsersPage
+      components/               Users table, toolbar, column menu, states
+    auth/                       Sign-in, sign-up, account hooks and access helpers
+    system/                     Health check example
+  hooks/                        Generic hooks (useDebouncedValue, useLocalStorage)
+  lib/api/                      Shared fetch client, ApiError, retry policy
+  lib/utils.ts                  cn() class name helper
+tests/                          node --test suites (tests/setup resolves the @/ alias)
 ```
 
 ## Team conventions
@@ -44,6 +54,32 @@ tests/api-client.test.mjs       API client tests
 - Call the backend through `apiRequest` rather than copying fetch setup into pages. Agree endpoint paths, request bodies, and response shapes with the backend team before adding real services.
 - TypeScript generics do not validate API responses at runtime. Validate external data in feature services, as the health example does.
 - Keep `.env.local` out of source control. `NEXT_PUBLIC_` values are visible in the browser and bundled at build time; they must not contain secrets. Restart development or rebuild after changing the API URL.
+
+## Frontend data-fetching conventions
+
+New features should follow the same layers as `features/admin`:
+
+- **API functions** (`features/<feature>/api.ts`) call `apiRequest`, build query strings, validate responses at runtime and convert snake_case to camelCase. They do not import React or SWR.
+- **Pure helpers** (`features/<feature>/utils/`) hold parsing, defaults and formatting. They have no React, DOM or network code, so `node --test` can cover them.
+- **Data hooks** (`features/<feature>/hooks/use-*.ts`) wrap `useSWR` with a stable key built from normalized params and map errors to friendly messages. A page-level hook composes them into one view model.
+- **Components** are presentational: they take data and callbacks as props and never call `apiRequest`, `useSWR`, `useRouter` or `useSearchParams`, check roles, or parse data.
+- **Route files** stay thin and wire the page hook to components.
+
+SWR configuration:
+
+- **Global** (`components/providers/swr-provider.tsx`, mounted around the signed-in shell only): a cache scoped to the shell, `revalidateOnFocus: false`, a 5 s `dedupingInterval`, and an `onErrorRetry` that retries only network and 5xx errors (up to 3 times, with backoff). 401, 403 and 422 never retry.
+- **Per hook**: the fetcher, and options such as `keepPreviousData: true` on the users list so rows stay visible while the next page loads.
+- **Sign out** clears every cached response, and leaving the signed-in area unmounts the cache, so the next person on the browser never sees the previous user's data. The cache is never persisted.
+- In development, React StrictMode mounts the provider twice, so the first `/auth/me` on a page can be requested twice. Production builds make one request.
+
+## shadcn/ui
+
+`components.json` configures shadcn/ui (new-york style, Tailwind v4, lucide icons). Added so far: `table`, `input`, `select`, `badge`, `skeleton`, `dropdown-menu`, `sheet`, `tooltip` and `separator`.
+
+- `button.tsx` and `card.tsx` in `components/ui/` are the portal's own components and are not shadcn. Do not run `shadcn add button` or `shadcn add card` without `--path`, or the CLI will offer to overwrite them.
+- shadcn's semantic tokens (`primary`, `muted`, `border`, ...) map onto the City palette in `globals.css`. Their default border color applies only to `[data-slot]` elements, so existing pages keep Tailwind's defaults.
+- `dark:` is class-based and the portal sets no `.dark` class, so shadcn's dark styles stay off even when the OS is in dark mode.
+- shadcn CLI 4.22 adds an unrelated `cn` npm package and imports `cn` from it. After adding a component, remove that package and import `cn` from `@/lib/utils`.
 
 ## FastAPI connection
 
@@ -106,7 +142,7 @@ npm start
 
 Development and builds use Webpack with Tailwind’s PostCSS integration.
 
-The API tests cover JSON requests, multipart uploads, validation errors, non-JSON errors, request signals, and invalid paths. `npm start` serves a completed production build.
+The tests cover the API client, the admin users API and its response parsing, the retry policy, URL params, column visibility, formatting, and role-based navigation. `tests/setup/resolve-aliases.mjs` lets `node --test` load sources that import through `@/`. `npm start` serves a completed production build.
 
 ## Starter scope
 

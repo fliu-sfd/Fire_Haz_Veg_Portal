@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  authErrorMessage,
-  getCurrentAccount,
-  signOut,
-  type Account,
-} from "@/features/auth/api";
+import { Menu, X } from "lucide-react";
+import { useSWRConfig } from "swr";
+import { AccountAvatar, SidebarAccount, SidebarBrand, SidebarNav } from "@/components/layout/sidebar-nav";
+import { useNavItems } from "@/components/layout/use-nav-items";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { authErrorMessage, signOut } from "@/features/auth/api";
+import { useCurrentAccount } from "@/features/auth/hooks/use-current-account";
+import { areaRedirect, homePathFor } from "@/features/auth/utils/access";
 
 type AuthenticatedShellProps = {
   children: ReactNode;
@@ -17,136 +19,103 @@ type AuthenticatedShellProps = {
 export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [account, setAccount] = useState<Account>();
-  const [error, setError] = useState<string>();
+  const { mutate } = useSWRConfig();
+  const { account, errorMessage } = useCurrentAccount();
+  const navGroups = useNavItems(account);
+  const [signOutError, setSignOutError] = useState<string>();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const redirectTo = account ? areaRedirect(account.role, pathname) : null;
+  const error = signOutError ?? errorMessage;
 
   useEffect(() => {
-    let active = true;
+    if (errorMessage) router.replace("/sign-in");
+  }, [errorMessage, router]);
 
-    getCurrentAccount()
-      .then((current) => {
-        if (!active) return;
-        if (current.role === "resident" && pathname.startsWith("/dashboard")) {
-          router.replace("/homeowner");
-          return;
-        }
-        if (current.role !== "resident" && pathname.startsWith("/homeowner")) {
-          router.replace("/dashboard");
-          return;
-        }
-        setAccount(current);
-      })
-      .catch((reason: unknown) => {
-        if (!active) return;
-        setError(authErrorMessage(reason));
-        router.replace("/sign-in");
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [pathname, router]);
+  useEffect(() => {
+    if (redirectTo) router.replace(redirectTo);
+  }, [redirectTo, router]);
 
   async function handleSignOut() {
     setIsSigningOut(true);
+    setSignOutError(undefined);
     try {
       await signOut();
+      // Drop every cached response so the next person on this browser never sees this user's data.
+      await mutate(() => true, undefined, { revalidate: false });
       router.replace("/sign-in");
     } catch (reason) {
-      setError(authErrorMessage(reason));
+      setSignOutError(authErrorMessage(reason));
       setIsSigningOut(false);
     }
   }
 
-  if (!account) {
+  if (!account || redirectTo) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-city-gray px-6">
         <p role="status" className="text-city-dark">
-          {error ?? "Loading your account…"}
+          {isSigningOut ? "Signing out…" : error ?? "Loading your account…"}
         </p>
       </main>
     );
   }
 
-  const homeHref = account.role === "resident" ? "/homeowner" : "/dashboard";
-  const initials = account.fullName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const homeHref = homePathFor(account.role);
+  const closeDrawer = () => setIsDrawerOpen(false);
+  const accountPanel = (
+    <SidebarAccount account={account} isSigningOut={isSigningOut} error={error} onSignOut={handleSignOut} />
+  );
 
   return (
     <div className="min-h-screen bg-city-gray md:flex">
-      <aside className="flex border-b border-city-light bg-deep-blue text-white md:fixed md:inset-y-0 md:w-64 md:flex-col md:border-b-0 md:border-r md:border-white/10">
-        <div className="flex min-w-0 flex-1 items-center gap-5 px-4 py-3 md:flex-col md:items-stretch md:px-5 md:py-6">
-          <Link href={homeHref} className="flex min-w-0 items-center gap-3">
-            <span aria-hidden="true" className="h-9 w-1 shrink-0 bg-city-orange" />
-            <span className="min-w-0">
-              <span className="block truncate text-[0.65rem] font-bold uppercase tracking-[0.16em] text-blue-200">
-                Fire Prevention
-              </span>
-              <span className="block truncate text-sm font-semibold md:text-base">
-                Vegetation Assessment
-              </span>
-            </span>
-          </Link>
-
-          <nav aria-label="Portal navigation" className="ml-auto md:ml-0 md:mt-10">
-            <Link
-              href={homeHref}
-              aria-current={pathname === homeHref ? "page" : undefined}
-              className={`flex items-center gap-3 rounded px-3 py-2.5 text-sm font-semibold transition-colors ${
-                pathname === homeHref
-                  ? "bg-white text-deep-blue"
-                  : "text-blue-50 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="m3 11 9-8 9 8M5 10v11h14V10M9 21v-7h6v7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Home
-            </Link>
-          </nav>
-        </div>
-
-        <div className="hidden border-t border-white/15 p-4 md:block">
-          <div className="flex items-center gap-3">
-            <div aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-denim text-sm font-bold text-white ring-2 ring-white/25">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{account.fullName}</p>
-              <p className="truncate text-xs text-blue-200">{account.email}</p>
-            </div>
+      <aside className="hidden bg-deep-blue text-white md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col md:border-r md:border-white/10">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-6">
+          <SidebarBrand href={homeHref} />
+          <div className="mt-10">
+            <SidebarNav groups={navGroups} pathname={pathname} />
           </div>
-          <button
-            type="button"
-            disabled={isSigningOut}
-            onClick={handleSignOut}
-            className="mt-4 w-full rounded border border-white/25 px-3 py-2 text-left text-sm font-semibold text-blue-50 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSigningOut ? "Signing out…" : "Sign out"}
-          </button>
-          {error ? <p className="mt-2 text-xs text-red-200">{error}</p> : null}
         </div>
+        {accountPanel}
       </aside>
 
       <div className="min-w-0 flex-1 md:ml-64">
-        <div className="flex items-center justify-between border-b border-city-light bg-white px-4 py-3 md:hidden">
-          <div className="flex min-w-0 items-center gap-2">
-            <div aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-denim text-xs font-bold text-white">
-              {initials}
-            </div>
-            <span className="truncate text-sm font-semibold text-charcoal">{account.fullName}</span>
+        <div className="flex items-center gap-3 bg-deep-blue px-4 py-3 text-white md:hidden">
+          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+            <SheetTrigger
+              aria-label="Open navigation"
+              className="-ml-1 flex size-10 shrink-0 items-center justify-center rounded text-blue-50 transition-colors hover:bg-white/10"
+            >
+              <Menu aria-hidden="true" className="size-6" />
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              showCloseButton={false}
+              aria-describedby={undefined}
+              className="w-72 max-w-[85vw] gap-0 border-white/10 bg-deep-blue text-white"
+            >
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
+              <div className="flex items-start gap-3 px-5 pt-5">
+                <div className="min-w-0 flex-1">
+                  <SidebarBrand href={homeHref} onNavigate={closeDrawer} />
+                </div>
+                <SheetClose className="flex size-9 shrink-0 items-center justify-center rounded text-blue-50 transition-colors hover:bg-white/10">
+                  <X aria-hidden="true" className="size-5" />
+                  <span className="sr-only">Close navigation</span>
+                </SheetClose>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-5 py-8">
+                <SidebarNav groups={navGroups} pathname={pathname} onNavigate={closeDrawer} />
+              </div>
+              {accountPanel}
+            </SheetContent>
+          </Sheet>
+          <div className="min-w-0 flex-1">
+            <SidebarBrand href={homeHref} />
           </div>
-          <button type="button" disabled={isSigningOut} onClick={handleSignOut} className="rounded px-3 py-2 text-sm font-semibold text-civic-blue hover:bg-city-gray">
-            {isSigningOut ? "Signing out…" : "Sign out"}
-          </button>
+          <AccountAvatar fullName={account.fullName} className="size-9 text-xs ring-0" />
         </div>
         <main id="main-content" className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-10">
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
         </main>
       </div>
     </div>
