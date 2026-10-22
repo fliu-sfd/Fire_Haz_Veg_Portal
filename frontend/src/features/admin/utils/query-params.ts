@@ -81,3 +81,16 @@ export function usersQueryToApiParams(query: UsersQuery): URLSearchParams {
   if (offset > 0) params.set("offset", String(offset));
   return params;
 }
+
+export function nextSort(
+  current: Pick<UsersQuery, "sort" | "order">,
+  field: UserSortField,
+): Pick<UsersQuery, "sort" | "order"> {
+  if (current.sort === field) return { sort: field, order: current.order === "asc" ? "desc" : "asc" };
+  // Dates read best newest first; text columns start A to Z.
+  return { sort: field, order: field === "created_at" ? "desc" : "asc" };
+}
+
+export function hasActiveFilters(query: UsersQuery): boolean {
+  return query.q !== "" || query.role !== null;
+}
