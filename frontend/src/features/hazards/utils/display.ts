@@ -70,3 +70,9 @@ export function filterChips(query: HazardsQuery): FilterChip[] {
   }
   return chips;
 }
+
+/** A filter button names what it is narrowing to, so the active filters read at a glance. */
+export function selectionLabel(name: string, selected: readonly string[], isAll: boolean): string {
+  if (isAll || selected.length === 0) return name;
+  return selected.length === 1 ? `${name}: ${selected[0]}` : `${name}: ${selected.length} selected`;
+}

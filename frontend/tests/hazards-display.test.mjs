@@ -6,6 +6,7 @@ import {
   formatInspectedDate,
   markerName,
   resultSummary,
+  selectionLabel,
   STATE_STYLES,
   stateLabel,
 } from "@/features/hazards/utils/display";
@@ -66,4 +67,11 @@ test("maps hazard errors to friendly messages", () => {
   assert.match(hazardErrorMessage(new ApiError(422, { detail: [] })), /filters were not accepted/);
   assert.match(hazardErrorMessage(new ApiError(500, "Traceback")), /could not load hazards/);
   assert.doesNotMatch(hazardErrorMessage(new ResponseFormatError("raw")), /raw/);
+});
+
+test("filter buttons name their selection", () => {
+  assert.equal(selectionLabel("Status", ["Open", "Closed", "Pending review"], true), "Status");
+  assert.equal(selectionLabel("Status", ["Open"], false), "Status: Open");
+  assert.equal(selectionLabel("Station/Shift", ["611A", "611B"], false), "Station/Shift: 2 selected");
+  assert.equal(selectionLabel("Station/Shift", [], false), "Station/Shift");
 });
