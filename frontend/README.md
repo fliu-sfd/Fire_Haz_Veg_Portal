@@ -24,6 +24,7 @@ src/
     homeowner/page.tsx          Homeowner portal
     dashboard/page.tsx          Staff portal
     dashboard/users/            Admin users list (page.tsx + client wiring)
+    dashboard/hazards/          Admin hazard map (page.tsx + client wiring)
     loading.tsx                 Shared loading state
     error.tsx                   Shared error boundary
     not-found.tsx               404 page
@@ -38,10 +39,15 @@ src/
       utils/                    Pure helpers: URL params, columns, formatting, errors
       hooks/                    useUsers, useUsersQueryState, useColumnVisibility, useUsersPage
       components/               Users table, toolbar, column menu, states
+    hazards/                    Admin hazard map
+      api.ts, types.ts          listHazards, getHazardFilters and response parsing
+      utils/                    URL params, labels and colors, map bounds, tile config, errors
+      hooks/                    useHazards, useHazardFilters, useHazardQueryState, useHazardsPage
+      components/               Leaflet map, markers, popup, filter bar, legend, states
     auth/                       Sign-in, sign-up, account hooks and access helpers
     system/                     Health check example
   hooks/                        Generic hooks (useDebouncedValue, useLocalStorage)
-  lib/api/                      Shared fetch client, ApiError, retry policy
+  lib/api/                      Shared fetch client, ApiError, retry policy, response guards
   lib/utils.ts                  cn() class name helper
 tests/                          node --test suites (tests/setup resolves the @/ alias)
 ```
@@ -71,6 +77,19 @@ SWR configuration:
 - **Per hook**: the fetcher, and options such as `keepPreviousData: true` on the users list so rows stay visible while the next page loads.
 - **Sign out** clears every cached response, and leaving the signed-in area unmounts the cache, so the next person on the browser never sees the previous user's data. The cache is never persisted.
 - In development, React StrictMode mounts the provider twice, so the first `/auth/me` on a page can be requested twice. Production builds make one request.
+
+## Hazard map
+
+`/dashboard/hazards` shows the latest season's hazards from `GET /admin/hazards`, one marker per asset. Notes for anyone changing it:
+
+- **Client-only map.** Leaflet needs `window`, so `hazard-map-loader.tsx` loads the map with `next/dynamic` and `ssr: false`. Next only allows that inside a Client Component. The loader shows a skeleton of the same size.
+- **Markers.** Markers are `L.divIcon`s styled in `hazard-map.module.css`, one shared icon per state. Leaflet's default marker images break under bundlers. Each state has its own color and glyph, so color is never the only cue.
+- **Popups.** Popup content is React (`HazardPopupContent`). Never build popup HTML from strings: comments are free text from the field.
+- **Filters.** Filters live in the URL (`state` and `crew` repeat, plus `property_type`) and the same params go to the API. Defaults are left out.
+  - The map refits only when results for new filters arrive (`fitKey`), never on a background revalidation.
+  - The property type control hides while only one type exists.
+- **Keyboard.** Leaflet opens a popup on Enter. The marker handler adds Space, and the map wrapper closes popups on Escape and returns focus to the marker. Zoom and "Fit to results" are React buttons placed before the map, so Tab reaches them ahead of the markers.
+- **Basemap.** Tiles come from `NEXT_PUBLIC_MAP_TILE_URL` and `NEXT_PUBLIC_MAP_ATTRIBUTION` (see `utils/map-config.ts`) and default to OpenStreetMap for development. Its usage policy discourages heavy production use, so pick a production provider before launch. Never put an API key in a `NEXT_PUBLIC_` variable.
 
 ## shadcn/ui
 
@@ -142,7 +161,7 @@ npm start
 
 Development and builds use Webpack with Tailwind’s PostCSS integration.
 
-The tests cover the API client, the admin users API and its response parsing, the retry policy, URL params, column visibility, formatting, and role-based navigation. `tests/setup/resolve-aliases.mjs` lets `node --test` load sources that import through `@/`. `npm start` serves a completed production build.
+The tests cover the API client, the admin users and hazards APIs and their response parsing, hazard map helpers, the retry policy, URL params, column visibility, formatting, and role-based navigation. `tests/setup/resolve-aliases.mjs` lets `node --test` load sources that import through `@/`. `npm start` serves a completed production build.
 
 ## Starter scope
 
