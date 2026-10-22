@@ -51,6 +51,8 @@ export type HazardFilterBarProps = {
   onPhotoFilterChange: (filter: PhotoFilter) => void;
   needsAttention: boolean;
   onToggleNeedsAttention: () => void;
+  /** The saved views control, shown in the row on wider screens and in the sheet on phones. */
+  viewsMenu: ReactNode;
   /** The result line, shown beside the chips so the row never sits empty. */
   summary: ReactNode;
 };
@@ -322,6 +324,10 @@ function MobileFilters(props: HazardFilterBarProps) {
             </div>
           </fieldset>
           <div>
+            <p className={menuLabelClass}>Saved views</p>
+            <div className="mt-2">{props.viewsMenu}</div>
+          </div>
+          <div>
             <p className={menuLabelClass}>Record quality</p>
             <CheckboxRow checked={props.needsAttention} onChange={props.onToggleNeedsAttention}>
               <span>
@@ -374,6 +380,7 @@ export function HazardFilterBar(props: HazardFilterBarProps) {
           <PhotoSelect {...props} />
           <AttentionToggle {...props} />
           <PropertyTypeControl {...props} />
+          {props.viewsMenu}
         </div>
       </div>
       {/* A fixed minimum height, so chips appearing never shift the map. */}

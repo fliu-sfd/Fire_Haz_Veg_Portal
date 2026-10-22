@@ -5,6 +5,7 @@ import { useHazardFilters } from "@/features/hazards/hooks/use-hazard-filters";
 import { useHazardList } from "@/features/hazards/hooks/use-hazard-list";
 import { useHazardQueryState } from "@/features/hazards/hooks/use-hazard-query-state";
 import { useHazardSelection } from "@/features/hazards/hooks/use-hazard-selection";
+import { useHazardViews } from "@/features/hazards/hooks/use-hazard-views";
 import { useHazards } from "@/features/hazards/hooks/use-hazards";
 import type { Hazard, HazardState, WorkspaceView } from "@/features/hazards/types";
 import { presetRange, matchingPreset, type DatePreset } from "@/features/hazards/utils/dates";
@@ -18,6 +19,7 @@ import {
 } from "@/features/hazards/utils/display";
 import { accessProblem } from "@/features/hazards/utils/errors";
 import { statesAfterTileClick, summaryTiles } from "@/features/hazards/utils/summary";
+import type { SavedView } from "@/features/hazards/utils/views";
 import {
   activeFilterCount,
   hazardsQueryToApiParams,
@@ -50,6 +52,7 @@ export function useHazardsPage() {
   const { toggleStatus, resetStatuses, toggleCrewCode, resetCrews, setPropertyType, resetFilters } = filtersState;
   const { setStatuses, setNeedsAttention, setSearch, setDateRange, setHasPhoto } = filtersState;
   const search = useUrlSearchInput(query.q, setSearch, normalizeSearch);
+  const savedViews = useHazardViews();
 
   function removeChip(chip: FilterChip) {
     if (chip.kind === "state") resetStatuses();
@@ -157,6 +160,13 @@ export function useHazardsPage() {
     selectFromList,
     workspaceView,
     setWorkspaceView,
+    views: savedViews.views,
+    viewsFull: savedViews.isFull,
+    canSaveView: savedViews.canSave,
+    // A view brings back filters and sort only, never a selected hazard.
+    applyView: (view: SavedView) => filtersState.applyView(view.query, view.sort),
+    saveView: (name: string) => savedViews.save(name, query, filtersState.sort),
+    deleteView: savedViews.remove,
   };
 }
 

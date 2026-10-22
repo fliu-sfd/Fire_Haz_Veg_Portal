@@ -5,6 +5,7 @@ import { HazardSummaryStrip } from "@/features/hazards/components/hazard-summary
 import { HazardLegend } from "@/features/hazards/components/hazard-legend";
 import { HazardList } from "@/features/hazards/components/hazard-list";
 import { HazardViewToggle } from "@/features/hazards/components/hazard-view-toggle";
+import { HazardViewsMenu } from "@/features/hazards/components/hazard-views-menu";
 import { HazardMapLoader } from "@/features/hazards/components/hazard-map-loader";
 import {
   HazardsAccessRequired,
@@ -78,6 +79,16 @@ export function HazardsView() {
           onPhotoFilterChange={page.setPhotoFilter}
           needsAttention={page.query.needsAttention}
           onToggleNeedsAttention={page.toggleNeedsAttention}
+          viewsMenu={
+            <HazardViewsMenu
+              views={page.views}
+              isFull={page.viewsFull}
+              canSave={page.canSaveView}
+              onApply={page.applyView}
+              onSave={page.saveView}
+              onDelete={page.deleteView}
+            />
+          }
           summary={
             <>
               <p aria-live="polite" aria-atomic="true">
