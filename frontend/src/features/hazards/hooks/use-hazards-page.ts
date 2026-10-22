@@ -1,11 +1,12 @@
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRequireRole } from "@/features/auth/hooks/use-require-role";
 import { useHazardFilters } from "@/features/hazards/hooks/use-hazard-filters";
+import { useHazardList } from "@/features/hazards/hooks/use-hazard-list";
 import { useHazardQueryState } from "@/features/hazards/hooks/use-hazard-query-state";
 import { useHazardSelection } from "@/features/hazards/hooks/use-hazard-selection";
 import { useHazards } from "@/features/hazards/hooks/use-hazards";
-import type { Hazard, HazardState } from "@/features/hazards/types";
+import type { Hazard, HazardState, WorkspaceView } from "@/features/hazards/types";
 import { filterChips, resultSummary, type FilterChip } from "@/features/hazards/utils/display";
 import { accessProblem } from "@/features/hazards/utils/errors";
 import { statesAfterTileClick, summaryTiles } from "@/features/hazards/utils/summary";
@@ -55,6 +56,20 @@ export function useHazardsPage() {
     isSettled: isSettled && Boolean(data),
     setAsset: filtersState.setAsset,
   });
+  const apiKey = hazardsQueryToApiParams(query).toString();
+  const list = useHazardList(items, filtersState.sort, selection.selectedAssetId, `${apiKey}|${filtersState.sort}`);
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("map");
+
+  const { select } = selection;
+  const selectFromList = useCallback(
+    (assetId: string) => {
+      // Below 1024 px the list hides the map, so a pick switches back to it and focuses the marker.
+      const isNarrow = window.matchMedia("(max-width: 1023.98px)").matches;
+      if (isNarrow) setWorkspaceView("map");
+      select(assetId, "list", { focusMarker: isNarrow });
+    },
+    [select],
+  );
 
   return {
     access,
@@ -88,13 +103,21 @@ export function useHazardsPage() {
     refresh: hazards.refresh,
     // Changes only when settled data for new filters arrives, so a background
     // revalidation never refits the map over the user's own pan and zoom.
-    fitKey: isSettled && data ? hazardsQueryToApiParams(query).toString() : null,
+    fitKey: isSettled && data ? apiKey : null,
     selectedAssetId: selection.selectedAssetId,
     selectRequest: selection.request,
     selectHazard: selection.select,
     onMapSelect: selection.onMapSelect,
     missingAssetId: selection.missingAssetId,
     dismissMissingAsset: selection.dismissNotice,
+    sort: filtersState.sort,
+    setSort: filtersState.setSort,
+    listRows: list.rows,
+    listRemaining: list.remaining,
+    showMoreRows: list.showMore,
+    selectFromList,
+    workspaceView,
+    setWorkspaceView,
   };
 }
 

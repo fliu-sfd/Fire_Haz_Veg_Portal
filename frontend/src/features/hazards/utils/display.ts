@@ -1,4 +1,4 @@
-import type { Hazard, HazardState, HazardsQuery, PropertyType } from "@/features/hazards/types";
+import type { AttentionReason, Hazard, HazardState, HazardsQuery, PropertyType } from "@/features/hazards/types";
 import { allStatesSelected } from "@/features/hazards/utils/query-params";
 
 export type StateGlyph = "alert" | "clock" | "check";
@@ -23,6 +23,16 @@ export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   naos: "NAOS",
   residential: "Residential",
 };
+
+export const ATTENTION_LABELS: Record<AttentionReason, string> = {
+  no_photo: "No photo",
+  no_comment: "No comment",
+};
+
+export function photoCountText(count: number): string {
+  if (count === 0) return "None recorded";
+  return count === 1 ? "1 photo" : `${count.toLocaleString("en-US")} photos`;
+}
 
 export function stateLabel(state: HazardState): string {
   return STATE_STYLES[state].label;

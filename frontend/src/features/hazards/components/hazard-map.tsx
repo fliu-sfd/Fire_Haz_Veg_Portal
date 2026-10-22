@@ -25,6 +25,8 @@ export type HazardMapProps = {
   selectRequest: SelectRequest | null;
   /** Called with the asset whose popup opened, or null when it closed. */
   onSelect: (assetId: string | null) => void;
+  /** False while hidden behind the list on narrow screens. */
+  isVisible: boolean;
 };
 
 const SELECTED_ZOOM = 15;
@@ -41,7 +43,14 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export default function HazardMap({ hazards, fitKey, selectedAssetId, selectRequest, onSelect }: HazardMapProps) {
+export default function HazardMap({
+  hazards,
+  fitKey,
+  selectedAssetId,
+  selectRequest,
+  onSelect,
+  isVisible,
+}: HazardMapProps) {
   const [map, setMap] = useState<LeafletMap | null>(null);
   const [reduceMotion] = useState(prefersReducedMotion);
   const lastFitKey = useRef<string | null>(null);
@@ -57,6 +66,11 @@ export default function HazardMap({ hazards, fitKey, selectedAssetId, selectRequ
     selected.current = selectedAssetId;
     reportSelection.current = onSelect;
   }, [selectedAssetId, onSelect]);
+
+  // A map sized while hidden has no size, so Leaflet must measure again once it shows.
+  useEffect(() => {
+    if (map && isVisible) map.invalidateSize();
+  }, [map, isVisible]);
 
   useEffect(() => {
     if (!map || fitKey === null || fitKey === lastFitKey.current) return;

@@ -64,3 +64,6 @@ export type HazardsPageState = {
   sort: HazardSort;
   asset: string | null;
 };
+
+/** Which half of the workspace shows below 1024 px, where the map and list do not fit side by side. */
+export type WorkspaceView = "map" | "list";
