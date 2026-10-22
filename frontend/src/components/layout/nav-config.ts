@@ -1,4 +1,4 @@
-import { House, Users, type LucideIcon } from "lucide-react";
+import { House, MapIcon, Users, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/components/layout/nav";
 import { homePathFor } from "@/features/auth/utils/access";
 
@@ -12,6 +12,9 @@ export const NAV_GROUPS: NavGroup<LucideIcon>[] = [
     id: "admin",
     label: "Admin",
     requiredRole: "admin",
-    items: [{ label: "Users", href: "/dashboard/users", icon: Users }],
+    items: [
+      { label: "Users", href: "/dashboard/users", icon: Users },
+      { label: "Hazard map", href: "/dashboard/hazards", icon: MapIcon },
+    ],
   },
 ];

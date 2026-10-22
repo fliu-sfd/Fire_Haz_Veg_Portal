@@ -2,16 +2,9 @@ import type { AdminUser, AdminUserList, UsersQuery } from "@/features/admin/type
 import { isUserRole, usersQueryToApiParams } from "@/features/admin/utils/query-params";
 import { apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
+import { isCount, isRecord } from "@/lib/api/guards";
 
 const INVALID_LIST = "The user service returned an invalid user list.";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isCount(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
 
 function parseAdminUser(data: unknown): AdminUser {
   if (
