@@ -23,6 +23,7 @@ ALLOWED_FIELDS = {
     "site_address",
     "photo_count",
     "age_days",
+    "attention_reasons",
     "latitude",
     "longitude",
 }

@@ -1,11 +1,25 @@
+from collections.abc import Callable
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import ColumnElement, Integer, Subquery, case, cast, func, literal, select
+from sqlalchemy import (
+    ColumnElement,
+    Date,
+    Integer,
+    Subquery,
+    case,
+    cast,
+    func,
+    literal,
+    not_,
+    or_,
+    select,
+)
 from sqlalchemy.orm import Session
 
 from app.models import Assessment, CrewPhoto
 from app.schemas.admin_hazards import (
+    AttentionReason,
     HazardFilterOptions,
     HazardList,
     HazardListParams,
@@ -13,6 +27,7 @@ from app.schemas.admin_hazards import (
     HazardState,
     PropertyType,
 )
+from app.services.text_search import LIKE_ESCAPE, like_pattern
 
 ISSUES_STATUS = "ISSUES"
 NAOS_SITE_TYPE = "Community"
@@ -24,6 +39,15 @@ HAZARD_LIMIT = 5000
 # Scottsdale has no daylight saving, and a date must mean the same day for every admin,
 # so day boundaries use the city's zone instead of the server's or the browser's.
 REPORTING_ZONE = ZoneInfo("America/Phoenix")
+
+
+# Each reason and the SQL test for it, in the order the API lists them. A new reason
+# needs one enum value and one entry here.
+ATTENTION_CHECKS: list[tuple[AttentionReason, Callable[[Subquery], ColumnElement[bool]]]] = [
+    # real photo rows, not photo_flag: the crew sets that flag by hand and it is unreliable
+    (AttentionReason.NO_PHOTO, lambda h: h.c.photo_count == 0),
+    (AttentionReason.NO_COMMENT, lambda h: h.c.comments.is_(None)),
+]
 
 
 def today_in_reporting_zone() -> date:
@@ -117,15 +141,38 @@ def _hazards(season: int) -> Subquery:
     )
 
 
-def _filters(hazards: Subquery, params: HazardListParams) -> list[ColumnElement[bool]]:
-    filters: list[ColumnElement[bool]] = []
+def needs_attention(hazards: Subquery) -> ColumnElement[bool]:
+    return or_(*(check(hazards) for _, check in ATTENTION_CHECKS))
+
+
+def _conditions(hazards: Subquery, params: HazardListParams) -> dict[str, ColumnElement[bool]]:
+    """Each active filter by parameter name, so the summary can leave one out."""
+    conditions: dict[str, ColumnElement[bool]] = {}
     if params.state:
-        filters.append(hazards.c.state.in_([s.value for s in params.state]))
+        conditions["state"] = hazards.c.state.in_([s.value for s in params.state])
     if params.crew:
-        filters.append(hazards.c.crew_code.in_(params.crew))
+        conditions["crew"] = hazards.c.crew_code.in_(params.crew)
     if params.property_type is not None:
-        filters.append(hazards.c.property_type == params.property_type.value)
-    return filters
+        conditions["property_type"] = hazards.c.property_type == params.property_type.value
+    if params.q:
+        pattern = like_pattern(params.q)
+        conditions["q"] = or_(
+            hazards.c.asset_id.ilike(pattern, escape=LIKE_ESCAPE),
+            hazards.c.site_address.ilike(pattern, escape=LIKE_ESCAPE),
+        )
+    # a hazard with no inspection time compares as NULL here, so any date bound excludes it
+    inspected_day = cast(func.timezone(REPORTING_ZONE.key, hazards.c.inspected_at), Date)
+    if params.inspected_from:
+        conditions["inspected_from"] = inspected_day >= params.inspected_from
+    if params.inspected_to:
+        conditions["inspected_to"] = inspected_day <= params.inspected_to
+    if params.has_photo is not None:
+        has_photo = hazards.c.photo_count > 0
+        conditions["has_photo"] = has_photo if params.has_photo else not_(has_photo)
+    if params.needs_attention is not None:
+        attention = needs_attention(hazards)
+        conditions["needs_attention"] = attention if params.needs_attention else not_(attention)
+    return conditions
 
 
 def list_hazards(db: Session, params: HazardListParams) -> HazardList:
@@ -134,17 +181,27 @@ def list_hazards(db: Session, params: HazardListParams) -> HazardList:
         return HazardList(season_year=None, total=0, items=[])
 
     hazards = _hazards(season)
-    filters = _filters(hazards, params)
+    filters = list(_conditions(hazards, params).values())
     total = db.scalar(select(func.count()).select_from(hazards).where(*filters)) or 0
+    reason_columns = [check(hazards).label(reason.value) for reason, check in ATTENTION_CHECKS]
     rows = db.execute(
-        select(hazards).where(*filters).order_by(hazards.c.asset_id).limit(HAZARD_LIMIT)
+        select(hazards, *reason_columns)
+        .where(*filters)
+        .order_by(hazards.c.asset_id)
+        .limit(HAZARD_LIMIT)
     ).mappings()
     today = today_in_reporting_zone()
     return HazardList(
         season_year=season,
         total=total,
         items=[
-            HazardOut.model_validate({**row, "age_days": age_in_days(row["inspected_at"], today)})
+            HazardOut.model_validate(
+                {
+                    **row,
+                    "age_days": age_in_days(row["inspected_at"], today),
+                    "attention_reasons": [r for r, _ in ATTENTION_CHECKS if row[r.value]],
+                }
+            )
             for row in rows
         ],
     )
