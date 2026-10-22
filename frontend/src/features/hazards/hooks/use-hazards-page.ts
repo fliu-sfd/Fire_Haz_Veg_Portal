@@ -5,9 +5,10 @@ import { useHazardFilters } from "@/features/hazards/hooks/use-hazard-filters";
 import { useHazardQueryState } from "@/features/hazards/hooks/use-hazard-query-state";
 import { useHazardSelection } from "@/features/hazards/hooks/use-hazard-selection";
 import { useHazards } from "@/features/hazards/hooks/use-hazards";
-import type { Hazard } from "@/features/hazards/types";
+import type { Hazard, HazardState } from "@/features/hazards/types";
 import { filterChips, resultSummary, type FilterChip } from "@/features/hazards/utils/display";
 import { accessProblem } from "@/features/hazards/utils/errors";
+import { statesAfterTileClick, summaryTiles } from "@/features/hazards/utils/summary";
 import {
   activeFilterCount,
   hazardsQueryToApiParams,
@@ -35,6 +36,7 @@ export function useHazardsPage() {
   }, [problem, router]);
 
   const { toggleStatus, resetStatuses, toggleCrewCode, resetCrews, setPropertyType, resetFilters } = filtersState;
+  const { setStatuses, setNeedsAttention } = filtersState;
 
   function removeChip(chip: FilterChip) {
     if (chip.kind === "state") resetStatuses();
@@ -72,6 +74,9 @@ export function useHazardsPage() {
     clearFilters: resetFilters,
     hazards: items,
     hasData: Boolean(data),
+    summaryTiles: data ? summaryTiles(data.summary, total, query) : null,
+    onStateTile: (state: HazardState) => setStatuses(statesAfterTileClick(query.states, state)),
+    toggleNeedsAttention: () => setNeedsAttention(!query.needsAttention),
     seasonYear: data?.seasonYear ?? null,
     summary: data ? resultSummary(items.length, total) : "",
     isCapped: items.length < total,

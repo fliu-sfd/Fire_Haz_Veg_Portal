@@ -1,6 +1,7 @@
 "use client";
 
 import { HazardFilterBar } from "@/features/hazards/components/hazard-filter-bar";
+import { HazardSummaryStrip } from "@/features/hazards/components/hazard-summary-strip";
 import { HazardLegend } from "@/features/hazards/components/hazard-legend";
 import { HazardMapLoader } from "@/features/hazards/components/hazard-map-loader";
 import {
@@ -40,6 +41,14 @@ export function HazardsView() {
         <h1 className="mt-2 text-3xl font-light tracking-tight text-charcoal sm:text-4xl">Hazard map</h1>
         <p className="mt-2 text-city-dark">See where vegetation hazards are open, and filter by status, station or property type.</p>
       </header>
+
+      {page.isForbidden ? null : (
+        <HazardSummaryStrip
+          tiles={page.summaryTiles}
+          onStateClick={page.onStateTile}
+          onAttentionClick={page.toggleNeedsAttention}
+        />
+      )}
 
       {page.isForbidden ? null : (
         <HazardFilterBar
