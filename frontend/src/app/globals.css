@@ -21,6 +21,17 @@
   --color-city-orange: #ff943b;
   --color-success-green: #849c3b;
   --color-success-dark: #65772d;
+
+  --animate-indeterminate: indeterminate 1.1s ease-in-out infinite;
+
+  @keyframes indeterminate {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(300%);
+    }
+  }
 }
 
 /* shadcn/ui semantic tokens, mapped onto the City palette above. */
