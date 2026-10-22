@@ -65,7 +65,7 @@ def signup(payload: SignupRequest, response: Response, db: DbSession) -> UserOut
             status.HTTP_404_NOT_FOUND,
             {
                 "code": "property_not_found",
-                "message": "We could not match that address and Asset ID.",
+                "message": "We could not find that Asset ID. Check the number on your door tag.",
                 "field": "asset_id",
             },
         ) from None

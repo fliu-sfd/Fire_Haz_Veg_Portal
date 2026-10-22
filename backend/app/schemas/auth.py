@@ -34,7 +34,7 @@ class SignupRequest(BaseModel):
 
     full_name: str
     email: EmailStr = Field(max_length=EMAIL_MAX_LENGTH)
-    property_address: str
+    property_address: str | None = None
     asset_id: str
     password: str
 
@@ -78,8 +78,12 @@ class SignupRequest(BaseModel):
 
     @field_validator("property_address")
     @classmethod
-    def clean_property_address(cls, v: str) -> str:
+    def clean_property_address(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         v = " ".join(v.split())
+        if not v:
+            return None
         if len(v) < 5:
             raise ValueError("Property address must be at least 5 characters")
         if len(v) > PROPERTY_ADDRESS_MAX_LENGTH:

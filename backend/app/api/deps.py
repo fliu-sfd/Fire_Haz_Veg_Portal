@@ -38,3 +38,13 @@ def require_admin(user: CurrentUser) -> User:
 
 
 AdminUser = Annotated[User, Depends(require_admin)]
+
+
+def require_resident(user: CurrentUser) -> User:
+    """Allow only homeowner accounts. Logged-out requests already got 401 from CurrentUser."""
+    if user.role != UserRole.RESIDENT:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Homeowner access required")
+    return user
+
+
+ResidentUser = Annotated[User, Depends(require_resident)]

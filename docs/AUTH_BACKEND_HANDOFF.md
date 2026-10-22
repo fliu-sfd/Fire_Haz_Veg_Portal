@@ -2,8 +2,12 @@
 
 > Historical planning document. The resident authentication flow is now implemented.
 > The current contract is defined by `backend/app/schemas/auth.py`: resident signup uses
-> `full_name`, `email`, `property_address`, `asset_id`, and `password`; the browser-only
-> password confirmation is not sent. Use the generated FastAPI OpenAPI schema as the
+> `full_name`, `email`, `asset_id`, `password` and an optional `property_address`; the
+> browser-only password confirmation is not sent. The Asset ID alone links the account to a
+> property (the sponsors confirmed on 14 October that the Property ID is the asset ID); the
+> address is kept as typed and is not checked, because almost no assessment has a site
+> address. `GET /api/v1/residents/me/properties` lists the signed-in homeowner's properties
+> with their latest inspection result. Use the generated FastAPI OpenAPI schema as the
 > authoritative API reference.
 
 ## Purpose

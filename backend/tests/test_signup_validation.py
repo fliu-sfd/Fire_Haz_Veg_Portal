@@ -124,9 +124,24 @@ def test_property_address_is_trimmed_and_spaces_collapsed() -> None:
     assert signup(property_address="  7575   E Main St  ").property_address == "7575 E Main St"
 
 
-@pytest.mark.parametrize("address", ["", "   ", "123"])
+@pytest.mark.parametrize("address", ["123", "ab c"])
 def test_property_address_rejects_short_values(address: str) -> None:
     error_for("property_address", property_address=address)
+
+
+@pytest.mark.parametrize("address", [None, "", "   "])
+def test_property_address_is_optional(address) -> None:
+    assert signup(property_address=address).property_address is None
+
+
+def test_property_address_can_be_left_out_entirely() -> None:
+    data = {
+        "full_name": "Jane Doe",
+        "email": "jane@example.com",
+        "asset_id": "A-1001",
+        "password": GOOD_PASSWORD,
+    }
+    assert SignupRequest(**data).property_address is None
 
 
 def test_asset_id_is_trimmed_and_uppercased() -> None:

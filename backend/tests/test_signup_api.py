@@ -24,7 +24,7 @@ def payload(**overrides) -> dict:
     return body
 
 
-def add_assessment(db, asset_id="A-1001", address="7575 E Main St, Scottsdale, AZ 85251"):
+def add_assessment(db, asset_id="A-1001", address=None):
     db.add(
         Assessment(
             season_year=2026,
@@ -76,7 +76,7 @@ def test_duplicate_email_any_case_returns_409(client, db) -> None:
     ("overrides", "field"),
     [
         ({"password": "weakpass", "confirm_password": "weakpass"}, "password"),
-        ({"property_address": ""}, "property_address"),
+        ({"property_address": "abc"}, "property_address"),
         ({"asset_id": "invalid id"}, "asset_id"),
         ({"full_name": "J"}, "full_name"),
         ({"email": "not-an-email"}, "email"),
@@ -93,19 +93,43 @@ def test_invalid_signup_returns_422(client, db, overrides: dict, field: str) -> 
     assert db.scalar(select(User)) is None
 
 
-def test_signup_rejects_unmatched_address_and_asset(client, db) -> None:
+def test_signup_rejects_unknown_asset_id_and_creates_nothing(client, db) -> None:
     add_assessment(db)
-    resp = client.post(URL, json=payload(property_address="9999 E Other St"))
+    resp = client.post(URL, json=payload(asset_id="ZZ-9999"))
+    print("unknown id ->", resp.status_code, resp.json())
+
     assert resp.status_code == 404
     assert resp.json()["detail"] == {
         "code": "property_not_found",
-        "message": "We could not match that address and Asset ID.",
+        "message": "We could not find that Asset ID. Check the number on your door tag.",
         "field": "asset_id",
     }
     assert db.scalar(select(User)) is None
+    assert db.scalar(select(ResidentAsset)) is None
 
 
-def test_signup_tolerates_address_formatting_differences(client, db) -> None:
-    add_assessment(db, address="7575 E. Main St., Scottsdale AZ 85251")
-    resp = client.post(URL, json=payload(property_address="7575 e main st scottsdale, az 85251"))
+def test_signup_does_not_check_the_address(client, db) -> None:
+    # most assessments have no site address, so the Asset ID alone links the account
+    add_assessment(db, address="1 Somewhere Else Rd")
+    resp = client.post(URL, json=payload(property_address="9999 E Other St"))
     assert resp.status_code == 201
+    assert resp.json()["property_ids"] == ["A-1001"]
+
+
+def test_signup_works_without_an_address(client, db) -> None:
+    add_assessment(db)
+    body = payload()
+    del body["property_address"]
+    resp = client.post(URL, json=body)
+    assert resp.status_code == 201
+
+    user = db.scalar(select(User).where(User.email == "jane.doe@example.com"))
+    assert user.resident_profile is None
+    assert [link.asset_id for link in user.resident_assets] == ["A-1001"]
+
+
+def test_asset_link_uses_the_id_as_stored_in_the_data(client, db) -> None:
+    add_assessment(db, asset_id="a-77x")
+    resp = client.post(URL, json=payload(asset_id="  A-77X "))
+    assert resp.status_code == 201
+    assert resp.json()["property_ids"] == ["a-77x"]
