@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { useRequireRole } from "@/features/auth/hooks/use-require-role";
 import { useHazardFilters } from "@/features/hazards/hooks/use-hazard-filters";
 import { useHazardQueryState } from "@/features/hazards/hooks/use-hazard-query-state";
+import { useHazardSelection } from "@/features/hazards/hooks/use-hazard-selection";
 import { useHazards } from "@/features/hazards/hooks/use-hazards";
 import type { Hazard } from "@/features/hazards/types";
 import { filterChips, resultSummary, type FilterChip } from "@/features/hazards/utils/display";
@@ -46,6 +47,12 @@ export function useHazardsPage() {
   const total = data?.total ?? 0;
   const activeCount = activeFilterCount(query);
   const isSettled = !hazards.isFirstLoad && !hazards.isShowingPrevious;
+  const selection = useHazardSelection({
+    asset: filtersState.asset,
+    hazards: items,
+    isSettled: isSettled && Boolean(data),
+    setAsset: filtersState.setAsset,
+  });
 
   return {
     access,
@@ -77,6 +84,12 @@ export function useHazardsPage() {
     // Changes only when settled data for new filters arrives, so a background
     // revalidation never refits the map over the user's own pan and zoom.
     fitKey: isSettled && data ? hazardsQueryToApiParams(query).toString() : null,
+    selectedAssetId: selection.selectedAssetId,
+    selectRequest: selection.request,
+    selectHazard: selection.select,
+    onMapSelect: selection.onMapSelect,
+    missingAssetId: selection.missingAssetId,
+    dismissMissingAsset: selection.dismissNotice,
   };
 }
 

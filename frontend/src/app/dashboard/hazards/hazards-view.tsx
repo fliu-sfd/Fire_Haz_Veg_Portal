@@ -6,6 +6,7 @@ import { HazardMapLoader } from "@/features/hazards/components/hazard-map-loader
 import {
   HazardsAccessRequired,
   HazardsError,
+  MissingAssetNotice,
   NoHazardsRecorded,
   NoMatchingHazards,
   UpdatingPill,
@@ -74,7 +75,13 @@ export function HazardsView() {
         className="relative isolate h-[60dvh] min-h-[22rem] overflow-hidden rounded-lg border border-city-light bg-white shadow-[0_12px_32px_rgba(26,35,40,0.08)] md:h-[calc(100dvh-18rem)] md:min-h-[28rem]"
       >
         {page.hasData ? (
-          <HazardMapLoader hazards={page.hazards} fitKey={page.fitKey} />
+          <HazardMapLoader
+            hazards={page.hazards}
+            fitKey={page.fitKey}
+            selectedAssetId={page.selectedAssetId}
+            selectRequest={page.selectRequest}
+            onSelect={page.onMapSelect}
+          />
         ) : page.isForbidden || page.errorMessage ? null : (
           <MapSkeleton />
         )}
@@ -87,6 +94,15 @@ export function HazardsView() {
         {page.hasData ? (
           <div className="absolute top-3 left-3 z-[1000] w-44">
             <HazardLegend />
+          </div>
+        ) : null}
+        {page.missingAssetId && !centered ? (
+          <div className={`${overlayClass} inset-x-3 top-16 flex justify-center sm:top-3`}>
+            <MissingAssetNotice
+              assetId={page.missingAssetId}
+              onClearFilters={page.clearFilters}
+              onDismiss={page.dismissMissingAsset}
+            />
           </div>
         ) : null}
         {centered ? (
