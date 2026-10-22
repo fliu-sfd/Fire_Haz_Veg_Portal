@@ -64,6 +64,7 @@ export function useHazardsPage() {
     removeChip,
     clearFilters: resetFilters,
     hazards: items,
+    hasData: Boolean(data),
     seasonYear: data?.seasonYear ?? null,
     summary: data ? resultSummary(items.length, total) : "",
     isCapped: items.length < total,
