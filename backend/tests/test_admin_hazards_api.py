@@ -21,6 +21,8 @@ ALLOWED_FIELDS = {
     "inspected_at",
     "comments",
     "site_address",
+    "photo_count",
+    "age_days",
     "latitude",
     "longitude",
 }

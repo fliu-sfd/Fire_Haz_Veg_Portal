@@ -40,6 +40,9 @@ class HazardOut(BaseModel):
     inspected_at: datetime | None
     comments: str | None
     site_address: str | None
+    # a count only: photo ids, names and storage keys stay server side
+    photo_count: int = Field(ge=0)
+    age_days: int | None = Field(ge=0)
     latitude: float
     longitude: float
 

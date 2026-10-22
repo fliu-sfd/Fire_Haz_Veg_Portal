@@ -1,7 +1,10 @@
-from sqlalchemy import ColumnElement, Subquery, case, func, literal, select
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
+
+from sqlalchemy import ColumnElement, Integer, Subquery, case, cast, func, literal, select
 from sqlalchemy.orm import Session
 
-from app.models import Assessment
+from app.models import Assessment, CrewPhoto
 from app.schemas.admin_hazards import (
     HazardFilterOptions,
     HazardList,
@@ -17,6 +20,21 @@ NAOS_SITE_TYPE = "Community"
 # the map needs every marker at once, so there is no paging; the cap only guards the
 # browser if the data ever grows far past a season's few hundred hazards
 HAZARD_LIMIT = 5000
+
+# Scottsdale has no daylight saving, and a date must mean the same day for every admin,
+# so day boundaries use the city's zone instead of the server's or the browser's.
+REPORTING_ZONE = ZoneInfo("America/Phoenix")
+
+
+def today_in_reporting_zone() -> date:
+    return datetime.now(REPORTING_ZONE).date()
+
+
+def age_in_days(inspected_at: datetime | None, today: date) -> int | None:
+    if inspected_at is None:
+        return None
+    # a clock that runs ahead in the field must not give a negative age
+    return max(0, (today - inspected_at.astimezone(REPORTING_ZONE).date()).days)
 
 
 def derive_state() -> ColumnElement[str]:
@@ -42,6 +60,13 @@ def _hazards(season: int) -> Subquery:
     Grouping stays inside one season because asset IDs are reissued every year.
     """
     newest_first = (Assessment.inspected_at.desc().nulls_last(), Assessment.source_global_id.desc())
+    # photos are counted per row before the join, so they never multiply the rows
+    # that feed the centroid and the latest-row details
+    photos = (
+        select(CrewPhoto.assessment_id, func.count().label("photo_count"))
+        .group_by(CrewPhoto.assessment_id)
+        .subquery()
+    )
     issue_rows = (
         select(
             Assessment.asset_id,
@@ -49,6 +74,7 @@ def _hazards(season: int) -> Subquery:
             Assessment.inspected_at,
             Assessment.comments,
             Assessment.location,
+            func.coalesce(photos.c.photo_count, 0).label("photo_count"),
             property_type_of(Assessment.site_type).label("property_type"),
             func.row_number()
             .over(partition_by=Assessment.asset_id, order_by=newest_first)
@@ -60,6 +86,7 @@ def _hazards(season: int) -> Subquery:
             )
             .label("latest_address"),
         )
+        .outerjoin(photos, photos.c.assessment_id == Assessment.id)
         .where(
             Assessment.season_year == season,
             Assessment.status == ISSUES_STATUS,
@@ -81,6 +108,7 @@ def _hazards(season: int) -> Subquery:
             latest(issue_rows.c.inspected_at).label("inspected_at"),
             latest(issue_rows.c.comments).label("comments"),
             func.max(issue_rows.c.latest_address).label("site_address"),
+            cast(func.sum(issue_rows.c.photo_count), Integer).label("photo_count"),
             func.ST_Y(centroid).label("latitude"),
             func.ST_X(centroid).label("longitude"),
         )
@@ -111,10 +139,14 @@ def list_hazards(db: Session, params: HazardListParams) -> HazardList:
     rows = db.execute(
         select(hazards).where(*filters).order_by(hazards.c.asset_id).limit(HAZARD_LIMIT)
     ).mappings()
+    today = today_in_reporting_zone()
     return HazardList(
         season_year=season,
         total=total,
-        items=[HazardOut.model_validate(dict(row)) for row in rows],
+        items=[
+            HazardOut.model_validate({**row, "age_days": age_in_days(row["inspected_at"], today)})
+            for row in rows
+        ],
     )
 
 
