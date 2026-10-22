@@ -1,6 +1,6 @@
 import type { Hazard, HazardFilterOptions, HazardList, HazardSummary, HazardsQuery } from "@/features/hazards/types";
 import {
-  hazardsQueryToParams,
+  hazardsQueryToApiParams,
   isAttentionReason,
   isHazardState,
   isPropertyType,
@@ -101,7 +101,7 @@ export function parseHazardFilterOptions(data: unknown): HazardFilterOptions {
 }
 
 export function hazardsPath(query: HazardsQuery): string {
-  const search = hazardsQueryToParams(query).toString();
+  const search = hazardsQueryToApiParams(query).toString();
   return search ? `/admin/hazards?${search}` : "/admin/hazards";
 }
 

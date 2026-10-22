@@ -52,7 +52,7 @@ test("summarizes the result count and the cap", () => {
 
 test("builds one chip per active filter", () => {
   assert.deepEqual(filterChips(DEFAULT_HAZARDS_QUERY), []);
-  const chips = filterChips({ states: ["open", "closed"], crews: ["611A", "613B"], propertyType: "naos" });
+  const chips = filterChips({ ...DEFAULT_HAZARDS_QUERY, states: ["open", "closed"], crews: ["611A", "613B"], propertyType: "naos" });
   assert.deepEqual(
     chips.map((chip) => chip.label),
     ["Status: Open, Closed", "Station/Shift: 611A", "Station/Shift: 613B", "Property type: NAOS"],

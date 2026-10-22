@@ -9,7 +9,7 @@ import { filterChips, resultSummary, type FilterChip } from "@/features/hazards/
 import { accessProblem } from "@/features/hazards/utils/errors";
 import {
   activeFilterCount,
-  hazardsQueryToParams,
+  hazardsQueryToApiParams,
   withKnownCrews,
 } from "@/features/hazards/utils/query-params";
 
@@ -76,7 +76,7 @@ export function useHazardsPage() {
     refresh: hazards.refresh,
     // Changes only when settled data for new filters arrives, so a background
     // revalidation never refits the map over the user's own pan and zoom.
-    fitKey: isSettled && data ? hazardsQueryToParams(query).toString() : null,
+    fitKey: isSettled && data ? hazardsQueryToApiParams(query).toString() : null,
   };
 }
 

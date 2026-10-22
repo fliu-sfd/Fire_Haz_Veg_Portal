@@ -42,7 +42,7 @@ test("listHazards sends no query string for the default view", async (t) => {
 
 test("listHazards repeats state and crew params and sends the property type", async (t) => {
   const urls = mockFetch(t);
-  await listHazards({ states: ["open", "closed"], crews: ["611A", "613B"], propertyType: "naos" });
+  await listHazards({ ...DEFAULT_HAZARDS_QUERY, states: ["open", "closed"], crews: ["611A", "613B"], propertyType: "naos" });
   assert.deepEqual(urls[0].searchParams.getAll("state"), ["open", "closed"]);
   assert.deepEqual(urls[0].searchParams.getAll("crew"), ["611A", "613B"]);
   assert.equal(urls[0].searchParams.get("property_type"), "naos");

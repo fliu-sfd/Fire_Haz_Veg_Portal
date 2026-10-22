@@ -47,4 +47,20 @@ export type HazardsQuery = {
   /** Empty means every crew. */
   crews: string[];
   propertyType: PropertyType | null;
+  /** Trimmed with spaces collapsed; empty means no search. */
+  q: string;
+  /** YYYY-MM-DD in Phoenix time, inclusive. */
+  inspectedFrom: string | null;
+  inspectedTo: string | null;
+  hasPhoto: boolean | null;
+  needsAttention: boolean;
+};
+
+export type HazardSort = "oldest" | "newest" | "asset" | "crew";
+
+/** Everything the page URL holds: server filters plus display-only sort and selection. */
+export type HazardsPageState = {
+  query: HazardsQuery;
+  sort: HazardSort;
+  asset: string | null;
 };
