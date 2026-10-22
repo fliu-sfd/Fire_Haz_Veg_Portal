@@ -90,6 +90,13 @@ const badItems = {
   "latitude as text": { latitude: "33.7" },
   "missing asset id": { asset_id: undefined },
   "missing crew": { crew_code: undefined },
+  "negative photo count": { photo_count: -1 },
+  "fractional photo count": { photo_count: 1.5 },
+  "missing photo count": { photo_count: undefined },
+  "negative age": { age_days: -2 },
+  "age as text": { age_days: "3" },
+  "unknown attention reason": { attention_reasons: ["no_gps"] },
+  "attention reasons not a list": { attention_reasons: "no_photo" },
   "bad date": { inspected_at: "yesterday" },
 };
 
@@ -99,6 +106,44 @@ for (const [name, change] of Object.entries(badItems)) {
     assert.throws(() => parseHazardList({ ...validList, items: [item] }), ResponseFormatError);
   });
 }
+
+test("parseHazardList accepts a null age and no attention reasons", () => {
+  const item = { ...validHazard, age_days: null, attention_reasons: [] };
+  const [hazard] = parseHazardList({ ...validList, items: [item] }).items;
+  assert.equal(hazard.ageDays, null);
+  assert.deepEqual(hazard.attentionReasons, []);
+});
+
+test("parseHazardList rejects a bad summary", () => {
+  const bad = [
+    undefined,
+    { ...validSummary, needs_attention: -1 },
+    { ...validSummary, by_state: { open: 1, pending_review: 0 } },
+    { ...validSummary, by_state: { open: "1", pending_review: 0, closed: 0 } },
+  ];
+  for (const summary of bad) {
+    assert.throws(() => parseHazardList({ ...validList, summary }), ResponseFormatError);
+  }
+});
+
+test("listHazards sends the new filters", async (t) => {
+  const urls = mockFetch(t);
+  await listHazards({
+    ...DEFAULT_HAZARDS_QUERY,
+    q: "ridge rd",
+    inspectedFrom: "2026-06-01",
+    inspectedTo: "2026-06-24",
+    hasPhoto: false,
+    needsAttention: true,
+  });
+  assert.deepEqual(Object.fromEntries(urls[0].searchParams), {
+    q: "ridge rd",
+    inspected_from: "2026-06-01",
+    inspected_to: "2026-06-24",
+    has_photo: "false",
+    needs_attention: "true",
+  });
+});
 
 test("parseHazardList rejects a bad envelope", () => {
   for (const body of [null, [], { ...validList, total: -1 }, { ...validList, season_year: "2026" }, { total: 0 }]) {
