@@ -7,7 +7,6 @@ import { FormAlert } from "@/components/ui/form-alert";
 import {
   authErrorMessage,
   getCurrentAccount,
-  signOut,
   type Account,
 } from "@/features/auth/api";
 
@@ -15,7 +14,6 @@ export function HomeownerAccount() {
   const router = useRouter();
   const [account, setAccount] = useState<Account>();
   const [error, setError] = useState<string>();
-  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -34,17 +32,6 @@ export function HomeownerAccount() {
     return () => { active = false; };
   }, [router]);
 
-  async function handleSignOut() {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-      router.replace("/sign-in");
-    } catch (reason) {
-      setError(authErrorMessage(reason));
-      setIsSigningOut(false);
-    }
-  }
-
   if (error) {
     return (
       <div className="mx-auto max-w-xl">
@@ -61,15 +48,12 @@ export function HomeownerAccount() {
   return (
     <section className="mx-auto max-w-4xl overflow-hidden rounded border border-city-light bg-white shadow-[0_12px_32px_rgba(26,35,40,0.1)]">
       <div className="border-l-4 border-denim p-7 sm:p-12">
-        <div className="flex flex-wrap items-start justify-between gap-5">
+        <div>
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">Homeowner portal</p>
             <h1 className="mt-3 text-4xl font-light tracking-tight text-charcoal">Welcome, {account.fullName}</h1>
             <p className="mt-3 text-city-dark">{account.email}</p>
           </div>
-          <Button variant="secondary" disabled={isSigningOut} onClick={handleSignOut}>
-            {isSigningOut ? "Signing out…" : "Sign out"}
-          </Button>
         </div>
 
         <div className="mt-10 border-t border-city-light pt-8">
