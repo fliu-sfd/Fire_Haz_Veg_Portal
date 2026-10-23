@@ -47,7 +47,7 @@ export function HomeownerSignUpForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormAlert variant="info" title="Homeowner account">
-        Your role is assigned automatically. Use the address and Asset ID from your assessment notice.
+        Use the Asset ID from your door tag.
       </FormAlert>
 
       <TextField
@@ -72,16 +72,17 @@ export function HomeownerSignUpForm() {
         id="property-address"
         name="property_address"
         label="Property address"
-        hint="Enter the address shown on your assessment notice."
+        optional
+        minLength={5}
+        maxLength={255}
         autoComplete="street-address"
-        required
       />
 
       <TextField
         id="asset-id"
         name="asset_id"
         label="Asset ID"
-        hint="Enter the ID exactly as it appears on your assessment notice."
+        hint="Enter the Asset ID from your door tag."
         autoComplete="off"
         spellCheck={false}
         required
@@ -122,7 +123,7 @@ export function HomeownerSignUpForm() {
       </Button>
 
       <p className="text-center text-xs leading-5 text-city-dark">
-        Your address and Asset ID must match an imported assessment before an account is created.
+        Your Asset ID must match an assessment in the City&apos;s data.
       </p>
     </form>
   );
