@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
+import { AlertTriangle, ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import {
   DropdownMenu,
@@ -11,15 +11,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toolbarButtonClass } from "@/features/admin/components/toolbar-button";
+import { DateFilterPanel, HazardDateFilter, type DateFilterProps } from "@/features/hazards/components/hazard-date-filter";
+import { HazardSearchInput } from "@/features/hazards/components/hazard-search-input";
 import { StateGlyph } from "@/features/hazards/components/state-glyph";
 import type { HazardState, PropertyType } from "@/features/hazards/types";
 import {
+  ATTENTION_HELP,
+  PHOTO_FILTER_LABELS,
   PROPERTY_TYPE_LABELS,
   selectionLabel,
   stateLabel,
   type FilterChip,
+  type PhotoFilter,
 } from "@/features/hazards/utils/display";
 import { HAZARD_STATES } from "@/features/hazards/utils/query-params";
 import { cn } from "@/lib/utils";
@@ -38,6 +45,14 @@ export type HazardFilterBarProps = {
   onPropertyTypeChange: (type: PropertyType | null) => void;
   onRemoveChip: (chip: FilterChip) => void;
   onClearFilters: () => void;
+  search: { value: string; maxLength: number; onChange: (value: string) => void; onClear: () => void };
+  dateFilter: DateFilterProps;
+  photoFilter: PhotoFilter;
+  onPhotoFilterChange: (filter: PhotoFilter) => void;
+  needsAttention: boolean;
+  onToggleNeedsAttention: () => void;
+  /** The saved views control, shown in the row on wider screens and in the sheet on phones. */
+  viewsMenu: ReactNode;
   /** The result line, shown beside the chips so the row never sits empty. */
   summary: ReactNode;
 };
@@ -157,6 +172,59 @@ function PropertyTypeControl({
   );
 }
 
+const PHOTO_FILTERS = Object.keys(PHOTO_FILTER_LABELS) as PhotoFilter[];
+
+function PhotoSelect({ photoFilter, onPhotoFilterChange }: Pick<HazardFilterBarProps, "photoFilter" | "onPhotoFilterChange">) {
+  const labelId = useId();
+  return (
+    <>
+      <span id={labelId} className="sr-only">
+        Photos
+      </span>
+      <Select value={photoFilter} onValueChange={(value) => onPhotoFilterChange(value as PhotoFilter)}>
+        <SelectTrigger
+          aria-labelledby={labelId}
+          className={cn("h-10! w-auto gap-2 bg-white font-semibold text-city-dark", photoFilter !== "any" && activeClass)}
+        >
+          <span>Photos:</span>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper" align="start">
+          {PHOTO_FILTERS.map((filter) => (
+            <SelectItem key={filter} value={filter}>
+              {PHOTO_FILTER_LABELS[filter]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
+  );
+}
+
+function AttentionToggle({
+  needsAttention,
+  onToggleNeedsAttention,
+  className,
+}: Pick<HazardFilterBarProps, "needsAttention" | "onToggleNeedsAttention"> & { className?: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-pressed={needsAttention}
+          onClick={onToggleNeedsAttention}
+          className={cn(toolbarButtonClass, needsAttention && activeClass, className)}
+        >
+          <AlertTriangle aria-hidden="true" className="size-4 text-fire-red" />
+          Needs attention
+          <span className="sr-only">: {ATTENTION_HELP}</span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{ATTENTION_HELP}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function CheckboxRow({ checked, disabled, onChange, children }: {
   checked: boolean;
   disabled?: boolean;
@@ -232,6 +300,42 @@ function MobileFilters(props: HazardFilterBarProps) {
               </div>
             </div>
           ) : null}
+          <div>
+            <p className={menuLabelClass}>Inspected</p>
+            <div className="mt-1">
+              <DateFilterPanel key={`${props.dateFilter.range.from}|${props.dateFilter.range.to}`} {...props.dateFilter} />
+            </div>
+          </div>
+          <fieldset>
+            <legend className={menuLabelClass}>Photos</legend>
+            <div className="mt-1">
+              {PHOTO_FILTERS.map((filter) => (
+                <label key={filter} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-2 text-sm hover:bg-accent">
+                  <input
+                    type="radio"
+                    name="hazard-photo-filter"
+                    checked={props.photoFilter === filter}
+                    onChange={() => props.onPhotoFilterChange(filter)}
+                    className="size-4 accent-denim"
+                  />
+                  {PHOTO_FILTER_LABELS[filter]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div>
+            <p className={menuLabelClass}>Saved views</p>
+            <div className="mt-2">{props.viewsMenu}</div>
+          </div>
+          <div>
+            <p className={menuLabelClass}>Record quality</p>
+            <CheckboxRow checked={props.needsAttention} onChange={props.onToggleNeedsAttention}>
+              <span>
+                <span className="block font-semibold">Needs attention</span>
+                <span className="block text-xs text-muted-foreground">{ATTENTION_HELP}</span>
+              </span>
+            </CheckboxRow>
+          </div>
         </div>
         <div className="flex gap-2 border-t border-city-light p-4">
           <button
@@ -256,16 +360,27 @@ function MobileFilters(props: HazardFilterBarProps) {
 }
 
 export function HazardFilterBar(props: HazardFilterBarProps) {
-  const { chips, activeCount, onRemoveChip, onClearFilters, summary } = props;
+  const { chips, activeCount, onRemoveChip, onClearFilters, summary, search } = props;
 
   return (
     <div className="space-y-2">
       <div role="group" aria-label="Filters" className="flex flex-wrap items-center gap-2">
+        <HazardSearchInput
+          value={search.value}
+          maxLength={search.maxLength}
+          onChange={search.onChange}
+          onClear={search.onClear}
+          className="flex-1 basis-40 sm:w-44 sm:flex-none xl:w-56"
+        />
         <MobileFilters {...props} />
-        <div className="hidden flex-wrap items-center gap-2 sm:flex">
+        <div className="hidden sm:contents">
           <StatusMenu {...props} />
           <CrewMenu {...props} />
+          <HazardDateFilter {...props.dateFilter} />
+          <PhotoSelect {...props} />
+          <AttentionToggle {...props} />
           <PropertyTypeControl {...props} />
+          {props.viewsMenu}
         </div>
       </div>
       {/* A fixed minimum height, so chips appearing never shift the map. */}

@@ -3,12 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import ResidentAsset, User
 from app.schemas.admin import AdminUserList, AdminUserOut, SortOrder, UserListParams, UserSortField
-
-
-def _like_pattern(text: str) -> str:
-    # treat % and _ typed by the admin as plain characters
-    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    return f"%{escaped}%"
+from app.services.text_search import LIKE_ESCAPE, like_pattern
 
 
 def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
@@ -16,15 +11,15 @@ def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
     if params.role is not None:
         filters.append(User.role == params.role)
     if params.q:
-        pattern = _like_pattern(params.q)
+        pattern = like_pattern(params.q)
         asset_match = exists().where(
             ResidentAsset.user_id == User.id,
-            ResidentAsset.asset_id.ilike(pattern, escape="\\"),
+            ResidentAsset.asset_id.ilike(pattern, escape=LIKE_ESCAPE),
         )
         filters.append(
             or_(
-                User.full_name.ilike(pattern, escape="\\"),
-                User.email.ilike(pattern, escape="\\"),
+                User.full_name.ilike(pattern, escape=LIKE_ESCAPE),
+                User.email.ilike(pattern, escape=LIKE_ESCAPE),
                 asset_match,
             )
         )

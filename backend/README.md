@@ -69,7 +69,25 @@ documentation is available at `http://127.0.0.1:8000/docs`.
   with the latest issue row's crew, date, comments and address. Repeatable `state`
   (`open`, `pending_review`, `closed`) and `crew`, plus `property_type` (`naos` /
   `residential`). Not paged; capped at 5000 items, and `total` is the count before the cap.
-  Every hazard is `open` until the review workflow exists
+  Every hazard is `open` until the review workflow exists. More filters:
+  - `q` (up to 100 characters): case-insensitive "contains" match on asset ID or address.
+    `%` and `_` are plain characters.
+  - `inspected_from` / `inspected_to` (`YYYY-MM-DD`, inclusive): compared with the latest
+    inspection's date in `America/Phoenix`. With either bound set, hazards with no
+    inspection time are left out. `inspected_from` after `inspected_to` is a 422.
+  - `has_photo` (`true` / `false`) and `needs_attention` (`true` / `false`).
+
+  Each item also has:
+  - `photo_count`: crew photos on the asset's `ISSUES` rows. Only the count is returned,
+    never photo IDs, names or storage keys.
+  - `age_days`: whole days from the latest inspection to today, both as `America/Phoenix`
+    dates. Never below 0, and `null` with no inspection time.
+  - `attention_reasons`: `no_photo` (no crew photo rows; `photo_flag` is ignored as
+    unreliable) and/or `no_comment` (the latest issue row has no comment), in that order.
+    The record "needs attention" when this list is not empty.
+
+  `summary` counts every match before the cap. `by_state` applies every filter except
+  `state`, and `needs_attention` applies every filter except `needs_attention`
 - `GET /api/v1/admin/hazards/filters` - administrators only. The season's crews and
   property types, for the map's filter controls
 

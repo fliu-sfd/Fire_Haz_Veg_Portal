@@ -1,6 +1,7 @@
-import { AlertTriangle, MapPinOff, SearchX, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Info, MapPinOff, SearchX, ShieldAlert, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { missingAssetMessage } from "@/features/hazards/utils/selection";
 
 type StateCardProps = {
   icon: ReactNode;
@@ -78,5 +79,32 @@ export function UpdatingPill() {
       <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-denim motion-reduce:animate-none" />
       Updating
     </span>
+  );
+}
+
+type MissingAssetNoticeProps = { assetId: string; onClearFilters: () => void; onDismiss: () => void };
+
+export function MissingAssetNotice({ assetId, onClearFilters, onDismiss }: MissingAssetNoticeProps) {
+  return (
+    <div
+      role="status"
+      className="pointer-events-auto flex max-w-xl items-start gap-3 rounded-lg border border-denim/30 bg-white px-4 py-3 text-sm text-city-dark shadow-[0_12px_32px_rgba(26,35,40,0.12)]"
+    >
+      <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-civic-blue" />
+      <p className="flex-1">
+        {missingAssetMessage(assetId)}{" "}
+        <button type="button" onClick={onClearFilters} className="font-semibold text-civic-blue underline underline-offset-4">
+          Clear filters
+        </button>
+      </p>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss notice"
+        className="-m-1 flex size-8 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-deep-blue"
+      >
+        <X aria-hidden="true" className="size-4" />
+      </button>
+    </div>
   );
 }

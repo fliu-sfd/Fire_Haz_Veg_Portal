@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   addressText,
+  ATTENTION_LABELS,
+  hasPhotoOf,
+  photoCountText,
+  photoFilterOf,
   filterChips,
   formatInspectedDate,
   markerName,
@@ -52,7 +56,7 @@ test("summarizes the result count and the cap", () => {
 
 test("builds one chip per active filter", () => {
   assert.deepEqual(filterChips(DEFAULT_HAZARDS_QUERY), []);
-  const chips = filterChips({ states: ["open", "closed"], crews: ["611A", "613B"], propertyType: "naos" });
+  const chips = filterChips({ ...DEFAULT_HAZARDS_QUERY, states: ["open", "closed"], crews: ["611A", "613B"], propertyType: "naos" });
   assert.deepEqual(
     chips.map((chip) => chip.label),
     ["Status: Open, Closed", "Station/Shift: 611A", "Station/Shift: 613B", "Property type: NAOS"],
@@ -74,4 +78,40 @@ test("filter buttons name their selection", () => {
   assert.equal(selectionLabel("Status", ["Open"], false), "Status: Open");
   assert.equal(selectionLabel("Station/Shift", ["611A", "611B"], false), "Station/Shift: 2 selected");
   assert.equal(selectionLabel("Station/Shift", [], false), "Station/Shift");
+});
+
+test("new filters get readable chips", () => {
+  const chips = filterChips({
+    ...DEFAULT_HAZARDS_QUERY,
+    q: "ridge",
+    inspectedFrom: "2026-06-01",
+    inspectedTo: "2026-06-24",
+    hasPhoto: false,
+    needsAttention: true,
+  });
+  assert.deepEqual(
+    chips.map((chip) => [chip.kind, chip.label]),
+    [
+      ["search", "Search: ridge"],
+      ["dates", "Inspected: Jun 1 to Jun 24, 2026"],
+      ["photo", "Photos: No photo"],
+      ["attention", "Needs attention"],
+    ],
+  );
+});
+
+test("photo filter maps to and from has_photo", () => {
+  assert.equal(photoFilterOf(null), "any");
+  assert.equal(photoFilterOf(true), "with");
+  assert.equal(photoFilterOf(false), "without");
+  assert.equal(hasPhotoOf("any"), null);
+  assert.equal(hasPhotoOf("with"), true);
+  assert.equal(hasPhotoOf("without"), false);
+});
+
+test("attention reasons and photo counts read as plain text", () => {
+  assert.deepEqual(ATTENTION_LABELS, { no_photo: "No photo", no_comment: "No comment" });
+  assert.equal(photoCountText(0), "None recorded");
+  assert.equal(photoCountText(1), "1 photo");
+  assert.equal(photoCountText(3), "3 photos");
 });
