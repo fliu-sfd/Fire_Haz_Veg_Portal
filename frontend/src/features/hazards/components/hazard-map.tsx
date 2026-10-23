@@ -67,6 +67,13 @@ export default function HazardMap({
     reportSelection.current = onSelect;
   }, [selectedAssetId, onSelect]);
 
+  useEffect(
+    () => () => {
+      reportSelection.current = () => {};
+    },
+    [],
+  );
+
   // A map sized while hidden has no size, so Leaflet must measure again once it shows.
   useEffect(() => {
     if (map && isVisible) map.invalidateSize();
