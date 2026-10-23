@@ -1,5 +1,10 @@
-import type { Hazard, HazardFilterOptions, HazardList, HazardsQuery } from "@/features/hazards/types";
-import { hazardsQueryToParams, isHazardState, isPropertyType } from "@/features/hazards/utils/query-params";
+import type { Hazard, HazardFilterOptions, HazardList, HazardSummary, HazardsQuery } from "@/features/hazards/types";
+import {
+  hazardsQueryToApiParams,
+  isAttentionReason,
+  isHazardState,
+  isPropertyType,
+} from "@/features/hazards/utils/query-params";
 import { apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isCount, isRecord } from "@/lib/api/guards";
@@ -30,6 +35,10 @@ function parseHazard(data: unknown): Hazard {
     (data.inspected_at !== null && Number.isNaN(Date.parse(data.inspected_at))) ||
     !isNullableString(data.comments) ||
     !isNullableString(data.site_address) ||
+    !isCount(data.photo_count) ||
+    !(data.age_days === null || isCount(data.age_days)) ||
+    !Array.isArray(data.attention_reasons) ||
+    !data.attention_reasons.every(isAttentionReason) ||
     !isCoordinate(data.latitude, 90) ||
     !isCoordinate(data.longitude, 180)
   ) {
@@ -43,8 +52,25 @@ function parseHazard(data: unknown): Hazard {
     inspectedAt: data.inspected_at,
     comments: data.comments,
     siteAddress: data.site_address,
+    photoCount: data.photo_count,
+    ageDays: data.age_days,
+    attentionReasons: data.attention_reasons,
     latitude: data.latitude,
     longitude: data.longitude,
+  };
+}
+
+function parseSummary(data: unknown): HazardSummary {
+  if (!isRecord(data) || !isRecord(data.by_state) || !isCount(data.needs_attention)) {
+    throw new ResponseFormatError(INVALID_LIST);
+  }
+  const counts = data.by_state;
+  if (!isCount(counts.open) || !isCount(counts.pending_review) || !isCount(counts.closed)) {
+    throw new ResponseFormatError(INVALID_LIST);
+  }
+  return {
+    byState: { open: counts.open, pending_review: counts.pending_review, closed: counts.closed },
+    needsAttention: data.needs_attention,
   };
 }
 
@@ -52,7 +78,12 @@ export function parseHazardList(data: unknown): HazardList {
   if (!isRecord(data) || !isSeasonYear(data.season_year) || !isCount(data.total) || !Array.isArray(data.items)) {
     throw new ResponseFormatError(INVALID_LIST);
   }
-  return { seasonYear: data.season_year, total: data.total, items: data.items.map(parseHazard) };
+  return {
+    seasonYear: data.season_year,
+    total: data.total,
+    summary: parseSummary(data.summary),
+    items: data.items.map(parseHazard),
+  };
 }
 
 export function parseHazardFilterOptions(data: unknown): HazardFilterOptions {
@@ -70,7 +101,7 @@ export function parseHazardFilterOptions(data: unknown): HazardFilterOptions {
 }
 
 export function hazardsPath(query: HazardsQuery): string {
-  const search = hazardsQueryToParams(query).toString();
+  const search = hazardsQueryToApiParams(query).toString();
   return search ? `/admin/hazards?${search}` : "/admin/hazards";
 }
 

@@ -42,11 +42,12 @@ src/
     hazards/                    Admin hazard map
       api.ts, types.ts          listHazards, getHazardFilters and response parsing
       utils/                    URL params, labels and colors, map bounds, tile config, errors
-      hooks/                    useHazards, useHazardFilters, useHazardQueryState, useHazardsPage
+      hooks/                    useHazards, useHazardFilters, useHazardQueryState, useHazardSelection,
+                                useHazardList, useHazardViews, useHazardsPage
       components/               Leaflet map, markers, popup, filter bar, legend, states
     auth/                       Sign-in, sign-up, account hooks and access helpers
     system/                     Health check example
-  hooks/                        Generic hooks (useDebouncedValue, useLocalStorage)
+  hooks/                        Generic hooks (useDebouncedValue, useLocalStorage, useUrlSearchInput)
   lib/api/                      Shared fetch client, ApiError, retry policy, response guards
   lib/utils.ts                  cn() class name helper
 tests/                          node --test suites (tests/setup resolves the @/ alias)
@@ -85,10 +86,16 @@ SWR configuration:
 - **Client-only map.** Leaflet needs `window`, so `hazard-map-loader.tsx` loads the map with `next/dynamic` and `ssr: false`. Next only allows that inside a Client Component. The loader shows a skeleton of the same size.
 - **Markers.** Markers are `L.divIcon`s styled in `hazard-map.module.css`, one shared icon per state. Leaflet's default marker images break under bundlers. Each state has its own color and glyph, so color is never the only cue.
 - **Popups.** Popup content is React (`HazardPopupContent`). Never build popup HTML from strings: comments are free text from the field.
-- **Filters.** Filters live in the URL (`state` and `crew` repeat, plus `property_type`) and the same params go to the API. Defaults are left out.
+- **Filters.** Filters live in the URL under the same names the API uses: `state` and `crew` (both repeat), `property_type`, `q`, `inspected_from`, `inspected_to`, `has_photo` and `needs_attention`. Defaults are left out.
+  - `sort` and `asset` are URL-only display state. `hazardsQueryToApiParams` never sends them (the API returns 422 for unknown params), and they are not part of the SWR key, so changing them never refetches.
+  - Search uses `router.replace` (debounced), and so does picking a hazard. Filter changes use `push`.
   - The map refits only when results for new filters arrive (`fitKey`), never on a background revalidation.
   - The property type control hides while only one type exists.
 - **Keyboard.** Leaflet opens a popup on Enter. The marker handler adds Space, and the map wrapper closes popups on Escape and returns focus to the marker. Zoom and "Fit to results" are React buttons placed before the map, so Tab reaches them ahead of the markers.
+- **Dates.** Inspection dates are Phoenix calendar days on both sides (`utils/dates.ts`). Presets turn into absolute dates when picked, so a shared link shows the same hazards later.
+- **List and selection.** The list sorts in the browser (`sortHazards`, asset ID breaks ties) and renders 50 rows at a time, growing to include the selected row. `asset` in the URL is the open popup. A list pick flies the map to the marker and opens it after the flight. Below 1024 px a Map/List toggle keeps both mounted and calls `invalidateSize()` when the map shows again.
+- **Summary and needs attention.** Counts come from the API's `summary`, and `attention_reasons` is shown as sent, never worked out again in the browser.
+- **Saved views.** Views live in `localStorage` (`admin.hazards.views.v1`) as URL params. Every load runs them back through the URL parser, so unknown values fall back to defaults. They keep filters and sort only, never hazards or personal data.
 - **Basemap.** Tiles come from `NEXT_PUBLIC_MAP_TILE_URL` and `NEXT_PUBLIC_MAP_ATTRIBUTION` (see `utils/map-config.ts`) and default to OpenStreetMap for development. Its usage policy discourages heavy production use, so pick a production provider before launch. Never put an API key in a `NEXT_PUBLIC_` variable.
 
 ## shadcn/ui
@@ -161,7 +168,7 @@ npm start
 
 Development and builds use Webpack with Tailwind’s PostCSS integration.
 
-The tests cover the API client, the admin users and hazards APIs and their response parsing, hazard map helpers, the retry policy, URL params, column visibility, formatting, and role-based navigation. `tests/setup/resolve-aliases.mjs` lets `node --test` load sources that import through `@/`. `npm start` serves a completed production build.
+The tests cover the API client, the admin users and hazards APIs and their response parsing, hazard map helpers (URL params, dates, sorting, windowing, selection, summary tiles, saved views), the retry policy, URL params, column visibility, formatting, and role-based navigation. `tests/setup/resolve-aliases.mjs` lets `node --test` load sources that import through `@/`. `npm start` serves a completed production build.
 
 ## Starter scope
 

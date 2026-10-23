@@ -1,4 +1,5 @@
-import type { Hazard, HazardState, HazardsQuery, PropertyType } from "@/features/hazards/types";
+import type { AttentionReason, Hazard, HazardState, HazardsQuery, PropertyType } from "@/features/hazards/types";
+import { formatDateRange } from "@/features/hazards/utils/dates";
 import { allStatesSelected } from "@/features/hazards/utils/query-params";
 
 export type StateGlyph = "alert" | "clock" | "check";
@@ -23,6 +24,18 @@ export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   naos: "NAOS",
   residential: "Residential",
 };
+
+export const ATTENTION_HELP = "Missing a photo or a comment";
+
+export const ATTENTION_LABELS: Record<AttentionReason, string> = {
+  no_photo: "No photo",
+  no_comment: "No comment",
+};
+
+export function photoCountText(count: number): string {
+  if (count === 0) return "None recorded";
+  return count === 1 ? "1 photo" : `${count.toLocaleString("en-US")} photos`;
+}
 
 export function stateLabel(state: HazardState): string {
   return STATE_STYLES[state].label;
@@ -49,8 +62,21 @@ export function resultSummary(shown: number, total: number): string {
   return `Showing ${total.toLocaleString("en-US")} ${total === 1 ? "hazard" : "hazards"}`;
 }
 
+export const PHOTO_FILTER_LABELS = { any: "Any", with: "With photo", without: "No photo" } as const;
+
+export type PhotoFilter = keyof typeof PHOTO_FILTER_LABELS;
+
+export function photoFilterOf(hasPhoto: boolean | null): PhotoFilter {
+  if (hasPhoto === null) return "any";
+  return hasPhoto ? "with" : "without";
+}
+
+export function hasPhotoOf(filter: PhotoFilter): boolean | null {
+  return filter === "any" ? null : filter === "with";
+}
+
 export type FilterChip =
-  | { id: string; label: string; kind: "state" | "propertyType" }
+  | { id: string; label: string; kind: "state" | "propertyType" | "search" | "dates" | "photo" | "attention" }
   | { id: string; label: string; kind: "crew"; crew: string };
 
 export function filterChips(query: HazardsQuery): FilterChip[] {
@@ -68,6 +94,15 @@ export function filterChips(query: HazardsQuery): FilterChip[] {
       label: `Property type: ${PROPERTY_TYPE_LABELS[query.propertyType]}`,
     });
   }
+  if (query.q) chips.push({ id: "q", kind: "search", label: `Search: ${query.q}` });
+  if (query.inspectedFrom || query.inspectedTo) {
+    const range = formatDateRange({ from: query.inspectedFrom, to: query.inspectedTo });
+    chips.push({ id: "dates", kind: "dates", label: `Inspected: ${range}` });
+  }
+  if (query.hasPhoto !== null) {
+    chips.push({ id: "photo", kind: "photo", label: `Photos: ${PHOTO_FILTER_LABELS[photoFilterOf(query.hasPhoto)]}` });
+  }
+  if (query.needsAttention) chips.push({ id: "attention", kind: "attention", label: "Needs attention" });
   return chips;
 }
 
