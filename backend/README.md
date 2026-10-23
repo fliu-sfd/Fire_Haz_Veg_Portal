@@ -64,6 +64,14 @@ documentation is available at `http://127.0.0.1:8000/docs`.
 - `GET /api/v1/admin/users` - administrators only (401 / 403 otherwise). Lists users with
   `q` (name, email or asset ID), `role`, `sort` (`full_name`, `email`, `role`, `asset_ids`,
   `created_at`), `order` (`asc` / `desc`), `limit` (1-100, default 25) and `offset`
+- `GET /api/v1/admin/hazards` - administrators only. Hazards for the map: one item per
+  `asset_id` with an `ISSUES` row in the latest season, at the centroid of its issue points,
+  with the latest issue row's crew, date, comments and address. Repeatable `state`
+  (`open`, `pending_review`, `closed`) and `crew`, plus `property_type` (`naos` /
+  `residential`). Not paged; capped at 5000 items, and `total` is the count before the cap.
+  Every hazard is `open` until the review workflow exists
+- `GET /api/v1/admin/hazards/filters` - administrators only. The season's crews and
+  property types, for the map's filter controls
 
 Protect an endpoint by adding a `user: CurrentUser` parameter (from `app/api/deps.py`).
 The frontend must send requests with `credentials: "include"` so the cookie is sent.

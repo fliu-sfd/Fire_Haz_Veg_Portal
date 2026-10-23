@@ -1,0 +1,129 @@
+.map {
+  height: 100%;
+  width: 100%;
+  background: var(--color-city-light);
+  font-family: var(--font-sans);
+}
+
+/* The icon element is the hit area (44px) and holds the smaller visible marker. */
+.markerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  animation: markerIn 150ms ease-out;
+}
+
+.markerIcon:focus-visible {
+  outline: none;
+}
+
+.marker {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 2.5px solid #ffffff;
+  background: var(--marker-fill);
+  color: var(--marker-glyph);
+  box-shadow: 0 2px 6px rgba(26, 35, 40, 0.35);
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.marker svg {
+  width: 16px;
+  height: 16px;
+}
+
+.markerIcon:hover .marker,
+.markerIcon:focus-visible .marker {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 3px var(--color-denim), 0 2px 8px rgba(26, 35, 40, 0.4);
+}
+
+.selected {
+  z-index: 1000 !important;
+}
+
+.selected .marker {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 3px var(--color-charcoal), 0 4px 12px rgba(26, 35, 40, 0.45);
+}
+
+@keyframes markerIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.map :global(.leaflet-popup-content-wrapper) {
+  border: 1px solid var(--color-city-light);
+  border-radius: 0.5rem;
+  box-shadow: 0 12px 32px rgba(26, 35, 40, 0.18);
+  color: var(--color-charcoal);
+}
+
+.map :global(.leaflet-popup-content) {
+  margin: 0;
+  max-width: min(18rem, calc(100vw - 6rem));
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Leaflet gives popup paragraphs a large default margin. */
+.map :global(.leaflet-popup-content p) {
+  margin: 0;
+}
+
+.map :global(.leaflet-popup-content:focus-visible) {
+  outline: 3px solid var(--color-denim);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+.map :global(.leaflet-popup-tip) {
+  box-shadow: none;
+  border: 1px solid var(--color-city-light);
+}
+
+.map :global(.leaflet-container a.leaflet-popup-close-button),
+.map :global(a.leaflet-popup-close-button) {
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  font: 600 1.25rem/2rem var(--font-sans);
+  color: var(--color-city-dark);
+}
+
+.map :global(a.leaflet-popup-close-button:hover) {
+  background: var(--color-accent);
+  color: var(--color-deep-blue);
+}
+
+.map :global(.leaflet-control-attribution) {
+  border-top-left-radius: 0.375rem;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 0.6875rem;
+  color: var(--color-city-dark);
+}
+
+.map :global(.leaflet-control-attribution a) {
+  color: var(--color-civic-blue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .markerIcon {
+    animation: none;
+  }
+
+  .marker {
+    transition: none;
+  }
+}
