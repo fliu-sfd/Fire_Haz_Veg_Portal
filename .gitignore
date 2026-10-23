@@ -29,3 +29,6 @@ npm-debug.log*
 
 # Crew photos saved by the local photo store
 photo_storage/
+
+# City sample data (large and not ours to publish); the Docker import reads it from here
+data/*.zip
