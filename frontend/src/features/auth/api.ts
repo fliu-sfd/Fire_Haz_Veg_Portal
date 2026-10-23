@@ -1,4 +1,6 @@
 import { ApiError, apiRequest } from "@/lib/api/client";
+import { ResponseFormatError } from "@/lib/api/errors";
+import { isRecord } from "@/lib/api/guards";
 
 export type UserRole = "resident" | "firefighter" | "admin";
 
@@ -16,6 +18,14 @@ export type HomeownerSignup = {
   property_address?: string;
   asset_id: string;
   password: string;
+};
+
+export type PropertySummary = {
+  assetId: string;
+  seasonYear: number | null;
+  latestStatus: "ISSUES" | "NO ISSUES" | null;
+  latestInspectedAt: string | null;
+  siteAddress: string | null;
 };
 
 export type Login = {
@@ -68,6 +78,31 @@ export async function signIn(payload: Login): Promise<Account> {
 
 export async function getCurrentAccount(): Promise<Account> {
   return parseAccount(await apiRequest<unknown>("/auth/me"));
+}
+
+export async function getMyProperties(): Promise<PropertySummary[]> {
+  const data = await apiRequest<unknown>("/residents/me/properties");
+  const invalidResponse = () => new ResponseFormatError("The service returned an invalid property list.");
+  if (!Array.isArray(data)) throw invalidResponse();
+
+  return data.map((value: unknown) => {
+    if (
+      !isRecord(value) ||
+      typeof value.asset_id !== "string" || !value.asset_id.trim() ||
+      !(value.season_year === null || (typeof value.season_year === "number" && Number.isInteger(value.season_year))) ||
+      !(value.latest_status === null || value.latest_status === "ISSUES" || value.latest_status === "NO ISSUES") ||
+      !(value.latest_inspected_at === null || (typeof value.latest_inspected_at === "string" && Number.isFinite(Date.parse(value.latest_inspected_at)))) ||
+      !(value.site_address === null || typeof value.site_address === "string")
+    ) throw invalidResponse();
+
+    return {
+      assetId: value.asset_id,
+      seasonYear: value.season_year,
+      latestStatus: value.latest_status,
+      latestInspectedAt: value.latest_inspected_at,
+      siteAddress: value.site_address,
+    };
+  });
 }
 
 export function signOut(): Promise<void> {
