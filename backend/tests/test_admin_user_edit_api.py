@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -221,6 +222,20 @@ def test_update_unknown_user(admin_client) -> None:
     resp = admin_client.patch(url(uuid.uuid4()), json={"full_name": "Nobody Here"})
     assert resp.status_code == 404
     assert error_code(resp) == "user_not_found"
+
+
+def test_write_logs_field_names_not_values(admin_client, admin, resident, caplog) -> None:
+    caplog.set_level(logging.INFO, logger="app.services.admin_user_service")
+    admin_client.patch(url(resident), json={"email": "carla@example.com", "phone": None})
+    messages = [r.getMessage() for r in caplog.records]
+    assert messages == [f"admin {admin.id} updated user {resident.id}: email, phone"]
+    assert "carla@example.com" not in caplog.text and "480-555-0100" not in caplog.text
+
+
+def test_unchanged_values_write_no_log(admin_client, resident, caplog) -> None:
+    caplog.set_level(logging.INFO, logger="app.services.admin_user_service")
+    admin_client.patch(url(resident), json={"full_name": "Carlos Rivera"})
+    assert caplog.records == []
 
 
 # --- update: email ---
