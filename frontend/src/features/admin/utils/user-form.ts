@@ -223,3 +223,12 @@ export function removeAssetConfirmation(name: string, assetId: string): Confirma
     destructive: true,
   };
 }
+
+export function discardConfirmation(name: string): Confirmation {
+  return {
+    title: "Discard changes?",
+    description: `Your edits to ${name} have not been saved.`,
+    actionLabel: "Discard changes",
+    destructive: true,
+  };
+}
