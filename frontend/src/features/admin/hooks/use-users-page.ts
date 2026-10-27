@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useColumnVisibility } from "@/features/admin/hooks/use-column-visibility";
+import { useLinkedAssets } from "@/features/admin/hooks/use-linked-assets";
 import { useSelectedUser } from "@/features/admin/hooks/use-selected-user";
 import { useUserActions } from "@/features/admin/hooks/use-user-actions";
 import { useUserDetail } from "@/features/admin/hooks/use-user-detail";
@@ -83,6 +84,7 @@ function useEditPanel(enabled: boolean) {
   const detail = useUserDetail(userId);
   const actions = useUserActions(userId);
   const form = useUserEditForm(detail.user, actions.save);
+  const assets = useLinkedAssets(detail.user, actions.link, actions.unlink);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const returnFocusTo = useRef<HTMLElement | null>(null);
 
@@ -96,6 +98,7 @@ function useEditPanel(enabled: boolean) {
 
   function close() {
     form.reset();
+    assets.reset();
     setIsDiscarding(false);
     setSelectedUserId(null);
   }
@@ -124,7 +127,7 @@ function useEditPanel(enabled: boolean) {
     retry: detail.retry,
     isSelf: Boolean(account && userId && account.id === userId),
     form,
-    actions,
+    assets,
     discardConfirmation: isDiscarding && detail.user ? discardConfirmation(detail.user.fullName) : null,
     openUser,
     requestClose,

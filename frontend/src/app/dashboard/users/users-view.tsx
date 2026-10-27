@@ -10,6 +10,7 @@ import {
   UsersError,
 } from "@/features/admin/components/users-states";
 import { UsersTable } from "@/features/admin/components/users-table";
+import { LinkedAssetsEditor } from "@/features/admin/components/linked-assets-editor";
 import { UserEditSheet } from "@/features/admin/components/user-edit-sheet";
 import { UsersToolbar } from "@/features/admin/components/users-toolbar";
 import { useUsersPage } from "@/features/admin/hooks/use-users-page";
@@ -116,7 +117,23 @@ export function UsersView() {
           isRetrying={page.editPanel.isRetrying}
           isSelf={page.editPanel.isSelf}
           form={page.editPanel.form}
-          linkedAssets={null}
+          linkedAssets={
+            <LinkedAssetsEditor
+              assetIds={page.editPanel.assets.assetIds}
+              input={page.editPanel.assets.input}
+              inputError={page.editPanel.assets.inputError}
+              alert={page.editPanel.assets.alert}
+              notice={page.editPanel.assets.notice}
+              isAdding={page.editPanel.assets.isAdding}
+              removingAssetId={page.editPanel.assets.removingAssetId}
+              confirmation={page.editPanel.assets.confirmation}
+              onInputChange={page.editPanel.assets.setInput}
+              onAdd={page.editPanel.assets.add}
+              onRemove={page.editPanel.assets.requestRemove}
+              onConfirmRemove={page.editPanel.assets.confirmRemove}
+              onCancelRemove={page.editPanel.assets.cancelRemove}
+            />
+          }
           discardConfirmation={page.editPanel.discardConfirmation}
           onRetry={page.editPanel.retry}
           onRequestClose={page.editPanel.requestClose}
