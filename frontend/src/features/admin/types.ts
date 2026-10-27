@@ -11,6 +11,8 @@ export type AdminUser = {
   role: UserRole;
   assetIds: string[];
   createdAt: string;
+  isActive: boolean;
+  lastLoginAt: string | null;
 };
 
 export type AdminUserList = {
@@ -28,3 +30,33 @@ export type UsersQuery = {
   limit: number;
   page: number;
 };
+
+export type FirefighterDetails = {
+  employeeId: string;
+  stationCode: string | null;
+};
+
+export type AdminUserDetail = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  isActive: boolean;
+  emailVerified: boolean;
+  createdAt: string;
+  lastLoginAt: string | null;
+  assetIds: string[];
+  /** Kept after a firefighter changes role, so it is reused if they return. */
+  firefighter: FirefighterDetails | null;
+};
+
+/** Only the fields present are sent. `phone: null` clears the phone. */
+export type UserUpdateInput = Partial<{
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  isActive: boolean;
+  firefighter: FirefighterDetails;
+}>;
