@@ -1,10 +1,13 @@
 import enum
 import uuid
 from datetime import datetime
+from typing import Self
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models import UserRole
+from app.schemas import validators
+from app.schemas.validators import EMAIL_MAX_LENGTH
 
 SEARCH_MAX_LENGTH = 100
 PAGE_MAX_SIZE = 100
@@ -87,3 +90,67 @@ class AdminUserDetail(BaseModel):
     asset_ids: list[str]
     # kept after a firefighter changes role, so it can be reused if they come back
     firefighter: FirefighterOut | None
+
+
+class FirefighterUpdate(BaseModel):
+    """Replaces both firefighter fields. Leaving out station_code clears it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    employee_id: str
+    station_code: str | None = None
+
+    @field_validator("employee_id")
+    @classmethod
+    def clean_employee_id(cls, v: str) -> str:
+        return validators.clean_employee_id(v)
+
+    @field_validator("station_code")
+    @classmethod
+    def clean_station_code(cls, v: str | None) -> str | None:
+        return validators.clean_station_code(v)
+
+
+class AdminUserUpdate(BaseModel):
+    """Partial update. Only fields present in the body are changed.
+
+    Only phone may be null (it clears the phone). Use model_fields_set to see what was sent.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    full_name: str | None = None
+    email: EmailStr | None = Field(None, max_length=EMAIL_MAX_LENGTH)
+    phone: str | None = None
+    role: UserRole | None = None
+    is_active: bool | None = None
+    firefighter: FirefighterUpdate | None = None
+
+    @field_validator("full_name", "email", "role", "is_active", "firefighter")
+    @classmethod
+    def not_null(cls, v: object) -> object:
+        # validators skip defaults, so this only runs when the field was sent
+        if v is None:
+            raise ValueError("Value may not be null")
+        return v
+
+    @field_validator("full_name")
+    @classmethod
+    def clean_full_name(cls, v: str) -> str:
+        return validators.clean_full_name(v)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: object) -> object:
+        return validators.normalize_email(v)
+
+    @field_validator("phone")
+    @classmethod
+    def clean_phone(cls, v: str | None) -> str | None:
+        return validators.clean_phone(v)
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> Self:
+        if not self.model_fields_set:
+            raise ValueError("Send at least one field to change")
+        return self

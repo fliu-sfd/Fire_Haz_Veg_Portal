@@ -1,22 +1,48 @@
+import logging
 import uuid
 
 from sqlalchemy import ColumnElement, String, cast, exists, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import ResidentAsset, User
+from app.models import FirefighterProfile, ResidentAsset, User, UserRole
 from app.schemas.admin import (
     AdminUserDetail,
     AdminUserList,
     AdminUserOut,
+    AdminUserUpdate,
     FirefighterOut,
     SortOrder,
     UserListParams,
     UserSortField,
 )
 from app.services.text_search import LIKE_ESCAPE, like_pattern
+from app.services.user_service import get_user_by_email
+
+logger = logging.getLogger(__name__)
 
 
 class UserNotFoundError(Exception):
+    pass
+
+
+class EmailTakenError(Exception):
+    pass
+
+
+class EmployeeIdTakenError(Exception):
+    pass
+
+
+class FirefighterDetailsRequiredError(Exception):
+    pass
+
+
+class FirefighterNotApplicableError(Exception):
+    pass
+
+
+class UnlinkAssetsFirstError(Exception):
     pass
 
 
@@ -128,3 +154,97 @@ def _get_user(db: Session, user_id: uuid.UUID) -> User:
 
 def get_user_detail(db: Session, user_id: uuid.UUID) -> AdminUserDetail:
     return user_detail(_get_user(db, user_id))
+
+
+def _employee_id_taken(db: Session, user: User, employee_id: str) -> bool:
+    return bool(
+        db.scalar(
+            select(
+                exists().where(
+                    FirefighterProfile.employee_id == employee_id,
+                    FirefighterProfile.user_id != user.id,
+                )
+            )
+        )
+    )
+
+
+def _check_rules(db: Session, user: User, data: AdminUserUpdate) -> None:
+    sent = data.model_fields_set
+    new_role = data.role if "role" in sent else user.role
+
+    if "firefighter" in sent and new_role is not UserRole.FIREFIGHTER:
+        raise FirefighterNotApplicableError
+    if (
+        "role" in sent
+        and new_role is UserRole.FIREFIGHTER
+        and user.firefighter_profile is None
+        and "firefighter" not in sent
+    ):
+        raise FirefighterDetailsRequiredError
+    if (
+        user.role is UserRole.RESIDENT
+        and new_role is not UserRole.RESIDENT
+        and user.resident_assets
+    ):
+        raise UnlinkAssetsFirstError
+
+    if "email" in sent:
+        other = get_user_by_email(db, data.email)
+        if other is not None and other.id != user.id:
+            raise EmailTakenError
+    if "firefighter" in sent and _employee_id_taken(db, user, data.firefighter.employee_id):
+        raise EmployeeIdTakenError
+
+
+def _apply(user: User, data: AdminUserUpdate) -> list[str]:
+    """Copy the sent values onto the user. Returns the names of the fields that changed."""
+    changed = []
+    for field in ("full_name", "email", "phone", "role", "is_active"):
+        if field in data.model_fields_set and getattr(data, field) != getattr(user, field):
+            setattr(user, field, getattr(data, field))
+            changed.append(field)
+
+    if "firefighter" in data.model_fields_set:
+        wanted = data.firefighter
+        profile = user.firefighter_profile
+        if profile is None:
+            user.firefighter_profile = FirefighterProfile(
+                employee_id=wanted.employee_id, station_code=wanted.station_code
+            )
+            changed.append("firefighter")
+        elif (profile.employee_id, profile.station_code) != (
+            wanted.employee_id,
+            wanted.station_code,
+        ):
+            # a returning firefighter keeps their old row, updated with what was sent
+            profile.employee_id = wanted.employee_id
+            profile.station_code = wanted.station_code
+            changed.append("firefighter")
+    return changed
+
+
+def update_user(
+    db: Session, admin: User, user_id: uuid.UUID, data: AdminUserUpdate
+) -> AdminUserDetail:
+    user = _get_user(db, user_id)
+    _check_rules(db, user, data)
+    changed = _apply(user, data)
+    if not changed:
+        return user_detail(user)
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        # another edit took the email or employee id after the checks above
+        db.rollback()
+        constraint = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint == "uq_firefighter_profiles_employee_id":
+            raise EmployeeIdTakenError from exc
+        if constraint == "uq_users_email_lower":
+            raise EmailTakenError from exc
+        raise
+    db.refresh(user)
+    # field names only: values such as email and phone stay out of the logs
+    logger.info("admin %s updated user %s: %s", admin.id, user.id, ", ".join(changed))
+    return user_detail(user)
