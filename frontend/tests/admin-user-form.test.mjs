@@ -198,5 +198,5 @@ test("no confirmation text uses an em dash", () => {
     saveConfirmation("A", initial, { role: "admin" }),
     removeAssetConfirmation("A", "1"),
   ];
-  for (const confirmation of all) assert.doesNotMatch(Object.values(confirmation).join(" "), /—/);
+  for (const confirmation of all) assert.doesNotMatch(Object.values(confirmation).join(" "), /\u2014/);
 });
