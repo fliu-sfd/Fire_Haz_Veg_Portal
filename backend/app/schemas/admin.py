@@ -65,3 +65,25 @@ class AdminUserList(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class FirefighterOut(BaseModel):
+    employee_id: str
+    station_code: str | None
+
+
+class AdminUserDetail(BaseModel):
+    """One user as the admin edit panel shows it. Never carries the password hash."""
+
+    id: uuid.UUID
+    full_name: str
+    email: EmailStr
+    phone: str | None
+    role: UserRole
+    is_active: bool
+    email_verified: bool
+    created_at: datetime
+    last_login_at: datetime | None
+    asset_ids: list[str]
+    # kept after a firefighter changes role, so it can be reused if they come back
+    firefighter: FirefighterOut | None

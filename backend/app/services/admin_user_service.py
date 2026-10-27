@@ -1,9 +1,23 @@
+import uuid
+
 from sqlalchemy import ColumnElement, String, cast, exists, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import ResidentAsset, User
-from app.schemas.admin import AdminUserList, AdminUserOut, SortOrder, UserListParams, UserSortField
+from app.schemas.admin import (
+    AdminUserDetail,
+    AdminUserList,
+    AdminUserOut,
+    FirefighterOut,
+    SortOrder,
+    UserListParams,
+    UserSortField,
+)
 from app.services.text_search import LIKE_ESCAPE, like_pattern
+
+
+class UserNotFoundError(Exception):
+    pass
 
 
 def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
@@ -82,3 +96,35 @@ def list_users(db: Session, params: UserListParams) -> AdminUserList:
         for u in users
     ]
     return AdminUserList(items=items, total=total, limit=params.limit, offset=params.offset)
+
+
+def user_detail(user: User) -> AdminUserDetail:
+    profile = user.firefighter_profile
+    return AdminUserDetail(
+        id=user.id,
+        full_name=user.full_name,
+        email=user.email,
+        phone=user.phone,
+        role=user.role,
+        is_active=user.is_active,
+        email_verified=user.email_verified,
+        created_at=user.created_at,
+        last_login_at=user.last_login_at,
+        asset_ids=sorted(link.asset_id for link in user.resident_assets),
+        firefighter=(
+            FirefighterOut(employee_id=profile.employee_id, station_code=profile.station_code)
+            if profile is not None
+            else None
+        ),
+    )
+
+
+def _get_user(db: Session, user_id: uuid.UUID) -> User:
+    user = db.get(User, user_id)
+    if user is None:
+        raise UserNotFoundError
+    return user
+
+
+def get_user_detail(db: Session, user_id: uuid.UUID) -> AdminUserDetail:
+    return user_detail(_get_user(db, user_id))
