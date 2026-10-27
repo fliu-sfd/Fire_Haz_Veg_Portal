@@ -13,18 +13,13 @@ from pydantic import (
 )
 
 from app.models import UserRole
+from app.schemas import validators
+from app.schemas.validators import EMAIL_MAX_LENGTH
 
-FULL_NAME_MIN_LENGTH = 2
-FULL_NAME_MAX_LENGTH = 120  # users.full_name column
-EMAIL_MAX_LENGTH = 254
 PASSWORD_MIN_LENGTH = 12
 PASSWORD_MAX_LENGTH = 128
 ASSET_ID_MAX_LENGTH = 32
 PROPERTY_ADDRESS_MAX_LENGTH = 255
-
-# letter runs ([^\W\d_] = any unicode letter) joined by space, apostrophe, hyphen or period:
-# "Mary-Jane O'Neil", "J. R. Smith", "José Núñez"
-_NAME_RE = re.compile(r"[^\W\d_]+(?:[ '.\-]+[^\W\d_]+)*\.?")
 
 
 class SignupRequest(BaseModel):
@@ -41,21 +36,12 @@ class SignupRequest(BaseModel):
     @field_validator("full_name")
     @classmethod
     def clean_full_name(cls, v: str) -> str:
-        v = " ".join(v.split())
-        if len(v) < FULL_NAME_MIN_LENGTH:
-            raise ValueError(f"Full name must be at least {FULL_NAME_MIN_LENGTH} characters")
-        if len(v) > FULL_NAME_MAX_LENGTH:
-            raise ValueError(f"Full name must be at most {FULL_NAME_MAX_LENGTH} characters")
-        if not _NAME_RE.fullmatch(v):
-            raise ValueError(
-                "Full name may only contain letters, spaces, apostrophes, hyphens and periods"
-            )
-        return v
+        return validators.clean_full_name(v)
 
     @field_validator("email", mode="before")
     @classmethod
     def normalize_email(cls, v: object) -> object:
-        return v.strip().lower() if isinstance(v, str) else v
+        return validators.normalize_email(v)
 
     @field_validator("password")
     @classmethod
@@ -128,7 +114,7 @@ class LoginRequest(BaseModel):
     @field_validator("email", mode="before")
     @classmethod
     def normalize_email(cls, v: object) -> object:
-        return v.strip().lower() if isinstance(v, str) else v
+        return validators.normalize_email(v)
 
 
 class UserOut(BaseModel):
