@@ -45,10 +45,14 @@ export function useUsersQueryState() {
   );
 
   const setRole = useCallback((role: UserRole | null) => update({ role }), [update]);
+  const setStatus = useCallback((isActive: boolean | null) => update({ isActive }), [update]);
   const toggleSort = useCallback((field: UserSortField) => update(nextSort(query, field)), [query, update]);
   const setLimit = useCallback((limit: number) => update({ limit }), [update]);
   const setPage = useCallback((page: number) => update({ page }), [update]);
-  const resetFilters = useCallback(() => update({ q: DEFAULT_USERS_QUERY.q, role: DEFAULT_USERS_QUERY.role }), [update]);
+  const resetFilters = useCallback(
+    () => update({ q: DEFAULT_USERS_QUERY.q, role: DEFAULT_USERS_QUERY.role, isActive: DEFAULT_USERS_QUERY.isActive }),
+    [update],
+  );
 
-  return { query, setSearch, setRole, toggleSort, setLimit, setPage, resetFilters };
+  return { query, setSearch, setRole, setStatus, toggleSort, setLimit, setPage, resetFilters };
 }

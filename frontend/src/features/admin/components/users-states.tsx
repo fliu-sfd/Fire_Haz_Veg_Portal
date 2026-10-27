@@ -28,7 +28,7 @@ export function NoMatchingUsers({ onClearFilters }: { onClearFilters: () => void
       title="No users match your filters"
       action={<Button variant="secondary" onClick={onClearFilters}>Clear filters</Button>}
     >
-      Try a different name, email, or asset ID, or choose another role.
+      Try a different name, email, or asset ID, or choose another role or status.
     </StateMessage>
   );
 }

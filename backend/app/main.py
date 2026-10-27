@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,8 +7,20 @@ from app.api.router import api_router
 from app.core.config import settings
 
 
+def _configure_logging() -> None:
+    """Send INFO lines from app.* loggers (such as admin edits) to stderr next to uvicorn's."""
+    logger = logging.getLogger("app")
+    if logger.handlers:
+        return
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+    _configure_logging()
     application = FastAPI(
         title=settings.app_name,
         version=settings.app_version,

@@ -10,18 +10,22 @@ export type ColumnConfig<Id extends string = string> = {
   locked?: boolean;
 };
 
-export type UserColumnId = "name" | "email" | "role" | "assetIds" | "createdAt";
+export type UserColumnId = "name" | "email" | "role" | "status" | "assetIds" | "lastLoginAt" | "createdAt";
 
 export const USER_COLUMNS: readonly ColumnConfig<UserColumnId>[] = [
   // Name identifies the row, so it stays visible.
   { id: "name", label: "Name", sortField: "full_name", defaultVisible: true, locked: true },
   { id: "email", label: "Email", sortField: "email", defaultVisible: true },
   { id: "role", label: "Role", sortField: "role", defaultVisible: true },
+  { id: "status", label: "Status", sortField: "is_active", defaultVisible: true },
   { id: "assetIds", label: "Asset IDs", sortField: "asset_ids", defaultVisible: true },
+  { id: "lastLoginAt", label: "Last sign-in", sortField: "last_login_at", defaultVisible: true },
   { id: "createdAt", label: "Created", sortField: "created_at", defaultVisible: true },
 ];
 
-export const USER_COLUMNS_STORAGE_KEY = "admin.users.columns.v1";
+// v1 lists were saved before Status and Last sign-in existed and would hide them.
+// A new key starts everyone from the default, where every column is visible.
+export const USER_COLUMNS_STORAGE_KEY = "admin.users.columns.v2";
 
 function inConfigOrder<Id extends string>(columns: readonly ColumnConfig<Id>[], ids: Iterable<Id>): Id[] {
   const set = new Set(ids);

@@ -10,7 +10,16 @@ pytestmark = pytest.mark.db
 
 URL = "/api/v1/admin/users"
 FAKE_HASH = "$argon2id$not-a-real-hash"
-ALLOWED_FIELDS = {"id", "full_name", "email", "role", "asset_ids", "created_at"}
+ALLOWED_FIELDS = {
+    "id",
+    "full_name",
+    "email",
+    "role",
+    "asset_ids",
+    "created_at",
+    "is_active",
+    "last_login_at",
+}
 BASE_TIME = datetime(2026, 10, 1, tzinfo=UTC)
 
 # (full name, email, role, asset ids, days after BASE_TIME)
@@ -276,6 +285,7 @@ def test_offset_past_end_is_empty(admin_client) -> None:
         ({"sort": "password_hash"}, "sort"),
         ({"order": "sideways"}, "order"),
         ({"role": "homeowner"}, "role"),
+        ({"is_active": "maybe"}, "is_active"),
         ({"q": "x" * 101}, "q"),
         ({"include": "phone"}, "include"),
     ],

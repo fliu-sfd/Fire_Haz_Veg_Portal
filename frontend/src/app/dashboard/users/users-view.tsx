@@ -10,6 +10,8 @@ import {
   UsersError,
 } from "@/features/admin/components/users-states";
 import { UsersTable } from "@/features/admin/components/users-table";
+import { LinkedAssetsEditor } from "@/features/admin/components/linked-assets-editor";
+import { UserEditSheet } from "@/features/admin/components/user-edit-sheet";
 import { UsersToolbar } from "@/features/admin/components/users-toolbar";
 import { useUsersPage } from "@/features/admin/hooks/use-users-page";
 import { PAGE_SIZES, SEARCH_MAX_LENGTH } from "@/features/admin/utils/query-params";
@@ -50,11 +52,13 @@ export function UsersView() {
               search={page.searchInput}
               searchMaxLength={SEARCH_MAX_LENGTH}
               role={page.query.role}
+              isActive={page.query.isActive}
               filtersActive={page.filtersActive}
               isRefreshing={page.isRefreshing}
               onSearchChange={page.setSearchInput}
               onSearchClear={page.clearSearch}
               onRoleChange={page.setRole}
+              onStatusChange={page.setStatus}
               onClearFilters={page.clearFilters}
               onRefresh={page.refresh}
               columnsMenu={
@@ -75,6 +79,8 @@ export function UsersView() {
                   columns={page.columns}
                   visibleColumns={page.visibleColumns}
                   rows={page.rows}
+                  selectedUserId={page.selectedUserId}
+                  onOpenUser={page.openUser}
                   sort={page.query.sort}
                   order={page.query.order}
                   onSortChange={page.toggleSort}
@@ -101,6 +107,41 @@ export function UsersView() {
       <p role="status" className="sr-only">
         {page.isLoading || page.isRefreshing ? "Loading users…" : ""}
       </p>
+
+      {page.isForbidden ? null : (
+        <UserEditSheet
+          open={page.editPanel.open}
+          user={page.editPanel.user}
+          isLoading={page.editPanel.isLoading}
+          loadError={page.editPanel.loadError}
+          isRetrying={page.editPanel.isRetrying}
+          isSelf={page.editPanel.isSelf}
+          form={page.editPanel.form}
+          linkedAssets={
+            <LinkedAssetsEditor
+              assetIds={page.editPanel.assets.assetIds}
+              input={page.editPanel.assets.input}
+              inputError={page.editPanel.assets.inputError}
+              alert={page.editPanel.assets.alert}
+              notice={page.editPanel.assets.notice}
+              isAdding={page.editPanel.assets.isAdding}
+              removingAssetId={page.editPanel.assets.removingAssetId}
+              confirmation={page.editPanel.assets.confirmation}
+              onInputChange={page.editPanel.assets.setInput}
+              onAdd={page.editPanel.assets.add}
+              onRemove={page.editPanel.assets.requestRemove}
+              onConfirmRemove={page.editPanel.assets.confirmRemove}
+              onCancelRemove={page.editPanel.assets.cancelRemove}
+            />
+          }
+          discardConfirmation={page.editPanel.discardConfirmation}
+          onRetry={page.editPanel.retry}
+          onRequestClose={page.editPanel.requestClose}
+          onDiscard={page.editPanel.discard}
+          onKeepEditing={page.editPanel.keepEditing}
+          onCloseAutoFocus={page.editPanel.onCloseAutoFocus}
+        />
+      )}
     </div>
   );
 }

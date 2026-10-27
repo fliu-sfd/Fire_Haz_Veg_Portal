@@ -98,9 +98,20 @@ SWR configuration:
 - **Saved views.** Views live in `localStorage` (`admin.hazards.views.v1`) as URL params. Every load runs them back through the URL parser, so unknown values fall back to defaults. They keep filters and sort only, never hazards or personal data.
 - **Basemap.** Tiles come from `NEXT_PUBLIC_MAP_TILE_URL` and `NEXT_PUBLIC_MAP_ATTRIBUTION` (see `utils/map-config.ts`) and default to OpenStreetMap for development. Its usage policy discourages heavy production use, so pick a production provider before launch. Never put an API key in a `NEXT_PUBLIC_` variable.
 
+## Users
+
+`/dashboard/users` lists accounts from `GET /admin/users`, and an admin can edit any of them in a side panel. Notes for anyone changing it:
+
+- **Filters.** Search, role and status live in the URL as `q`, `role` and `status` (`active` / `disabled`). The API takes `is_active=true|false`, sent only when a status is chosen. Column choices are stored in `localStorage` under `admin.users.columns.v2`; the key changed when Status and Last sign-in were added, so older saved lists do not hide them.
+- **Edit panel.** Clicking a name or the pencil opens the panel and sets `?user=<id>`. That param is URL-only: `parseUsersQuery` never reads it, so it is not in the list request or its SWR key. The detail is cached under `["admin/user", id]`.
+- **Saving.** The form sends only changed fields (`buildPatch` in `utils/user-form.ts`), after the same cleanup the backend does. Field rules mirror `backend/app/schemas/validators.py`; change both together. Each write puts the returned user in the detail cache and revalidates every cached list page.
+- **Confirmations.** Turning an account off, changing a role, removing a linked property and closing with unsaved edits each ask first. Linked properties save right away, apart from the Save button.
+- **Errors.** `editError` in `utils/errors.ts` puts `email_taken`, `employee_id_taken`, `firefighter_details_required` and `property_not_found` under their field. Other errors show at the top of the panel.
+- **Own account.** Role and Active are locked on the admin's own account. The server enforces this and the last-active-admin rule as well.
+
 ## shadcn/ui
 
-`components.json` configures shadcn/ui (new-york style, Tailwind v4, lucide icons). Added so far: `table`, `input`, `select`, `badge`, `skeleton`, `dropdown-menu`, `sheet`, `tooltip` and `separator`.
+`components.json` configures shadcn/ui (new-york style, Tailwind v4, lucide icons). Added so far: `table`, `input`, `select`, `badge`, `skeleton`, `dropdown-menu`, `sheet`, `tooltip`, `separator`, `alert-dialog` and `switch`.
 
 - `button.tsx` and `card.tsx` in `components/ui/` are the portal's own components and are not shadcn. Do not run `shadcn add button` or `shadcn add card` without `--path`, or the CLI will offer to overwrite them.
 - shadcn's semantic tokens (`primary`, `muted`, `border`, ...) map onto the City palette in `globals.css`. Their default border color applies only to `[data-slot]` elements, so existing pages keep Tailwind's defaults.
