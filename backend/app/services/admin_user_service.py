@@ -16,8 +16,9 @@ from app.schemas.admin import (
     UserListParams,
     UserSortField,
 )
+from app.services.property_service import link_user_to_property, resolve_property
 from app.services.text_search import LIKE_ESCAPE, like_pattern
-from app.services.user_service import get_user_by_email
+from app.services.user_service import PropertyNotFoundError, get_user_by_email
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,10 @@ class CannotChangeOwnAccessError(Exception):
 
 
 class LastAdminError(Exception):
+    pass
+
+
+class AssetsResidentsOnlyError(Exception):
     pass
 
 
@@ -277,4 +282,43 @@ def update_user(
     db.refresh(user)
     # field names only: values such as email and phone stay out of the logs
     logger.info("admin %s updated user %s: %s", admin.id, user.id, ", ".join(changed))
+    return user_detail(user)
+
+
+def _get_resident(db: Session, user_id: uuid.UUID) -> User:
+    user = _get_user(db, user_id)
+    if user.role is not UserRole.RESIDENT:
+        raise AssetsResidentsOnlyError
+    return user
+
+
+def link_asset(db: Session, admin: User, user_id: uuid.UUID, asset_id: str) -> AdminUserDetail:
+    """Link a resident to an asset. Linking one already linked changes nothing."""
+    user = _get_resident(db, user_id)
+    stored_id = resolve_property(db, asset_id)
+    if stored_id is None:
+        raise PropertyNotFoundError
+    if stored_id in {link.asset_id for link in user.resident_assets}:
+        return user_detail(user)
+
+    link_user_to_property(db, user, stored_id)
+    db.commit()
+    db.refresh(user)
+    logger.info("admin %s updated user %s: asset_ids", admin.id, user.id)
+    return user_detail(user)
+
+
+def unlink_asset(db: Session, admin: User, user_id: uuid.UUID, asset_id: str) -> AdminUserDetail:
+    """Remove a resident's link to an asset. Removing one not linked changes nothing."""
+    user = _get_resident(db, user_id)
+    wanted = asset_id.strip().lower()
+    links = [link for link in user.resident_assets if link.asset_id.lower() == wanted]
+    if not links:
+        return user_detail(user)
+
+    for link in links:
+        user.resident_assets.remove(link)
+    db.commit()
+    db.refresh(user)
+    logger.info("admin %s updated user %s: asset_ids", admin.id, user.id)
     return user_detail(user)

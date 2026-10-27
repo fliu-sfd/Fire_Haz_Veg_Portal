@@ -9,6 +9,7 @@ import re
 FULL_NAME_MIN_LENGTH = 2
 FULL_NAME_MAX_LENGTH = 120  # users.full_name column
 EMAIL_MAX_LENGTH = 254
+ASSET_ID_MAX_LENGTH = 32  # resident_assets.asset_id column
 
 # letter runs ([^\W\d_] = any unicode letter) joined by space, apostrophe, hyphen or period:
 # "Mary-Jane O'Neil", "J. R. Smith", "José Núñez"
@@ -31,6 +32,17 @@ def clean_full_name(v: str) -> str:
 def normalize_email(v: object) -> object:
     """Run before EmailStr parsing, so non-strings fall through to its own error."""
     return v.strip().lower() if isinstance(v, str) else v
+
+
+def clean_asset_id(v: str) -> str:
+    v = v.strip().upper()
+    if not v:
+        raise ValueError("Asset ID is required")
+    if len(v) > ASSET_ID_MAX_LENGTH:
+        raise ValueError(f"Asset ID must be at most {ASSET_ID_MAX_LENGTH} characters")
+    if not re.fullmatch(r"[A-Z0-9_-]+", v):
+        raise ValueError("Asset ID may only contain letters, numbers, hyphens and underscores")
+    return v
 
 
 PHONE_MAX_LENGTH = 20  # users.phone column

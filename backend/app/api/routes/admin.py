@@ -1,11 +1,19 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Path, Query, status
 
 from app.api.deps import AdminUser, DbSession
-from app.schemas.admin import AdminUserDetail, AdminUserList, AdminUserUpdate, UserListParams
+from app.schemas.admin import (
+    AdminUserDetail,
+    AdminUserList,
+    AdminUserUpdate,
+    AssetLinkRequest,
+    UserListParams,
+)
+from app.schemas.validators import ASSET_ID_MAX_LENGTH
 from app.services.admin_user_service import (
+    AssetsResidentsOnlyError,
     CannotChangeOwnAccessError,
     EmailTakenError,
     EmployeeIdTakenError,
@@ -15,9 +23,12 @@ from app.services.admin_user_service import (
     UnlinkAssetsFirstError,
     UserNotFoundError,
     get_user_detail,
+    link_asset,
     list_users,
+    unlink_asset,
     update_user,
 )
+from app.services.user_service import PropertyNotFoundError
 
 router = APIRouter(
     prefix="/admin",
@@ -78,6 +89,18 @@ _ERRORS: dict[type[Exception], tuple[int, str, str, str | None]] = {
         "This is the only active admin. Make another user an admin first.",
         None,
     ),
+    AssetsResidentsOnlyError: (
+        status.HTTP_409_CONFLICT,
+        "assets_residents_only",
+        "Only homeowner accounts can have linked properties.",
+        None,
+    ),
+    PropertyNotFoundError: (
+        status.HTTP_404_NOT_FOUND,
+        "property_not_found",
+        "No inspection record has this asset ID.",
+        "asset_id",
+    ),
 }
 
 
@@ -129,5 +152,44 @@ def patch_user(
     """
     try:
         return update_user(db, admin, user_id, payload)
+    except tuple(_ERRORS) as exc:
+        raise _http_error(exc) from None
+
+
+@router.post(
+    "/users/{user_id}/assets",
+    response_model=AdminUserDetail,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "User or asset not found"},
+        status.HTTP_409_CONFLICT: {"description": "User is not a resident"},
+    },
+)
+def post_user_asset(
+    admin: AdminUser, user_id: uuid.UUID, payload: AssetLinkRequest, db: DbSession
+) -> AdminUserDetail:
+    """Link a resident to an asset ID from the inspection data. Administrators only."""
+    try:
+        return link_asset(db, admin, user_id, payload.asset_id)
+    except tuple(_ERRORS) as exc:
+        raise _http_error(exc) from None
+
+
+@router.delete(
+    "/users/{user_id}/assets/{asset_id}",
+    response_model=AdminUserDetail,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "User not found"},
+        status.HTTP_409_CONFLICT: {"description": "User is not a resident"},
+    },
+)
+def delete_user_asset(
+    admin: AdminUser,
+    user_id: uuid.UUID,
+    asset_id: Annotated[str, Path(max_length=ASSET_ID_MAX_LENGTH)],
+    db: DbSession,
+) -> AdminUserDetail:
+    """Unlink a resident from an asset ID. Administrators only."""
+    try:
+        return unlink_asset(db, admin, user_id, asset_id)
     except tuple(_ERRORS) as exc:
         raise _http_error(exc) from None

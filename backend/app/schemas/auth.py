@@ -1,4 +1,3 @@
-import re
 import uuid
 from datetime import datetime
 from typing import Self
@@ -18,7 +17,6 @@ from app.schemas.validators import EMAIL_MAX_LENGTH
 
 PASSWORD_MIN_LENGTH = 12
 PASSWORD_MAX_LENGTH = 128
-ASSET_ID_MAX_LENGTH = 32
 PROPERTY_ADDRESS_MAX_LENGTH = 255
 
 
@@ -81,14 +79,7 @@ class SignupRequest(BaseModel):
     @field_validator("asset_id")
     @classmethod
     def clean_asset_id(cls, v: str) -> str:
-        v = v.strip().upper()
-        if not v:
-            raise ValueError("Asset ID is required")
-        if len(v) > ASSET_ID_MAX_LENGTH:
-            raise ValueError(f"Asset ID must be at most {ASSET_ID_MAX_LENGTH} characters")
-        if not re.fullmatch(r"[A-Z0-9_-]+", v):
-            raise ValueError("Asset ID may only contain letters, numbers, hyphens and underscores")
-        return v
+        return validators.clean_asset_id(v)
 
     @model_validator(mode="after")
     def password_not_personal(self) -> Self:

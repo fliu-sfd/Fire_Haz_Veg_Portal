@@ -154,3 +154,14 @@ class AdminUserUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("Send at least one field to change")
         return self
+
+
+class AssetLinkRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    asset_id: str
+
+    @field_validator("asset_id")
+    @classmethod
+    def clean_asset_id(cls, v: str) -> str:
+        return validators.clean_asset_id(v)
