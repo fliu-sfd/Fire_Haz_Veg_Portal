@@ -53,6 +53,8 @@ class AdminUserOut(BaseModel):
     role: UserRole
     asset_ids: list[str]
     created_at: datetime
+    is_active: bool
+    last_login_at: datetime | None
 
 
 class AdminUserList(BaseModel):

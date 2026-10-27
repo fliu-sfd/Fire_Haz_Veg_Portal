@@ -69,6 +69,8 @@ def list_users(db: Session, params: UserListParams) -> AdminUserList:
             role=u.role,
             asset_ids=sorted(link.asset_id for link in u.resident_assets),
             created_at=u.created_at,
+            is_active=u.is_active,
+            last_login_at=u.last_login_at,
         )
         for u in users
     ]
