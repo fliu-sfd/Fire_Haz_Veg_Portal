@@ -50,11 +50,13 @@ export function UsersView() {
               search={page.searchInput}
               searchMaxLength={SEARCH_MAX_LENGTH}
               role={page.query.role}
+              isActive={page.query.isActive}
               filtersActive={page.filtersActive}
               isRefreshing={page.isRefreshing}
               onSearchChange={page.setSearchInput}
               onSearchClear={page.clearSearch}
               onRoleChange={page.setRole}
+              onStatusChange={page.setStatus}
               onClearFilters={page.clearFilters}
               onRefresh={page.refresh}
               columnsMenu={

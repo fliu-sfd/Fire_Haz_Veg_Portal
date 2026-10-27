@@ -32,6 +32,8 @@ export type AdminUserList = {
 export type UsersQuery = {
   q: string;
   role: UserRole | null;
+  /** null shows every account; true only active ones, false only disabled ones. */
+  isActive: boolean | null;
   sort: UserSortField;
   order: SortOrder;
   limit: number;

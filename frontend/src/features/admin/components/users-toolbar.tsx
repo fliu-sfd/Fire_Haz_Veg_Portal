@@ -4,6 +4,7 @@ import { RefreshCw, Search, X } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StatusFilter } from "@/features/admin/components/status-filter";
 import { toolbarButtonClass } from "@/features/admin/components/toolbar-button";
 import type { UserRole } from "@/features/auth/api";
 import { cn } from "@/lib/utils";
@@ -21,12 +22,14 @@ type UsersToolbarProps = {
   search: string;
   searchMaxLength: number;
   role: UserRole | null;
+  isActive: boolean | null;
   filtersActive: boolean;
   isRefreshing: boolean;
   columnsMenu: ReactNode;
   onSearchChange: (value: string) => void;
   onSearchClear: () => void;
   onRoleChange: (role: UserRole | null) => void;
+  onStatusChange: (isActive: boolean | null) => void;
   onClearFilters: () => void;
   onRefresh: () => void;
 };
@@ -35,12 +38,14 @@ export function UsersToolbar({
   search,
   searchMaxLength,
   role,
+  isActive,
   filtersActive,
   isRefreshing,
   columnsMenu,
   onSearchChange,
   onSearchClear,
   onRoleChange,
+  onStatusChange,
   onClearFilters,
   onRefresh,
 }: UsersToolbarProps) {
@@ -91,6 +96,8 @@ export function UsersToolbar({
           ))}
         </SelectContent>
       </Select>
+
+      <StatusFilter value={isActive} onChange={onStatusChange} />
 
       {filtersActive ? (
         <button

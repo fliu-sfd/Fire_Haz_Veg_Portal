@@ -12,7 +12,7 @@ import { useUrlSearchInput } from "@/hooks/use-url-search-input";
 export function useUsersPage() {
   const router = useRouter();
   const { status: access } = useRequireRole("admin");
-  const { query, setSearch, setRole, toggleSort, setLimit, setPage, resetFilters } = useUsersQueryState();
+  const { query, setSearch, setRole, setStatus, toggleSort, setLimit, setPage, resetFilters } = useUsersQueryState();
   const users = useUsers(access === "allowed" ? query : null);
   const columns = useColumnVisibility(USER_COLUMNS, USER_COLUMNS_STORAGE_KEY);
 
@@ -39,6 +39,7 @@ export function useUsersPage() {
     setSearchInput: search.setInput,
     clearSearch: search.clear,
     setRole,
+    setStatus,
     toggleSort,
     setLimit,
     setPage,

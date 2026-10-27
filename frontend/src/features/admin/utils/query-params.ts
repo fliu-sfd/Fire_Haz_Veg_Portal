@@ -16,9 +16,14 @@ export const SORT_ORDERS: readonly SortOrder[] = ["asc", "desc"];
 export const PAGE_SIZES: readonly number[] = [10, 25, 50, 100];
 export const SEARCH_MAX_LENGTH = 100;
 
+// The page URL says "active" or "disabled"; the API takes is_active=true or false.
+const STATUS_PARAM = { active: true, disabled: false } as const;
+type StatusParam = keyof typeof STATUS_PARAM;
+
 export const DEFAULT_USERS_QUERY: UsersQuery = {
   q: "",
   role: null,
+  isActive: null,
   sort: "created_at",
   order: "desc",
   limit: 25,
@@ -53,11 +58,16 @@ function parsePositiveInt(value: string | null): number | null {
 
 type ReadableParams = { get(name: string): string | null };
 
+function parseStatus(value: string | null): boolean | null {
+  return value !== null && Object.hasOwn(STATUS_PARAM, value) ? STATUS_PARAM[value as StatusParam] : null;
+}
+
 export function parseUsersQuery(params: ReadableParams): UsersQuery {
   const limit = parsePositiveInt(params.get("limit"));
   return {
     q: normalizeSearch(params.get("q") ?? ""),
     role: isUserRole(params.get("role")) ? (params.get("role") as UserRole) : null,
+    isActive: parseStatus(params.get("status")),
     sort: oneOf(SORT_FIELDS, params.get("sort"), DEFAULT_USERS_QUERY.sort),
     order: oneOf(SORT_ORDERS, params.get("order"), DEFAULT_USERS_QUERY.order),
     limit: limit !== null && PAGE_SIZES.includes(limit) ? limit : DEFAULT_USERS_QUERY.limit,
@@ -70,6 +80,7 @@ export function usersQueryToSearchParams(query: UsersQuery): URLSearchParams {
   const params = new URLSearchParams();
   if (query.q) params.set("q", query.q);
   if (query.role) params.set("role", query.role);
+  if (query.isActive !== null) params.set("status", query.isActive ? "active" : "disabled");
   if (query.sort !== DEFAULT_USERS_QUERY.sort) params.set("sort", query.sort);
   if (query.order !== DEFAULT_USERS_QUERY.order) params.set("order", query.order);
   if (query.limit !== DEFAULT_USERS_QUERY.limit) params.set("limit", String(query.limit));
@@ -82,6 +93,8 @@ export function usersQueryToApiParams(query: UsersQuery): URLSearchParams {
   const params = new URLSearchParams();
   if (query.q) params.set("q", query.q);
   if (query.role) params.set("role", query.role);
+  // Sent only when set: the API rejects parameters it does not know, and has no "all" value.
+  if (query.isActive !== null) params.set("is_active", String(query.isActive));
   if (query.sort !== "created_at") params.set("sort", query.sort);
   if (query.order !== "desc") params.set("order", query.order);
   if (query.limit !== 25) params.set("limit", String(query.limit));
@@ -100,5 +113,5 @@ export function nextSort(
 }
 
 export function hasActiveFilters(query: UsersQuery): boolean {
-  return query.q !== "" || query.role !== null;
+  return query.q !== "" || query.role !== null || query.isActive !== null;
 }
