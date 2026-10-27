@@ -46,6 +46,14 @@ class UnlinkAssetsFirstError(Exception):
     pass
 
 
+class CannotChangeOwnAccessError(Exception):
+    pass
+
+
+class LastAdminError(Exception):
+    pass
+
+
 def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
     filters: list[ColumnElement[bool]] = []
     if params.role is not None:
@@ -169,6 +177,27 @@ def _employee_id_taken(db: Session, user: User, employee_id: str) -> bool:
     )
 
 
+def _check_access_change(db: Session, admin: User, user: User, data: AdminUserUpdate) -> None:
+    sent = data.model_fields_set
+    new_role = data.role if "role" in sent else user.role
+    new_active = data.is_active if "is_active" in sent else user.is_active
+    if new_role is user.role and new_active is user.is_active:
+        return
+
+    if user.role is UserRole.ADMIN and user.is_active:
+        # lock every active admin row until commit, so two admins demoting each other
+        # at the same moment are counted one after the other
+        active_admins = db.scalars(
+            select(User.id)
+            .where(User.role == UserRole.ADMIN, User.is_active.is_(True))
+            .with_for_update()
+        ).all()
+        if len(active_admins) <= 1:
+            raise LastAdminError
+    if user.id == admin.id:
+        raise CannotChangeOwnAccessError
+
+
 def _check_rules(db: Session, user: User, data: AdminUserUpdate) -> None:
     sent = data.model_fields_set
     new_role = data.role if "role" in sent else user.role
@@ -228,6 +257,7 @@ def update_user(
     db: Session, admin: User, user_id: uuid.UUID, data: AdminUserUpdate
 ) -> AdminUserDetail:
     user = _get_user(db, user_id)
+    _check_access_change(db, admin, user, data)
     _check_rules(db, user, data)
     changed = _apply(user, data)
     if not changed:

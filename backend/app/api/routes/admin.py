@@ -6,10 +6,12 @@ from fastapi import APIRouter, HTTPException, Query, status
 from app.api.deps import AdminUser, DbSession
 from app.schemas.admin import AdminUserDetail, AdminUserList, AdminUserUpdate, UserListParams
 from app.services.admin_user_service import (
+    CannotChangeOwnAccessError,
     EmailTakenError,
     EmployeeIdTakenError,
     FirefighterDetailsRequiredError,
     FirefighterNotApplicableError,
+    LastAdminError,
     UnlinkAssetsFirstError,
     UserNotFoundError,
     get_user_detail,
@@ -62,6 +64,18 @@ _ERRORS: dict[type[Exception], tuple[int, str, str, str | None]] = {
         status.HTTP_409_CONFLICT,
         "unlink_assets_first",
         "Remove this user's linked properties before changing their role.",
+        None,
+    ),
+    CannotChangeOwnAccessError: (
+        status.HTTP_409_CONFLICT,
+        "cannot_change_own_access",
+        "You can't change your own role or turn off your own account.",
+        None,
+    ),
+    LastAdminError: (
+        status.HTTP_409_CONFLICT,
+        "last_admin",
+        "This is the only active admin. Make another user an admin first.",
         None,
     ),
 }
