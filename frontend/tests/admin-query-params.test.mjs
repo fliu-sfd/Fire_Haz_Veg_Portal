@@ -8,8 +8,10 @@ import {
   pageCount,
   pageToOffset,
   parseUsersQuery,
+  readSelectedUser,
   usersQueryToApiParams,
   usersQueryToSearchParams,
+  withSelectedUser,
 } from "@/features/admin/utils/query-params";
 
 const parse = (search) => parseUsersQuery(new URLSearchParams(search));
@@ -96,4 +98,26 @@ test("is_active is sent to the API only when a status is chosen", () => {
   assert.equal(usersQueryToApiParams({ ...DEFAULT_USERS_QUERY, isActive: true }).get("is_active"), "true");
   assert.equal(usersQueryToApiParams({ ...DEFAULT_USERS_QUERY, isActive: false }).get("is_active"), "false");
   assert.equal(usersQueryToApiParams({ ...DEFAULT_USERS_QUERY, isActive: false }).has("status"), false);
+});
+
+test("the selected user never reaches the list query, its API params or its URL state", () => {
+  const params = new URLSearchParams("q=ada&page=2&user=8f9d2a8e-7b1c-4d7e-9a43-0c2f7f1e5b6a");
+  const query = parseUsersQuery(params);
+  assert.equal("user" in query, false);
+  assert.deepEqual(query, parse("q=ada&page=2"));
+  assert.equal(usersQueryToApiParams(query).has("user"), false);
+  assert.equal(usersQueryToSearchParams(query).has("user"), false);
+});
+
+test("readSelectedUser reads the id and treats blank as none", () => {
+  assert.equal(readSelectedUser(new URLSearchParams("user=abc")), "abc");
+  assert.equal(readSelectedUser(new URLSearchParams("user=%20")), null);
+  assert.equal(readSelectedUser(new URLSearchParams("q=a")), null);
+});
+
+test("withSelectedUser keeps filters and page", () => {
+  const params = new URLSearchParams("q=ada&role=admin&page=3");
+  assert.equal(withSelectedUser(params, "u1"), "q=ada&role=admin&page=3&user=u1");
+  assert.equal(withSelectedUser(new URLSearchParams("q=ada&user=u1&page=3"), null), "q=ada&page=3");
+  assert.equal(params.has("user"), false);
 });

@@ -115,3 +115,21 @@ export function nextSort(
 export function hasActiveFilters(query: UsersQuery): boolean {
   return query.q !== "" || query.role !== null || query.isActive !== null;
 }
+
+/**
+ * The open edit panel's user id. It lives only in the page URL: parseUsersQuery never reads
+ * it, so it can't reach the list request (the API rejects unknown params) or the SWR key.
+ */
+export const SELECTED_USER_PARAM = "user";
+
+export function readSelectedUser(params: ReadableParams): string | null {
+  return params.get(SELECTED_USER_PARAM)?.trim() || null;
+}
+
+/** The page search string with the selected user set or removed, every other param kept. */
+export function withSelectedUser(params: URLSearchParams, id: string | null): string {
+  const next = new URLSearchParams(params);
+  if (id) next.set(SELECTED_USER_PARAM, id);
+  else next.delete(SELECTED_USER_PARAM);
+  return next.toString();
+}
