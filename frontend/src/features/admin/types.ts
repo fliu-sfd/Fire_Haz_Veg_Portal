@@ -1,6 +1,13 @@
 import type { UserRole } from "@/features/auth/api";
 
-export type UserSortField = "full_name" | "email" | "role" | "asset_ids" | "created_at";
+export type UserSortField =
+  | "full_name"
+  | "email"
+  | "role"
+  | "asset_ids"
+  | "created_at"
+  | "last_login_at"
+  | "is_active";
 
 export type SortOrder = "asc" | "desc";
 

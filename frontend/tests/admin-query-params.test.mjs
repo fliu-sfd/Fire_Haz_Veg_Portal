@@ -75,6 +75,8 @@ test("nextSort flips order on the same column", () => {
 test("nextSort starts text columns A to Z and dates newest first", () => {
   assert.deepEqual(nextSort({ sort: "created_at", order: "desc" }, "full_name"), { sort: "full_name", order: "asc" });
   assert.deepEqual(nextSort({ sort: "email", order: "asc" }, "created_at"), { sort: "created_at", order: "desc" });
+  assert.deepEqual(nextSort({ sort: "email", order: "asc" }, "last_login_at"), { sort: "last_login_at", order: "desc" });
+  assert.deepEqual(nextSort({ sort: "email", order: "desc" }, "is_active"), { sort: "is_active", order: "asc" });
 });
 
 test("hasActiveFilters only counts search and role", () => {

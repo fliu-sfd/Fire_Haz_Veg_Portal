@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AssetIdList } from "@/features/admin/components/asset-id-list";
 import { RoleBadge } from "@/features/admin/components/role-badge";
+import { StatusBadge } from "@/features/admin/components/status-badge";
 import type { AdminUser, SortOrder, UserSortField } from "@/features/admin/types";
 import type { ColumnConfig, UserColumnId } from "@/features/admin/utils/columns";
 import { formatDate, formatTimestamp, initials } from "@/features/admin/utils/format";
@@ -25,7 +26,16 @@ const CELLS: Record<UserColumnId, (user: AdminUser) => ReactNode> = {
   ),
   email: (user) => <span className="text-city-dark">{user.email}</span>,
   role: (user) => <RoleBadge role={user.role} />,
+  status: (user) => <StatusBadge isActive={user.isActive} />,
   assetIds: (user) => <AssetIdList ids={user.assetIds} />,
+  lastLoginAt: (user) =>
+    user.lastLoginAt ? (
+      <time dateTime={user.lastLoginAt} title={formatTimestamp(user.lastLoginAt)} className="text-city-dark">
+        {formatDate(user.lastLoginAt)}
+      </time>
+    ) : (
+      <span className="text-muted-foreground">Never</span>
+    ),
   createdAt: (user) => (
     <time dateTime={user.createdAt} title={formatTimestamp(user.createdAt)} className="text-city-dark">
       {formatDate(user.createdAt)}
@@ -37,7 +47,9 @@ const SKELETON_WIDTHS: Record<UserColumnId, string> = {
   name: "w-40",
   email: "w-48",
   role: "w-20",
+  status: "w-16",
   assetIds: "w-28",
+  lastLoginAt: "w-24",
   createdAt: "w-24",
 };
 
@@ -133,7 +145,7 @@ export function UsersTable({
                 </TableRow>
               ))
             : rows.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className={cn(!user.isActive && "bg-city-gray/60 text-muted-foreground")}>
                   {shown.map((column) => (
                     <TableCell key={column.id} className="h-14 px-4">
                       {CELLS[column.id](user)}

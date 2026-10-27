@@ -2,7 +2,15 @@ import type { UserRole } from "@/features/auth/api";
 import type { SortOrder, UserSortField, UsersQuery } from "@/features/admin/types";
 
 export const USER_ROLES: readonly UserRole[] = ["resident", "firefighter", "admin"];
-export const SORT_FIELDS: readonly UserSortField[] = ["full_name", "email", "role", "asset_ids", "created_at"];
+export const SORT_FIELDS: readonly UserSortField[] = [
+  "full_name",
+  "email",
+  "role",
+  "asset_ids",
+  "created_at",
+  "last_login_at",
+  "is_active",
+];
 export const SORT_ORDERS: readonly SortOrder[] = ["asc", "desc"];
 // The backend rejects limit above 100 with a 422.
 export const PAGE_SIZES: readonly number[] = [10, 25, 50, 100];
@@ -87,8 +95,8 @@ export function nextSort(
   field: UserSortField,
 ): Pick<UsersQuery, "sort" | "order"> {
   if (current.sort === field) return { sort: field, order: current.order === "asc" ? "desc" : "asc" };
-  // Dates read best newest first; text columns start A to Z.
-  return { sort: field, order: field === "created_at" ? "desc" : "asc" };
+  // Dates read best newest first; text columns start A to Z, and status starts with Disabled.
+  return { sort: field, order: field === "created_at" || field === "last_login_at" ? "desc" : "asc" };
 }
 
 export function hasActiveFilters(query: UsersQuery): boolean {

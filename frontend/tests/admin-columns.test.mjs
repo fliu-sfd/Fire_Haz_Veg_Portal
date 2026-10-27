@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   USER_COLUMNS,
+  USER_COLUMNS_STORAGE_KEY,
   allColumns,
   canHideColumn,
   defaultVisibleColumns,
@@ -10,7 +11,7 @@ import {
   toggleColumn,
 } from "@/features/admin/utils/columns";
 
-const ALL = ["name", "email", "role", "assetIds", "createdAt"];
+const ALL = ["name", "email", "role", "status", "assetIds", "lastLoginAt", "createdAt"];
 
 test("every column is visible by default", () => {
   assert.deepEqual(defaultVisibleColumns(USER_COLUMNS), ALL);
@@ -18,7 +19,7 @@ test("every column is visible by default", () => {
 
 test("toggling hides and shows a column in config order", () => {
   const hidden = toggleColumn(USER_COLUMNS, ALL, "role");
-  assert.deepEqual(hidden, ["name", "email", "assetIds", "createdAt"]);
+  assert.deepEqual(hidden, ["name", "email", "status", "assetIds", "lastLoginAt", "createdAt"]);
   assert.deepEqual(toggleColumn(USER_COLUMNS, hidden, "role"), ALL);
 });
 
@@ -63,4 +64,8 @@ test("names the sort column only when it is hidden", () => {
   assert.equal(hiddenSortLabel(USER_COLUMNS, ALL, "email"), null);
   assert.equal(hiddenSortLabel(USER_COLUMNS, ["name", "role"], "email"), "Email");
   assert.equal(hiddenSortLabel(USER_COLUMNS, ["name"], "created_at"), "Created");
+});
+
+test("the storage key changed when Status and Last sign-in were added", () => {
+  assert.equal(USER_COLUMNS_STORAGE_KEY, "admin.users.columns.v2");
 });
