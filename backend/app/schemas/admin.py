@@ -16,6 +16,8 @@ class UserSortField(enum.StrEnum):
     ROLE = "role"
     ASSET_IDS = "asset_ids"
     CREATED_AT = "created_at"
+    LAST_LOGIN_AT = "last_login_at"
+    IS_ACTIVE = "is_active"
 
 
 class SortOrder(enum.StrEnum):
@@ -30,6 +32,7 @@ class UserListParams(BaseModel):
 
     q: str | None = Field(None, max_length=SEARCH_MAX_LENGTH)
     role: UserRole | None = None
+    is_active: bool | None = None
     sort: UserSortField = UserSortField.CREATED_AT
     order: SortOrder = SortOrder.DESC
     limit: int = Field(25, ge=1, le=PAGE_MAX_SIZE)

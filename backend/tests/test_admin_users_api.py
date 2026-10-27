@@ -285,6 +285,7 @@ def test_offset_past_end_is_empty(admin_client) -> None:
         ({"sort": "password_hash"}, "sort"),
         ({"order": "sideways"}, "order"),
         ({"role": "homeowner"}, "role"),
+        ({"is_active": "maybe"}, "is_active"),
         ({"q": "x" * 101}, "q"),
         ({"include": "phone"}, "include"),
     ],

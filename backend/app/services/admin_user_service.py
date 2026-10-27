@@ -10,6 +10,8 @@ def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
     filters: list[ColumnElement[bool]] = []
     if params.role is not None:
         filters.append(User.role == params.role)
+    if params.is_active is not None:
+        filters.append(User.is_active.is_(params.is_active))
     if params.q:
         pattern = like_pattern(params.q)
         asset_match = exists().where(
@@ -42,6 +44,11 @@ def _sort_key(field: UserSortField) -> ColumnElement:
             .correlate(User)
             .scalar_subquery()
         )
+    if field is UserSortField.LAST_LOGIN_AT:
+        # never signed in is null, and nulls_last() in list_users keeps it last both ways
+        return User.last_login_at
+    if field is UserSortField.IS_ACTIVE:
+        return User.is_active
     return User.created_at
 
 
