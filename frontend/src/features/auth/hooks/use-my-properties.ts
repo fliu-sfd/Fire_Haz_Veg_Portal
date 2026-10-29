@@ -4,11 +4,14 @@ import useSWR from "swr";
 import { authErrorMessage, getMyProperties } from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 
-/** Mounted only after the resident guard passes; cache entries belong to the account. */
-export function useMyProperties(accountId: string) {
+/**
+ * Mounted only after the resident guard passes; cache entries belong to the account.
+ * Pass null to skip the request, as the profile page does for staff.
+ */
+export function useMyProperties(accountId: string | null) {
   const router = useRouter();
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    ["residents/me/properties", accountId],
+    accountId ? ["residents/me/properties", accountId] : null,
     () => getMyProperties(),
   );
   const redirectTo = error instanceof ApiError
