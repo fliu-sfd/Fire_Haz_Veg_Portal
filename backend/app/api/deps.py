@@ -18,10 +18,10 @@ def get_current_user(request: Request, db: DbSession) -> User:
     token = request.cookies.get(settings.auth_cookie_name)
     if not token:
         raise unauthorized
-    user_id = decode_access_token(token)
-    if user_id is None:
+    claims = decode_access_token(token)
+    if claims is None:
         raise unauthorized
-    user = db.get(User, user_id)
+    user = db.get(User, claims.user_id)
     if user is None or not user.is_active:
         raise unauthorized
     return user

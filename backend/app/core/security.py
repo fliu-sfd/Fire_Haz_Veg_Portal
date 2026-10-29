@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from functools import cache
 
@@ -40,17 +41,29 @@ def create_access_token(user_id: uuid.UUID, expire_minutes: int | None = None) -
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def decode_access_token(token: str) -> uuid.UUID | None:
-    """Return the user id from a valid access token, or None if invalid or expired."""
+@dataclass(frozen=True)
+class TokenClaims:
+    user_id: uuid.UUID
+    # whole seconds, as JWT stores them
+    issued_at: datetime
+    expires_at: datetime
+
+
+def decode_access_token(token: str) -> TokenClaims | None:
+    """Return the claims of a valid access token, or None if invalid or expired."""
     try:
         payload = jwt.decode(
             token,
             settings.jwt_secret_key,
             algorithms=[settings.jwt_algorithm],
-            options={"require": ["sub", "exp"]},
+            options={"require": ["sub", "exp", "iat"]},
         )
         if payload.get("type") != "access":
             return None
-        return uuid.UUID(payload["sub"])
-    except (jwt.InvalidTokenError, ValueError):
+        return TokenClaims(
+            user_id=uuid.UUID(payload["sub"]),
+            issued_at=datetime.fromtimestamp(payload["iat"], UTC),
+            expires_at=datetime.fromtimestamp(payload["exp"], UTC),
+        )
+    except (jwt.InvalidTokenError, ValueError, TypeError):
         return None
