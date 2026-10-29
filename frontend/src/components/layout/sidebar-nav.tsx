@@ -94,21 +94,41 @@ export function AccountAvatar({ fullName, className }: { fullName: string; class
 
 type SidebarAccountProps = {
   account: Account;
+  profileHref: string;
+  isProfileActive: boolean;
   isSigningOut: boolean;
   error?: string;
   onSignOut: () => void;
+  onNavigate?: () => void;
 };
 
-export function SidebarAccount({ account, isSigningOut, error, onSignOut }: SidebarAccountProps) {
+export function SidebarAccount({
+  account,
+  profileHref,
+  isProfileActive,
+  isSigningOut,
+  error,
+  onSignOut,
+  onNavigate,
+}: SidebarAccountProps) {
   return (
     <div className="border-t border-white/15 p-4">
-      <div className="flex items-center gap-3">
+      <Link
+        href={profileHref}
+        onClick={onNavigate}
+        aria-current={isProfileActive ? "page" : undefined}
+        className={cn(
+          "-m-2 flex items-center gap-3 rounded p-2 transition-colors",
+          isProfileActive ? "bg-white/15" : "hover:bg-white/10",
+        )}
+      >
         <AccountAvatar fullName={account.fullName} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{account.fullName}</p>
-          <p className="truncate text-xs text-blue-200">{account.email}</p>
-        </div>
-      </div>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">{account.fullName}</span>
+          <span className="block truncate text-xs text-blue-200">{account.email}</span>
+          <span className="sr-only">, view your profile</span>
+        </span>
+      </Link>
       <button
         type="button"
         disabled={isSigningOut}
