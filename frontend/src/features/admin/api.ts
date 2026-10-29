@@ -9,22 +9,10 @@ import type {
 import { isUserRole, usersQueryToApiParams } from "@/features/admin/utils/query-params";
 import { apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
-import { isCount, isRecord } from "@/lib/api/guards";
+import { isCount, isDate, isOptionalDate, isRecord, isStringList } from "@/lib/api/guards";
 
 const INVALID_LIST = "The user service returned an invalid user list.";
 const INVALID_USER = "The user service returned an invalid user.";
-
-function isDate(value: unknown): value is string {
-  return typeof value === "string" && !Number.isNaN(Date.parse(value));
-}
-
-function isOptionalDate(value: unknown): value is string | null {
-  return value === null || isDate(value);
-}
-
-function isStringList(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
-}
 
 function parseAdminUser(data: unknown): AdminUser {
   if (

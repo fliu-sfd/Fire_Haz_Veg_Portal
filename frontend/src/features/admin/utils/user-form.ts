@@ -1,5 +1,13 @@
 import type { AdminUserDetail, UserUpdateInput } from "@/features/admin/types";
 import type { UserRole } from "@/features/auth/api";
+import {
+  normalizeFullName,
+  normalizePhone,
+  validateFullName,
+  validatePhone,
+} from "@/lib/validation/person";
+
+export { normalizeFullName, normalizePhone, validateFullName, validatePhone };
 
 /** What the edit form holds. Text fields keep what the admin typed until they are sent. */
 export type UserFormValues = {
@@ -17,21 +25,14 @@ export type UserFormField = "fullName" | "email" | "phone" | "employeeId" | "sta
 export type UserFormErrors = Partial<Record<UserFormField, string>>;
 
 // The same limits the backend applies (app/schemas/validators.py).
-const FULL_NAME_MIN_LENGTH = 2;
-const FULL_NAME_MAX_LENGTH = 120;
+// Name and phone rules live in @/lib/validation/person.
 const EMAIL_MAX_LENGTH = 254;
-const PHONE_MAX_LENGTH = 20;
-const PHONE_MIN_DIGITS = 10;
-const PHONE_MAX_DIGITS = 15;
 const EMPLOYEE_ID_MAX_LENGTH = 32;
 const STATION_CODE_MAX_LENGTH = 16;
 const ASSET_ID_MAX_LENGTH = 32;
 
-// Letter runs joined by space, apostrophe, hyphen or period: "Mary-Jane O'Neil", "J. R. Smith".
-const NAME_PATTERN = /^\p{L}+(?:[ '.-]+\p{L}+)*\.?$/u;
 // A practical check only; the backend's email validator has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PATTERN = /^\+?[0-9 ()-]+$/;
 const CODE_PATTERN = /^[A-Z0-9_-]+$/;
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -40,41 +41,16 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Admin",
 };
 
-const collapseSpaces = (value: string) => value.trim().replace(/\s+/g, " ");
-
-export const normalizeFullName = collapseSpaces;
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
-export const normalizePhone = (value: string): string | null => collapseSpaces(value) || null;
 export const normalizeEmployeeId = (value: string) => value.trim().toUpperCase();
 export const normalizeStationCode = (value: string): string | null => value.trim().toUpperCase() || null;
 export const normalizeAssetId = (value: string) => value.trim().toUpperCase();
-
-export function validateFullName(value: string): string | undefined {
-  const name = normalizeFullName(value);
-  if (!name) return "Enter a full name.";
-  if (name.length < FULL_NAME_MIN_LENGTH) return `Full name must be at least ${FULL_NAME_MIN_LENGTH} characters.`;
-  if (name.length > FULL_NAME_MAX_LENGTH) return `Full name must be at most ${FULL_NAME_MAX_LENGTH} characters.`;
-  if (!NAME_PATTERN.test(name)) return "Use only letters, spaces, apostrophes, hyphens, and periods.";
-  return undefined;
-}
 
 export function validateEmail(value: string): string | undefined {
   const email = normalizeEmail(value);
   if (!email) return "Enter an email address.";
   if (email.length > EMAIL_MAX_LENGTH) return `Email must be at most ${EMAIL_MAX_LENGTH} characters.`;
   if (!EMAIL_PATTERN.test(email)) return "Enter a valid email address, like name@example.com.";
-  return undefined;
-}
-
-export function validatePhone(value: string): string | undefined {
-  const phone = normalizePhone(value);
-  if (phone === null) return undefined;
-  if (phone.length > PHONE_MAX_LENGTH) return `Phone must be at most ${PHONE_MAX_LENGTH} characters.`;
-  if (!PHONE_PATTERN.test(phone)) return "Use only digits, spaces, hyphens, parentheses, and a leading +.";
-  const digits = phone.replace(/\D/g, "").length;
-  if (digits < PHONE_MIN_DIGITS || digits > PHONE_MAX_DIGITS) {
-    return `Phone must have ${PHONE_MIN_DIGITS} to ${PHONE_MAX_DIGITS} digits.`;
-  }
   return undefined;
 }
 

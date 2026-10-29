@@ -42,6 +42,7 @@ erDiagram
         bool is_active
         bool email_verified
         timestamptz last_login_at
+        timestamptz password_changed_at "null = never changed"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -111,6 +112,7 @@ or stored.
 | `0002` | `users`, `resident_profiles`, `firefighter_profiles` |
 | `0003` | `assessments`, `crew_photos` |
 | `0004` | `resident_assets`; make resident ZIP optional because the imported address is stored as one value |
+| `0005` | `users.password_changed_at`; tokens issued before it are rejected |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
 

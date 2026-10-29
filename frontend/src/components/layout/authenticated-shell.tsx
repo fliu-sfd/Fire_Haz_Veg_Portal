@@ -1,10 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 import { useSWRConfig } from "swr";
 import { AccountAvatar, SidebarAccount, SidebarBrand, SidebarNav } from "@/components/layout/sidebar-nav";
+import { PROFILE_HREF } from "@/components/layout/nav-config";
 import { useNavItems } from "@/components/layout/use-nav-items";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -62,8 +64,17 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
 
   const homeHref = homePathFor(account.role);
   const closeDrawer = () => setIsDrawerOpen(false);
-  const accountPanel = (
-    <SidebarAccount account={account} isSigningOut={isSigningOut} error={error} onSignOut={handleSignOut} />
+  const isProfileActive = pathname === PROFILE_HREF;
+  const accountPanel = (onNavigate?: () => void) => (
+    <SidebarAccount
+      account={account}
+      profileHref={PROFILE_HREF}
+      isProfileActive={isProfileActive}
+      isSigningOut={isSigningOut}
+      error={error}
+      onSignOut={handleSignOut}
+      onNavigate={onNavigate}
+    />
   );
 
   return (
@@ -75,7 +86,7 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
             <SidebarNav groups={navGroups} pathname={pathname} />
           </div>
         </div>
-        {accountPanel}
+        {accountPanel()}
       </aside>
 
       <div className="min-w-0 flex-1 md:ml-64">
@@ -106,13 +117,23 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-8">
                 <SidebarNav groups={navGroups} pathname={pathname} onNavigate={closeDrawer} />
               </div>
-              {accountPanel}
+              {accountPanel(closeDrawer)}
             </SheetContent>
           </Sheet>
           <div className="min-w-0 flex-1">
             <SidebarBrand href={homeHref} />
           </div>
-          <AccountAvatar fullName={account.fullName} className="size-9 text-xs ring-0" />
+          <Link
+            href={PROFILE_HREF}
+            aria-label="Your profile"
+            aria-current={isProfileActive ? "page" : undefined}
+            className="shrink-0 rounded-full"
+          >
+            <AccountAvatar
+              fullName={account.fullName}
+              className={isProfileActive ? "size-9 text-xs ring-2 ring-white" : "size-9 text-xs ring-0"}
+            />
+          </Link>
         </div>
         <main id="main-content" className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:py-10">
           <TooltipProvider>{children}</TooltipProvider>

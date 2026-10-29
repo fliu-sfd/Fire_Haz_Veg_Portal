@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import decode_access_token
+from app.core.security import TokenClaims, decode_access_token
 from app.db.session import get_db
 from app.models import User, UserRole
 
@@ -18,13 +18,24 @@ def get_current_user(request: Request, db: DbSession) -> User:
     token = request.cookies.get(settings.auth_cookie_name)
     if not token:
         raise unauthorized
-    user_id = decode_access_token(token)
-    if user_id is None:
+    claims = decode_access_token(token)
+    if claims is None:
         raise unauthorized
-    user = db.get(User, user_id)
+    user = db.get(User, claims.user_id)
     if user is None or not user.is_active:
         raise unauthorized
+    if _issued_before_password_change(claims, user):
+        raise unauthorized
+    # lets a route reissue the cookie with the same lifetime (remember me or not)
+    request.state.token_claims = claims
     return user
+
+
+def _issued_before_password_change(claims: TokenClaims, user: User) -> bool:
+    if user.password_changed_at is None:
+        return False
+    # iat is whole seconds, so a token made in the same second as the change is still valid
+    return claims.issued_at < user.password_changed_at.replace(microsecond=0)
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]

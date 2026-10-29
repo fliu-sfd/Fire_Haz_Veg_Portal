@@ -13,10 +13,8 @@ from pydantic import (
 
 from app.models import UserRole
 from app.schemas import validators
-from app.schemas.validators import EMAIL_MAX_LENGTH
+from app.schemas.validators import EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH
 
-PASSWORD_MIN_LENGTH = 12
-PASSWORD_MAX_LENGTH = 128
 PROPERTY_ADDRESS_MAX_LENGTH = 255
 
 
@@ -44,21 +42,7 @@ class SignupRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def check_password_strength(cls, v: str) -> str:
-        if len(v) < PASSWORD_MIN_LENGTH:
-            raise ValueError(f"Password must be at least {PASSWORD_MIN_LENGTH} characters")
-        if len(v) > PASSWORD_MAX_LENGTH:
-            raise ValueError(f"Password must be at most {PASSWORD_MAX_LENGTH} characters")
-        if v != v.strip():
-            raise ValueError("Password must not start or end with whitespace")
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain an uppercase letter")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must contain a lowercase letter")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain a digit")
-        if not any(not c.isalnum() and not c.isspace() for c in v):
-            raise ValueError("Password must contain a special character")
-        return v
+        return validators.check_password_strength(v)
 
     @field_validator("property_address")
     @classmethod
@@ -83,12 +67,7 @@ class SignupRequest(BaseModel):
 
     @model_validator(mode="after")
     def password_not_personal(self) -> Self:
-        lowered = self.password.lower()
-        personal = [self.email.split("@")[0], *self.full_name.split()]
-        for part in personal:
-            part = part.strip("'.-").lower()
-            if len(part) >= 3 and part in lowered:
-                raise ValueError("Password must not contain your name or email")
+        validators.check_password_not_personal(self.password, self.email, self.full_name)
         return self
 
 

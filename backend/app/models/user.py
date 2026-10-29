@@ -58,6 +58,8 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
     email_verified: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # tokens issued before this are rejected; null means never changed
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
