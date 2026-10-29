@@ -1,14 +1,46 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import type { PropertySummary, UserRole } from "@/features/auth/api";
 import { useMyProperties } from "@/features/auth/hooks/use-my-properties";
-import { usePasswordForm } from "@/features/profile/hooks/use-password-form";
+import { usePasswordForm, type PasswordFormModel } from "@/features/profile/hooks/use-password-form";
 import { useProfile } from "@/features/profile/hooks/use-profile";
 import { useProfileActions } from "@/features/profile/hooks/use-profile-actions";
-import { useProfileForm } from "@/features/profile/hooks/use-profile-form";
-import { accountFacts, joinedLabel } from "@/features/profile/utils/display";
+import { useProfileForm, type ProfileFormModel } from "@/features/profile/hooks/use-profile-form";
+import type { FirefighterDetails } from "@/features/profile/types";
+import { accountFacts, joinedLabel, type AccountFact } from "@/features/profile/utils/display";
+
+type Loading = { status: "loading" };
+
+type LoadError = {
+  status: "error";
+  loadError: string;
+  isRetrying: boolean;
+  retry: () => void;
+};
+
+type Ready = {
+  status: "ready";
+  header: { fullName: string; role: UserRole; joined: string };
+  email: string;
+  details: ProfileFormModel;
+  password: PasswordFormModel;
+  /** Only for homeowners. */
+  properties: {
+    items: PropertySummary[] | undefined;
+    errorMessage?: string;
+    isLoading: boolean;
+    isRetrying: boolean;
+    retry: () => void;
+  } | null;
+  /** Only for firefighters; null inside means no details are on file. */
+  department: { details: FirefighterDetails | null } | null;
+  accountFacts: AccountFact[];
+};
+
+export type ProfilePageModel = Loading | LoadError | Ready;
 
 /** Everything the profile page shows, for any signed-in role. The API decides whose data it is. */
-export function useProfilePage() {
+export function useProfilePage(): ProfilePageModel {
   const router = useRouter();
   const { profile, errorMessage, isUnauthorized, isLoading, isRetrying, retry } = useProfile();
   const actions = useProfileActions();
@@ -26,17 +58,12 @@ export function useProfilePage() {
   }, [isUnauthorized, router]);
 
   if (!profile) {
-    return {
-      status: errorMessage ? ("error" as const) : ("loading" as const),
-      loadError: errorMessage,
-      isLoading,
-      isRetrying,
-      retry,
-    };
+    if (!errorMessage || isLoading) return { status: "loading" };
+    return { status: "error", loadError: errorMessage, isRetrying, retry: () => void retry() };
   }
 
   return {
-    status: "ready" as const,
+    status: "ready",
     header: { fullName: profile.fullName, role: profile.role, joined: joinedLabel(profile.createdAt) },
     email: profile.email,
     details,
@@ -48,12 +75,10 @@ export function useProfilePage() {
             errorMessage: properties.errorMessage,
             isLoading: properties.isLoading,
             isRetrying: properties.isValidating && Boolean(properties.errorMessage),
-            retry: properties.refresh,
+            retry: () => void properties.refresh(),
           }
         : null,
-    department: profile.role === "firefighter" ? profile.firefighter : null,
+    department: profile.role === "firefighter" ? { details: profile.firefighter } : null,
     accountFacts: accountFacts(profile),
   };
 }
-
-export type ProfilePageModel = ReturnType<typeof useProfilePage>;

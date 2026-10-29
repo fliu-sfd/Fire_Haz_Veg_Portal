@@ -6,14 +6,18 @@ import { AuthenticatedShell } from "@/components/layout/authenticated-shell";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SWRProvider } from "@/components/providers/swr-provider";
 
+// Pages under these paths get the sidebar shell, which sends signed-out visitors to sign in.
+const AUTHENTICATED_PREFIXES = ["/homeowner", "/dashboard", "/profile"];
+
 type SiteShellProps = {
   children: ReactNode;
 };
 
 export function SiteShell({ children }: SiteShellProps) {
   const pathname = usePathname();
-  const isAuthenticatedPage =
-    pathname.startsWith("/homeowner") || pathname.startsWith("/dashboard");
+  const isAuthenticatedPage = AUTHENTICATED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 
   if (isAuthenticatedPage) {
     return (
