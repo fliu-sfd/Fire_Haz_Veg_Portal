@@ -40,6 +40,20 @@ services:
       - photos:/app/photo_storage
       - ${NAOS_DATA_DIR:-./data}:/data:ro
 
+  frontend:
+    build: ./frontend
+    container_name: fhv-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+
 volumes:
   pgdata:
   photos:
