@@ -26,6 +26,8 @@ def get_current_user(request: Request, db: DbSession) -> User:
         raise unauthorized
     if _issued_before_password_change(claims, user):
         raise unauthorized
+    # lets a route reissue the cookie with the same lifetime (remember me or not)
+    request.state.token_claims = claims
     return user
 
 
