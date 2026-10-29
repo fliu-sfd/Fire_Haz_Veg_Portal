@@ -61,6 +61,26 @@ documentation is available at `http://127.0.0.1:8000/docs`.
 - `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user (401 bad credentials, 403 disabled)
 - `POST /api/v1/auth/logout` - clears the auth cookie (204)
 - `GET /api/v1/auth/me` - current user from the cookie (401 if not logged in)
+- `GET /api/v1/me/profile` - any signed-in role (401 otherwise). The signed-in user's own
+  account: `id`, `full_name`, `email`, `phone`, `role`, `email_verified`, `created_at`,
+  `last_login_at`, sorted `asset_ids` (empty for staff) and `firefighter` (`employee_id`,
+  `station_code`, only for firefighters) or `null`. Never the password hash
+- `PATCH /api/v1/me/profile` - any signed-in role. Changes your own `full_name` and `phone`
+  (`null` clears it). Only fields in the body change; an empty body or any other field
+  (`email`, `role`, ...) is a 422. Returns the updated profile
+- `POST /api/v1/me/password` - any signed-in role. Body `{current_password, new_password}`.
+  The new password follows the signup rules. Returns 204 and a fresh auth cookie with the
+  same lifetime as the current sign-in (remember me or not). Errors:
+
+  | Status | Code | Field | When |
+  |---|---|---|---|
+  | 400 | `wrong_current_password` | `current_password` | Current password is wrong (400, not 401, so the session stays) |
+  | 422 | `password_unchanged` | `new_password` | New password equals the current one |
+  | 422 | `password_personal` | `new_password` | New password contains your name or email |
+
+  The `/me` routes only ever act on the user in the cookie; no user id is accepted. Each
+  successful write logs the user id and the changed field names (`full_name`, `phone`,
+  `password`), never the values.
 - `GET /api/v1/admin/users` - administrators only (401 / 403 otherwise). Lists users with
   `q` (name, email or asset ID), `role`, `is_active` (`true` / `false`), `sort`
   (`full_name`, `email`, `role`, `asset_ids`, `created_at`, `last_login_at`, `is_active`),
@@ -98,8 +118,11 @@ documentation is available at `http://127.0.0.1:8000/docs`.
   changed field names (never the values).
 
   **Sessions:** `get_current_user` reads the user row on every request, so a disabled user
-  gets 401 on their next request and a role change applies on the next request too. Do not
-  add token tracking or revocation for this.
+  gets 401 on their next request and a role change applies on the next request too.
+  Changing a password sets `users.password_changed_at`, and any token issued before it gets
+  401, so other devices are signed out. JWT `iat` is whole seconds, so the comparison uses
+  `password_changed_at` truncated to the second. The browser that made the change gets a
+  new cookie in the same response and stays signed in.
 - `GET /api/v1/admin/hazards` - administrators only. Hazards for the map: one item per
   `asset_id` with an `ISSUES` row in the latest season, at the centroid of its issue points,
   with the latest issue row's crew, date, comments and address. Repeatable `state`
