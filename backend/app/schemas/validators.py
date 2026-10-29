@@ -10,6 +10,8 @@ FULL_NAME_MIN_LENGTH = 2
 FULL_NAME_MAX_LENGTH = 120  # users.full_name column
 EMAIL_MAX_LENGTH = 254
 ASSET_ID_MAX_LENGTH = 32  # resident_assets.asset_id column
+PASSWORD_MIN_LENGTH = 12
+PASSWORD_MAX_LENGTH = 128
 
 # letter runs ([^\W\d_] = any unicode letter) joined by space, apostrophe, hyphen or period:
 # "Mary-Jane O'Neil", "J. R. Smith", "José Núñez"
@@ -93,3 +95,31 @@ def clean_station_code(v: str | None) -> str | None:
     if len(v) > STATION_CODE_MAX_LENGTH:
         raise ValueError(f"Station code must be at most {STATION_CODE_MAX_LENGTH} characters")
     return v or None
+
+
+def check_password_strength(v: str) -> str:
+    if len(v) < PASSWORD_MIN_LENGTH:
+        raise ValueError(f"Password must be at least {PASSWORD_MIN_LENGTH} characters")
+    if len(v) > PASSWORD_MAX_LENGTH:
+        raise ValueError(f"Password must be at most {PASSWORD_MAX_LENGTH} characters")
+    if v != v.strip():
+        raise ValueError("Password must not start or end with whitespace")
+    if not any(c.isupper() for c in v):
+        raise ValueError("Password must contain an uppercase letter")
+    if not any(c.islower() for c in v):
+        raise ValueError("Password must contain a lowercase letter")
+    if not any(c.isdigit() for c in v):
+        raise ValueError("Password must contain a digit")
+    if not any(not c.isalnum() and not c.isspace() for c in v):
+        raise ValueError("Password must contain a special character")
+    return v
+
+
+def check_password_not_personal(password: str, email: str, full_name: str) -> None:
+    """Reject a password that contains the email's local part or a name of 3+ letters."""
+    lowered = password.lower()
+    personal = [email.split("@")[0], *full_name.split()]
+    for part in personal:
+        part = part.strip("'.-").lower()
+        if len(part) >= 3 and part in lowered:
+            raise ValueError("Password must not contain your name or email")
