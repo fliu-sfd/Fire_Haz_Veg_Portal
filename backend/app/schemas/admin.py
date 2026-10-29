@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 
 from app.models import UserRole
 from app.schemas import validators
+from app.schemas.firefighter import FirefighterOut
 from app.schemas.validators import EMAIL_MAX_LENGTH
 
 SEARCH_MAX_LENGTH = 100
@@ -68,11 +69,6 @@ class AdminUserList(BaseModel):
     total: int
     limit: int
     offset: int
-
-
-class FirefighterOut(BaseModel):
-    employee_id: str
-    station_code: str | None
 
 
 class AdminUserDetail(BaseModel):
