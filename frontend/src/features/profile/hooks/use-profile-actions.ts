@@ -1,6 +1,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useSWRConfig } from "swr";
+import type { Account } from "@/features/auth/api";
+import { CURRENT_ACCOUNT_KEY } from "@/features/auth/hooks/use-current-account";
 import { changePassword as postPasswordChange, updateProfile } from "@/features/profile/api";
 import { PROFILE_KEY } from "@/features/profile/hooks/use-profile";
 import type { PasswordChangeInput, Profile, ProfileUpdateInput } from "@/features/profile/types";
@@ -30,6 +32,12 @@ export function useProfileActions() {
         const profile = await updateProfile(patch);
         // The response is the full profile, so the page needs no second request.
         await mutate(PROFILE_KEY, profile, { revalidate: false });
+        // The sidebar reads the shared /auth/me entry, so its name changes without a reload.
+        await mutate<Account>(
+          CURRENT_ACCOUNT_KEY,
+          (account) => (account ? { ...account, fullName: profile.fullName } : account),
+          { revalidate: false },
+        );
         return profile;
       }),
     [mutate, run],
