@@ -4,6 +4,7 @@ from app.api.routes import (
     admin,
     admin_hazards,
     admin_settings,
+    admin_submissions,
     assessments,
     auth,
     health,
@@ -22,3 +23,4 @@ api_router.include_router(admin_settings.router)
 api_router.include_router(me.router)
 api_router.include_router(assessments.router)
 api_router.include_router(submissions.router)
+api_router.include_router(admin_submissions.router)
