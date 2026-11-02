@@ -61,6 +61,11 @@ documentation is available at `http://127.0.0.1:8000/docs`.
 - `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user (401 bad credentials, 403 disabled)
 - `POST /api/v1/auth/logout` - clears the auth cookie (204)
 - `GET /api/v1/auth/me` - current user from the cookie (401 if not logged in)
+- `GET /api/v1/assessments/{asset_id}` - latest-season inspection details and safe crew-photo
+  metadata. Residents can view their linked assets; firefighters and administrators can view
+  any asset. Missing and unauthorized assets both return 404
+- `GET /api/v1/assessments/photos/{photo_id}` - protected crew-photo file. Uses the same
+  property access rules and does not reveal whether an unauthorized photo exists
 - `GET /api/v1/me/profile` - any signed-in role (401 otherwise). The signed-in user's own
   account: `id`, `full_name`, `email`, `phone`, `role`, `email_verified`, `created_at`,
   `last_login_at`, sorted `asset_ids` (empty for staff) and `firefighter` (`employee_id`,
