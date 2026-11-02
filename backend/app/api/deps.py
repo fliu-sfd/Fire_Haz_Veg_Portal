@@ -7,8 +7,17 @@ from app.core.config import settings
 from app.core.security import TokenClaims, decode_access_token
 from app.db.session import get_db
 from app.models import User, UserRole
+from app.storage import LocalDiskStore, PhotoStore
 
 DbSession = Annotated[Session, Depends(get_db)]
+
+
+def get_photo_store() -> PhotoStore:
+    """Build the configured private photo store for an API request."""
+    return LocalDiskStore(settings.photo_storage_dir)
+
+
+PhotoStoreDep = Annotated[PhotoStore, Depends(get_photo_store)]
 
 
 def get_current_user(request: Request, db: DbSession) -> User:
