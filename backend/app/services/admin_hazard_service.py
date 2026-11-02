@@ -17,7 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Session
 
-from app.models import Assessment, CrewPhoto
+from app.models import Assessment, CrewPhoto, Submission
 from app.schemas.admin_hazards import (
     AttentionReason,
     HazardFilterOptions,
@@ -63,9 +63,19 @@ def age_in_days(inspected_at: datetime | None, today: date) -> int | None:
     return max(0, (today - inspected_at.astimezone(REPORTING_ZONE).date()).days)
 
 
-def derive_state() -> ColumnElement[str]:
-    # every hazard stays open until the admin review workflow stores pending and closed states
-    return literal(HazardState.OPEN.value)
+def derive_state(submission_status: ColumnElement[str | None]) -> ColumnElement[str]:
+    # Surface waiting evidence without clearing the original crew finding.
+    return case(
+        (
+            func.bool_or(submission_status == "pending_review"),
+            literal(HazardState.PENDING_REVIEW.value),
+        ),
+        (
+            func.bool_and(func.coalesce(submission_status == "approved", False)),
+            literal(HazardState.CLOSED.value),
+        ),
+        else_=literal(HazardState.OPEN.value),
+    )
 
 
 def property_type_of(site_type: ColumnElement[str | None]) -> ColumnElement[str]:
@@ -93,6 +103,20 @@ def _hazards(season: int) -> Subquery:
         .group_by(CrewPhoto.assessment_id)
         .subquery()
     )
+    latest_submission_status = (
+        select(Submission.status)
+        .where(Submission.assessment_id == Assessment.id)
+        .order_by(Submission.created_at.desc(), Submission.id)
+        .limit(1)
+        .scalar_subquery()
+    )
+    # State covers every issue point, even one with no map coordinates.
+    asset_states = (
+        select(Assessment.asset_id, derive_state(latest_submission_status).label("state"))
+        .where(Assessment.season_year == season, Assessment.status == ISSUES_STATUS)
+        .group_by(Assessment.asset_id)
+        .subquery()
+    )
     issue_rows = (
         select(
             Assessment.asset_id,
@@ -100,6 +124,7 @@ def _hazards(season: int) -> Subquery:
             Assessment.inspected_at,
             Assessment.comments,
             Assessment.location,
+            latest_submission_status.label("submission_status"),
             func.coalesce(photos.c.photo_count, 0).label("photo_count"),
             property_type_of(Assessment.site_type).label("property_type"),
             func.row_number()
@@ -128,7 +153,7 @@ def _hazards(season: int) -> Subquery:
     return (
         select(
             issue_rows.c.asset_id,
-            derive_state().label("state"),
+            func.max(asset_states.c.state).label("state"),
             latest(issue_rows.c.property_type).label("property_type"),
             latest(issue_rows.c.crew_code).label("crew_code"),
             latest(issue_rows.c.inspected_at).label("inspected_at"),
@@ -137,6 +162,9 @@ def _hazards(season: int) -> Subquery:
             cast(func.sum(issue_rows.c.photo_count), Integer).label("photo_count"),
             func.ST_Y(centroid).label("latitude"),
             func.ST_X(centroid).label("longitude"),
+        )
+        .select_from(
+            issue_rows.join(asset_states, asset_states.c.asset_id == issue_rows.c.asset_id)
         )
         .group_by(issue_rows.c.asset_id)
         .subquery("hazards")

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -27,6 +28,7 @@ class InspectionPointOut(BaseModel):
     inspection_type: str | None
     site_address: str | None
     photos: list[CrewPhotoOut]
+    submission_status: Literal["pending_review", "approved", "rejected"] | None = None
 
 
 class PropertyAssessmentOut(BaseModel):
