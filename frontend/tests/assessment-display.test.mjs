@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { hasIssues, inspectionDate, nextStep, statusLabel } from "@/features/assessments/utils/display";
+import { hasIssues, inspectionDate, inspectionProgress, nextStep, propertyProgress, statusLabel } from "@/features/assessments/utils/display";
 
 const inspection = {
   id: "inspection-1",
@@ -37,4 +37,20 @@ test("nextStep relies on crew notes and does not invent missing instructions", (
   assert.match(nextStep(inspection), /inspection notes/);
   assert.match(nextStep({ ...inspection, comments: null }), /Contact Fire Prevention/);
   assert.match(nextStep({ ...inspection, status: "NO ISSUES" }), /No corrective work/);
+});
+
+test("a saved pending submission completes the homeowner step while keeping department verification pending", () => {
+  const submitted = { ...inspection, submissionStatus: "pending_review" };
+  assert.equal(inspectionProgress(submitted), "pending_review");
+  assert.match(nextStep(submitted), /submission step is complete/);
+  assert.match(nextStep(submitted), /verification is pending/);
+  assert.equal(submitted.status, "ISSUES");
+});
+
+test("property progress still requires action if another inspection has no evidence", () => {
+  const assessment = { inspections: [{ ...inspection, submissionStatus: "pending_review" }, inspection] };
+  assert.equal(propertyProgress(assessment), "action_needed");
+  assert.equal(propertyProgress({ inspections: [assessment.inspections[0]] }), "pending_review");
+  assert.equal(propertyProgress({ inspections: [{ ...inspection, submissionStatus: "rejected" }] }), "action_needed");
+  assert.equal(propertyProgress({ inspections: [{ ...inspection, submissionStatus: "approved" }] }), "approved");
 });

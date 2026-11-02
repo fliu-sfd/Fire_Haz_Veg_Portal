@@ -44,6 +44,7 @@ function parseInspection(value: unknown): InspectionPoint {
     !isNullableString(value.inspection_type) ||
     !isNullableString(value.site_address) ||
     !Array.isArray(value.photos)
+    || !(value.submission_status == null || ["pending_review", "approved", "rejected"].includes(String(value.submission_status)))
   ) {
     throw invalidAssessment();
   }
@@ -55,6 +56,7 @@ function parseInspection(value: unknown): InspectionPoint {
     inspectionType: value.inspection_type,
     siteAddress: value.site_address,
     photos: value.photos.map(parsePhoto),
+    submissionStatus: value.submission_status as InspectionPoint["submissionStatus"] ?? null,
   };
 }
 

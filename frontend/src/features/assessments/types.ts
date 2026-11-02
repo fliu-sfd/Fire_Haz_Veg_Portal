@@ -13,6 +13,7 @@ export type InspectionPoint = {
   inspectionType: string | null;
   siteAddress: string | null;
   photos: CrewPhoto[];
+  submissionStatus: "pending_review" | "approved" | "rejected" | null;
 };
 
 export type PropertyAssessment = {
