@@ -3,16 +3,16 @@
 Draft · November 2, 2026 · Story #51 / Task #75
 
 This is the separate guide for an **Admin** account. Sign in using
-[C01](account.md#c01--sign-in). You need an existing active administrator account;
+[C01](account.md#c01--sign-in). You need an existing active administrator account
+(see [A07](#a07--create-an-administrator-account--available));
 homeowner self-registration does not grant administrator access. After signing
-in, open **Users** or **Hazard map** under **Admin** in navigation. A firefighter
-account does not have those permissions.
+in, open **Users** or **Hazard map** under **Admin** in navigation.
 
 ## A01 — Find an account — Available
 
 1. Select **Users** to open `/dashboard/users`.
 2. Use **Search by name, email, or asset ID** to locate an account.
-3. Narrow the list with the role selector (**All roles**, **Resident**, **Firefighter**, **Admin**) and status selector (**All statuses**, **Active**, **Disabled**).
+3. Narrow the list with the role selector (**All roles**, **Resident**, **Admin**) and status selector (**All statuses**, **Active**, **Disabled**).
 4. Use table headings to sort and pagination to move through results. Use the column menu if you need additional account details.
 5. Select the user's name or pencil action to open the edit panel.
 
@@ -27,7 +27,7 @@ Screenshot A01: pending Users list, search, role/status filters and pagination.
 
 1. Open the account through A01 and confirm the selected name and email.
 2. Update **Full name**, **Email** or **Phone** as needed. A changed email becomes the user's sign-in email; tell them the new value through your normal department process.
-3. Change **Role** only when authorized. If changing to Firefighter, supply the required employee ID and any applicable station code. Remove linked homeowner properties first if the role change requires it.
+3. Change **Role** only when authorized. Remove a homeowner's linked properties (A04) before making them an administrator.
 4. Select **Save changes**. Confirm a role change when prompted with **Change role**.
 5. Check for **Saved**. Select **Cancel** to close without saving pending details; if prompted, choose whether to discard them or keep editing.
 
@@ -40,8 +40,6 @@ the original sprint proposal; this guide describes the current screen.
 | Message | What to do |
 | --- | --- |
 | “Another account already uses this email.” | Use the correct, unique email. |
-| “Enter an employee ID to make this user a firefighter.” | Supply the department employee ID. |
-| “Another firefighter already has this employee ID.” | Check which account should own that ID. |
 | “Remove this user's linked properties before changing their role.” | Check the intended access change before following A04. |
 | “You can't change your own role or turn off your own account.” | Have another authorized administrator manage access if needed. |
 | “This is the only active admin. Make another user an admin before changing this account.” | Preserve an active administrator before retrying. |
@@ -133,21 +131,21 @@ shown before saving.
 
 Screenshot A06: pending Views menu, save form and applied saved view.
 
-## A07 — Create a staff account — Planned (#65)
+## A07 — Create an administrator account — Available
 
-No administrator account-creation form is present in the reviewed build. Do
-not use the prototype staff registration page as a working replacement.
+There is no account-creation form in the portal. An administrator comes from one
+of two places:
 
-1. After release, open **Users** and its planned **New user** action.
-2. Enter name, email, Firefighter or Admin role, and a starting password that satisfies the portal's password rules.
-3. Submit and confirm that the new account appears with the intended role.
-4. Have the staff member sign in and follow [C03](account.md#c03--change-your-password) to replace the starting password, using the department's agreed account handoff process.
+- **An existing homeowner account.** Follow A02 to change its **Role** to **Admin**,
+  after removing any linked properties.
+- **The command line.** The first administrator is created this way, by a developer
+  with access to the server. See "Create the first admin" in `backend/README.md`.
 
-Expected result after release: an active staff account is created. Homeowners
-continue to self-register with Asset IDs. A duplicate email must be refused.
-Final fields, confirmations and exact errors await the implementation.
+Expected result: the account appears in **Users** with the **Admin** role and can
+sign in using [C01](account.md#c01--sign-in). An email already in use is refused and
+nothing changes. Homeowners continue to self-register with Asset IDs.
 
-Screenshot A07: placeholder for the released New user form and duplicate-email error.
+No screenshot: the command line step has no portal screen, and A02 covers the role change.
 
 ## A08 — Review homeowner fix submissions — Planned (#39, #38, #44)
 
@@ -161,7 +159,7 @@ Expected result after release: approval moves that issue to Closed; sending it
 back returns it to Open with the reason visible to the homeowner. The decision
 records who acted and when. The original inspection result stays unchanged.
 A second decision on the same submission must be refused; refresh if another
-administrator has already reviewed it. Firefighters cannot make these decisions.
+administrator has already reviewed it.
 
 Exact queue labels, decision confirmations, required-reason errors and concurrent
 review errors must be copied from the released screens. No email or text alert

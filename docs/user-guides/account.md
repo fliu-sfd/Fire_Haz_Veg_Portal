@@ -2,7 +2,7 @@
 
 Draft · November 2, 2026 · Available unless stated otherwise.
 
-These instructions apply to homeowners, firefighters and administrators.
+These instructions apply to homeowners and administrators.
 Return to your [role guide](README.md) for the actions specific to your account.
 
 ## C01 — Sign in
@@ -15,7 +15,7 @@ Before you start: you need an active account and its email and password.
 4. Select **Sign in securely** and wait for the page to finish loading.
 
 Expected result: a homeowner reaches **Connected properties** on `/homeowner`.
-A firefighter or administrator reaches **Department portal** on `/dashboard`.
+An administrator reaches **Department portal** on `/dashboard`.
 
 | Message | What to do |
 | --- | --- |
@@ -36,7 +36,6 @@ Expected result: **Saved** appears after a successful save. Before saving, chang
 fields produce **You have unsaved changes**. Email is read-only on your own
 profile; contact the department if it needs correction. A homeowner also sees
 **Your properties** and can select **Go to my homeowner page** to open assessments.
-A firefighter can view their department details but cannot edit them here.
 
 | Message | What to do |
 | --- | --- |
