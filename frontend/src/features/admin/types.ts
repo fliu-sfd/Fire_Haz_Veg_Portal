@@ -40,11 +40,6 @@ export type UsersQuery = {
   page: number;
 };
 
-export type FirefighterDetails = {
-  employeeId: string;
-  stationCode: string | null;
-};
-
 export type AdminUserDetail = {
   id: string;
   fullName: string;
@@ -56,8 +51,6 @@ export type AdminUserDetail = {
   createdAt: string;
   lastLoginAt: string | null;
   assetIds: string[];
-  /** Kept after a firefighter changes role, so it is reused if they return. */
-  firefighter: FirefighterDetails | null;
 };
 
 /** Only the fields present are sent. `phone: null` clears the phone. */
@@ -67,5 +60,4 @@ export type UserUpdateInput = Partial<{
   phone: string | null;
   role: UserRole;
   isActive: boolean;
-  firefighter: FirefighterDetails;
 }>;

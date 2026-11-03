@@ -7,7 +7,6 @@ import { FormAlert } from "@/components/ui/form-alert";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/features/admin/components/confirm-dialog";
-import { FirefighterFields } from "@/features/admin/components/firefighter-fields";
 import { RoleBadge } from "@/features/admin/components/role-badge";
 import { StatusBadge } from "@/features/admin/components/status-badge";
 import { UserAccessFields } from "@/features/admin/components/user-access-fields";
@@ -185,16 +184,6 @@ export function UserEditSheet({
                 onRoleChange={(role) => form.setField("role", role)}
                 onActiveChange={(isActive) => form.setField("isActive", isActive)}
               />
-
-              {form.showFirefighterFields ? (
-                <FirefighterFields
-                  values={values}
-                  errors={form.errors}
-                  disabled={form.isSaving}
-                  onChange={form.setField}
-                  onBlur={form.blurField}
-                />
-              ) : null}
 
               {user.role === "resident" ? linkedAssets : null}
 

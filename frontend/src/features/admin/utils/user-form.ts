@@ -16,19 +16,15 @@ export type UserFormValues = {
   phone: string;
   role: UserRole;
   isActive: boolean;
-  employeeId: string;
-  stationCode: string;
 };
 
-export type UserFormField = "fullName" | "email" | "phone" | "employeeId" | "stationCode";
+export type UserFormField = "fullName" | "email" | "phone";
 
 export type UserFormErrors = Partial<Record<UserFormField, string>>;
 
 // The same limits the backend applies (app/schemas/validators.py).
 // Name and phone rules live in @/lib/validation/person.
 const EMAIL_MAX_LENGTH = 254;
-const EMPLOYEE_ID_MAX_LENGTH = 32;
-const STATION_CODE_MAX_LENGTH = 16;
 const ASSET_ID_MAX_LENGTH = 32;
 
 // A practical check only; the backend's email validator has the final say.
@@ -41,8 +37,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
-export const normalizeEmployeeId = (value: string) => value.trim().toUpperCase();
-export const normalizeStationCode = (value: string): string | null => value.trim().toUpperCase() || null;
 export const normalizeAssetId = (value: string) => value.trim().toUpperCase();
 
 export function validateEmail(value: string): string | undefined {
@@ -50,22 +44,6 @@ export function validateEmail(value: string): string | undefined {
   if (!email) return "Enter an email address.";
   if (email.length > EMAIL_MAX_LENGTH) return `Email must be at most ${EMAIL_MAX_LENGTH} characters.`;
   if (!EMAIL_PATTERN.test(email)) return "Enter a valid email address, like name@example.com.";
-  return undefined;
-}
-
-export function validateEmployeeId(value: string): string | undefined {
-  const id = normalizeEmployeeId(value);
-  if (!id) return "Enter an employee ID.";
-  if (id.length > EMPLOYEE_ID_MAX_LENGTH) return `Employee ID must be at most ${EMPLOYEE_ID_MAX_LENGTH} characters.`;
-  if (!CODE_PATTERN.test(id)) return "Use only letters, numbers, hyphens, and underscores.";
-  return undefined;
-}
-
-export function validateStationCode(value: string): string | undefined {
-  const code = normalizeStationCode(value);
-  if (code !== null && code.length > STATION_CODE_MAX_LENGTH) {
-    return `Station code must be at most ${STATION_CODE_MAX_LENGTH} characters.`;
-  }
   return undefined;
 }
 
@@ -84,16 +62,7 @@ export function initialFormValues(user: AdminUserDetail): UserFormValues {
     phone: user.phone ?? "",
     role: user.role,
     isActive: user.isActive,
-    employeeId: user.firefighter?.employeeId ?? "",
-    stationCode: user.firefighter?.stationCode ?? "",
   };
-}
-
-function firefighterChanged(initial: UserFormValues, current: UserFormValues): boolean {
-  return (
-    normalizeEmployeeId(current.employeeId) !== normalizeEmployeeId(initial.employeeId) ||
-    normalizeStationCode(current.stationCode) !== normalizeStationCode(initial.stationCode)
-  );
 }
 
 /** The fields to send: only what changed, compared after the same cleanup the backend does. */
@@ -110,25 +79,11 @@ export function buildPatch(initial: UserFormValues, current: UserFormValues): Us
   }
   if (current.role !== initial.role) patch.role = current.role;
   if (current.isActive !== initial.isActive) patch.isActive = current.isActive;
-  // Firefighter details only apply to firefighters. Unchanged ones are left out, so a
-  // returning firefighter keeps their saved profile.
-  if (current.role === "firefighter" && firefighterChanged(initial, current)) {
-    patch.firefighter = {
-      employeeId: normalizeEmployeeId(current.employeeId),
-      stationCode: normalizeStationCode(current.stationCode),
-    };
-  }
   return patch;
 }
 
 export function isDirty(initial: UserFormValues, current: UserFormValues): boolean {
   return Object.keys(buildPatch(initial, current)).length > 0;
-}
-
-/** Firefighter fields are checked only when they will be sent or are newly required. */
-function checksFirefighter(initial: UserFormValues, current: UserFormValues): boolean {
-  if (current.role !== "firefighter") return false;
-  return initial.role !== "firefighter" || firefighterChanged(initial, current);
 }
 
 export function validateField(field: UserFormField, values: UserFormValues): string | undefined {
@@ -139,19 +94,14 @@ export function validateField(field: UserFormField, values: UserFormValues): str
       return validateEmail(values.email);
     case "phone":
       return validatePhone(values.phone);
-    case "employeeId":
-      return validateEmployeeId(values.employeeId);
-    case "stationCode":
-      return validateStationCode(values.stationCode);
   }
 }
 
-export function validateForm(initial: UserFormValues, current: UserFormValues): UserFormErrors {
+export function validateForm(values: UserFormValues): UserFormErrors {
   const fields: UserFormField[] = ["fullName", "email", "phone"];
-  if (checksFirefighter(initial, current)) fields.push("employeeId", "stationCode");
   const errors: UserFormErrors = {};
   for (const field of fields) {
-    const error = validateField(field, current);
+    const error = validateField(field, values);
     if (error) errors[field] = error;
   }
   return errors;

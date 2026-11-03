@@ -33,14 +33,11 @@ export type EditError = { field?: EditErrorField; message: string };
 
 const CODE_ERRORS: Record<string, EditError> = {
   email_taken: { field: "email", message: "Another account already uses this email." },
-  employee_id_taken: { field: "employeeId", message: "Another firefighter already has this employee ID." },
-  firefighter_details_required: { field: "employeeId", message: "Enter an employee ID to make this user a firefighter." },
   property_not_found: { field: "assetId", message: "No inspection record has this asset ID. Check it and try again." },
   user_not_found: { message: "This user no longer exists. Close the panel and refresh the list." },
   last_admin: { message: "This is the only active admin. Make another user an admin before changing this account." },
   unlink_assets_first: { message: "Remove this user's linked properties before changing their role." },
   cannot_change_own_access: { message: "You can't change your own role or turn off your own account." },
-  firefighter_not_applicable: { message: "Firefighter details only apply to firefighter accounts." },
   assets_residents_only: { message: "Only homeowner accounts can have linked properties." },
 };
 
@@ -49,8 +46,6 @@ const BODY_FIELDS: Record<string, EditErrorField> = {
   full_name: "fullName",
   email: "email",
   phone: "phone",
-  employee_id: "employeeId",
-  station_code: "stationCode",
   asset_id: "assetId",
 };
 

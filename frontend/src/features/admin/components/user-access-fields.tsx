@@ -35,7 +35,6 @@ export function UserAccessFields({ role, isActive, isSelf, disabled, onRoleChang
         label="Role"
         value={role}
         disabled={locked}
-        hint={isSelf ? undefined : "Firefighter details are asked for when the role is Firefighter."}
         onChange={(event) => onRoleChange(event.target.value as UserRole)}
       >
         {USER_ROLES.map((value) => (
