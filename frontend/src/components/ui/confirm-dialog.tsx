@@ -10,7 +10,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Confirmation } from "@/features/admin/utils/user-form";
+
+export type Confirmation = {
+  title: string;
+  description: string;
+  actionLabel: string;
+  destructive: boolean;
+};
 
 type ConfirmDialogProps = {
   /** The dialog is open while this is set. */

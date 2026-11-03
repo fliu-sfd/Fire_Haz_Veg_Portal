@@ -1,3 +1,4 @@
+import type { Confirmation } from "@/components/ui/confirm-dialog";
 import type { AdminUserDetail, UserUpdateInput } from "@/features/admin/types";
 import type { UserRole } from "@/features/auth/api";
 import { normalizeAssetId, validateAssetId } from "@/lib/validation/asset-id";
@@ -8,6 +9,7 @@ import {
   validatePhone,
 } from "@/lib/validation/person";
 
+export type { Confirmation };
 export { normalizeAssetId, normalizeFullName, normalizePhone, validateAssetId, validateFullName, validatePhone };
 
 /** What the edit form holds. Text fields keep what the admin typed until they are sent. */
@@ -96,13 +98,6 @@ export function validateForm(values: UserFormValues): UserFormErrors {
   }
   return errors;
 }
-
-export type Confirmation = {
-  title: string;
-  description: string;
-  actionLabel: string;
-  destructive: boolean;
-};
 
 /** Saving a role change or turning an account off asks first. Other edits save directly. */
 export function saveConfirmation(name: string, initial: UserFormValues, patch: UserUpdateInput): Confirmation | null {
