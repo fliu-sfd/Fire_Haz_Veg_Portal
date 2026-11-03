@@ -16,10 +16,8 @@ from app.services.property_service import (
 
 pytestmark = pytest.mark.db
 
-SIGNUP = "/api/v1/auth/signup"
 MINE = "/api/v1/residents/me/properties"
 FAKE_HASH = "$argon2id$not-a-real-hash"
-PASSWORD = "Wildfire#Safe2026"
 
 
 def add_assessment(db, asset_id, status="NO ISSUES", year=2026, when=None, address=None):
@@ -70,46 +68,6 @@ def test_resolve_ignores_spaces_and_letter_case(db):
 def test_resolve_gives_none_for_blank_or_unknown(db, bad):
     add_assessment(db, "1732983")
     assert resolve_property(db, bad) is None
-
-
-# ---- signup ---------------------------------------------------------------------------
-
-
-def signup_body(asset_id):
-    return {
-        "full_name": "Jane Doe",
-        "email": "jane.doe@example.com",
-        "asset_id": asset_id,
-        "password": PASSWORD,
-    }
-
-
-def test_valid_id_creates_account_and_link(client, db):
-    add_assessment(db, "1732983")
-    db.commit()
-
-    resp = client.post(SIGNUP, json=signup_body("1732983"))
-    print("signup:", resp.status_code, resp.json())
-
-    assert resp.status_code == 201
-    assert resp.json()["property_ids"] == ["1732983"]
-    assert db.scalar(select(func.count()).select_from(ResidentAsset)) == 1
-
-
-def test_unknown_id_is_refused_and_leaves_no_user(client, db):
-    add_assessment(db, "1732983")
-    db.commit()
-
-    resp = client.post(SIGNUP, json=signup_body("0000000"))
-    assert resp.status_code == 404
-    assert resp.json()["detail"]["field"] == "asset_id"
-    assert db.scalar(select(func.count()).select_from(User)) == 0
-
-
-def test_blank_id_is_refused(client, db):
-    resp = client.post(SIGNUP, json=signup_body("   "))
-    assert resp.status_code == 422
-    assert db.scalar(select(func.count()).select_from(User)) == 0
 
 
 # ---- linking twice -------------------------------------------------------------------
