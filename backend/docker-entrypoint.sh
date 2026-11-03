@@ -1,23 +1,16 @@
 #!/bin/sh
 # Runs every time the api container starts:
-#   1. wait for the database and apply migrations
+#   1. wait for the database, then apply migrations once (a failed migration stops here)
 #   2. load the NAOS inspection file, if there is one (safe to repeat)
 #   3. start the API
 set -eu
 
 cd "${APP_DIR:-/app}"
 
+python -m app.cli.wait_for_db
+
 echo "[entrypoint] applying database migrations"
-tries=0
-until python -m alembic upgrade head; do
-  tries=$((tries + 1))
-  if [ "$tries" -ge 30 ]; then
-    echo "[entrypoint] database is not reachable, giving up" >&2
-    exit 1
-  fi
-  echo "[entrypoint] database not ready yet, retrying in 2s ($tries/30)"
-  sleep 2
-done
+python -m alembic upgrade head
 
 if [ "${AUTO_IMPORT:-true}" = "true" ]; then
   data_dir="${NAOS_DATA_DIR:-/data}"
