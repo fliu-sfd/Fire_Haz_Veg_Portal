@@ -10,38 +10,56 @@ For signing in, changing your details/password and signing out, follow the
 numbered [shared account instructions](account.md). Read the
 [portal limitations](README.md#what-the-portal-does-not-do) before starting.
 
-## H01 — Find your Asset ID and create an account — Available
+## H01 — Create an account — Available
 
-1. Find the **Asset ID** printed on your assessment door tag. This is the Property ID used by the portal. Copy it exactly; do not substitute your street address or an inspection-point number. The precise printed location on the tag still needs confirmation against a real tag.
-2. Open the portal and select **Create homeowner account** to open `/sign-up/homeowner`.
-3. Enter **Full name**, **Email address** and **Asset ID**. **Property address** is optional.
-4. Enter **Create a password** and **Confirm password**. Use at least 12 characters with upper- and lowercase letters, a number and a symbol; both entries must match. Follow any additional validation shown by the form.
-5. Select **Create homeowner account** and wait for registration to finish.
+You do not need your door tag to create an account.
 
-Expected result: the portal signs you in and opens your homeowner page. Your
-Asset ID has been checked against the City's imported assessment data and
-linked to the new account. An address alone cannot establish that link.
+1. Open the portal and select **Create homeowner account** to open `/sign-up/homeowner`.
+2. Enter **Full name** and **Email address**.
+3. Enter **Create a password** and **Confirm password**. Use at least 12 characters with upper- and lowercase letters, a number and a symbol; both entries must match. Follow any additional validation shown by the form.
+4. Select **Create homeowner account** and wait for registration to finish.
+
+Expected result: the portal signs you in and opens your homeowner page, which
+shows **No properties on your account yet.** Follow H02 to add your property.
 
 | Message under “We could not create your account” | What to do |
 | --- | --- |
 | “Passwords do not match.” | Re-enter matching passwords. This can also appear beside Confirm password. |
 | “An account with this email already exists.” | Use Sign in if this is your account. |
-| “We could not find that Asset ID. Check the number on your door tag.” | Follow H02 below. |
 
-Screenshot H01: pending real door-tag example and registration screen; confirm the tag label before adding an annotated image.
+Screenshot H01: pending registration screen.
 
-## H02 — If your Asset ID is not accepted — Available
+## H02 — Add or remove a property — Available
 
-1. Compare the entry with the door tag, including every letter and digit, and correct typing mistakes.
-2. Submit the registration form again with the corrected ID.
-3. If **We could not find that Asset ID. Check the number on your door tag.** persists, contact the Scottsdale Fire Department using the contact details supplied with your notice. Have the tag and ID ready. Do not guess another property's ID.
+To add a property:
 
-Expected result: a valid ID permits registration. A rejected ID does not create
-an account. The department may need to check whether the inspection data has
-been loaded; the error alone does not prove the door tag is wrong. No support
-email address or phone number has been confirmed for this guide.
+1. Find the **Asset ID** printed on your assessment door tag. This is the Property ID used by the portal. Copy it exactly; do not substitute your street address or an inspection-point number. The precise printed location on the tag still needs confirmation against a real tag.
+2. On your homeowner page, enter it under **Asset ID** and select **Add property**. Letter case and extra spaces do not matter.
+3. Repeat for each property you own.
 
-Screenshot H02: pending rejected-ID message on the actual registration form.
+Expected result: **Added** and the Asset ID appear, and the property gets a card
+under **Connected properties**. The Asset ID was checked against the City's
+imported assessment data.
+
+| Message | What to do |
+| --- | --- |
+| “We could not find that Asset ID. Check the number on your door tag.” | Compare the entry with the tag, including every letter and digit. If it persists, contact the Scottsdale Fire Department using the contact details supplied with your notice. Have the tag and ID ready. Do not guess another property's ID. |
+| “This property is already on your account.” | Nothing more is needed; the property is already listed. |
+| “You can link up to 25 properties. Contact the Scottsdale Fire Department if you need more.” | Contact the department, or remove a property you no longer need. |
+
+The department may need to check whether the inspection data has been loaded;
+the error alone does not prove the door tag is wrong. No support email address
+or phone number has been confirmed for this guide.
+
+To remove a property:
+
+1. Select **Remove** on its card.
+2. Select **Remove property** to confirm, or **Cancel** to keep it.
+
+Expected result: the card disappears. Inspection records are not changed, and you
+can add the property again later with the same Asset ID.
+
+Screenshot H02: pending add form with a rejected-ID message, and the remove confirmation.
 
 ## H03 — See your connected properties — Available
 
@@ -55,10 +73,8 @@ inspection recorded a concern; **No issues found** means the latest result
 reported none; **Not inspected yet** means no result is available. These are
 inspection results, not confirmation that an administrator has approved a fix.
 
-If **No properties are linked to this account yet.** appears, contact the
-department. If **We could not load your properties** appears, read the error
-and select **Try again**. To link another property, contact the department as
-directed on Profile; there is no homeowner self-service linking action here.
+If **No properties on your account yet.** appears, follow H02. If **We could not load your properties** appears, read the error
+and select **Try again**.
 
 Screenshot H03: pending connected-property cards and empty/error states.
 

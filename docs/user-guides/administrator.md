@@ -143,7 +143,7 @@ of two places:
 
 Expected result: the account appears in **Users** with the **Admin** role and can
 sign in using [C01](account.md#c01--sign-in). An email already in use is refused and
-nothing changes. Homeowners continue to self-register with Asset IDs.
+nothing changes. Homeowners continue to self-register and add their own Asset IDs.
 
 No screenshot: the command line step has no portal screen, and A02 covers the role change.
 
