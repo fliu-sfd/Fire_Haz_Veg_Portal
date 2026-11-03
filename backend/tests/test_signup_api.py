@@ -93,6 +93,14 @@ def test_invalid_signup_returns_422(client, db, overrides: dict, field: str) -> 
     assert db.scalar(select(User)) is None
 
 
+@pytest.mark.parametrize("role", ["resident", "admin", "firefighter"])
+def test_signup_rejects_any_sent_role(client, db, role: str) -> None:
+    add_assessment(db)
+    resp = client.post(URL, json=payload(role=role))
+    assert resp.status_code == 422
+    assert db.scalar(select(User)) is None
+
+
 def test_signup_rejects_unknown_asset_id_and_creates_nothing(client, db) -> None:
     add_assessment(db)
     resp = client.post(URL, json=payload(asset_id="ZZ-9999"))

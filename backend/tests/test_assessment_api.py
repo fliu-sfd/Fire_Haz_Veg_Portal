@@ -149,6 +149,16 @@ def test_admin_can_open_any_asset(client, db):
     assert client.get(DETAIL.format(asset_id="ASSET-1")).status_code == 200
 
 
+def test_resident_cannot_open_another_residents_asset(client, db):
+    add_assessment(db, "ASSET-1")
+    add_user(db, "owner@example.com", assets=["ASSET-1"])
+    stranger = add_user(db, "stranger@example.com", assets=["OTHER-ASSET"])
+    db.commit()
+    sign_in(client, stranger)
+
+    assert client.get(DETAIL.format(asset_id="ASSET-1")).status_code == 404
+
+
 def test_unknown_and_not_linked_assets_have_the_same_response(client, db):
     add_assessment(db, "ASSET-1")
     resident = add_user(db, "resident@example.com", assets=["OTHER-ASSET"])

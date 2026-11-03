@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import select, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from app.models import ResidentAsset, ResidentProfile, User, UserRole
 
@@ -11,6 +11,20 @@ FAKE_HASH = "$2b$12$notarealhashjustfortestingxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 def make_user(email="jane@example.com", role=UserRole.RESIDENT, **kw):
     return User(email=email, password_hash=FAKE_HASH, full_name="Jane Doe", role=role, **kw)
+
+
+def test_there_are_exactly_two_roles():
+    assert {role.value for role in UserRole} == {"resident", "admin"}
+
+
+def test_database_refuses_any_other_role(db):
+    with pytest.raises(DBAPIError, match="invalid input value for enum user_role"):
+        db.execute(
+            text(
+                "INSERT INTO users (email, password_hash, full_name, role) "
+                "VALUES ('frank@example.com', 'x', 'Frank Ortiz', 'firefighter')"
+            )
+        )
 
 
 def test_new_user_gets_defaults(db):
