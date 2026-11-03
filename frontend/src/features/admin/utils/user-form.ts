@@ -1,5 +1,6 @@
 import type { AdminUserDetail, UserUpdateInput } from "@/features/admin/types";
 import type { UserRole } from "@/features/auth/api";
+import { normalizeAssetId, validateAssetId } from "@/lib/validation/asset-id";
 import {
   normalizeFullName,
   normalizePhone,
@@ -7,7 +8,7 @@ import {
   validatePhone,
 } from "@/lib/validation/person";
 
-export { normalizeFullName, normalizePhone, validateFullName, validatePhone };
+export { normalizeAssetId, normalizeFullName, normalizePhone, validateAssetId, validateFullName, validatePhone };
 
 /** What the edit form holds. Text fields keep what the admin typed until they are sent. */
 export type UserFormValues = {
@@ -23,13 +24,11 @@ export type UserFormField = "fullName" | "email" | "phone";
 export type UserFormErrors = Partial<Record<UserFormField, string>>;
 
 // The same limits the backend applies (app/schemas/validators.py).
-// Name and phone rules live in @/lib/validation/person.
+// Name and phone rules live in @/lib/validation/person, Asset ID rules in @/lib/validation/asset-id.
 const EMAIL_MAX_LENGTH = 254;
-const ASSET_ID_MAX_LENGTH = 32;
 
 // A practical check only; the backend's email validator has the final say.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CODE_PATTERN = /^[A-Z0-9_-]+$/;
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   resident: "Resident",
@@ -37,21 +36,12 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
-export const normalizeAssetId = (value: string) => value.trim().toUpperCase();
 
 export function validateEmail(value: string): string | undefined {
   const email = normalizeEmail(value);
   if (!email) return "Enter an email address.";
   if (email.length > EMAIL_MAX_LENGTH) return `Email must be at most ${EMAIL_MAX_LENGTH} characters.`;
   if (!EMAIL_PATTERN.test(email)) return "Enter a valid email address, like name@example.com.";
-  return undefined;
-}
-
-export function validateAssetId(value: string): string | undefined {
-  const id = normalizeAssetId(value);
-  if (!id) return "Enter an asset ID.";
-  if (id.length > ASSET_ID_MAX_LENGTH) return `Asset ID must be at most ${ASSET_ID_MAX_LENGTH} characters.`;
-  if (!CODE_PATTERN.test(id)) return "Use only letters, numbers, hyphens, and underscores.";
   return undefined;
 }
 
