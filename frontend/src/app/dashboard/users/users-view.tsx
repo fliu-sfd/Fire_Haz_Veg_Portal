@@ -37,7 +37,7 @@ export function UsersView() {
       <header>
         <p className="text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">Admin</p>
         <h1 className="mt-2 text-3xl font-light tracking-tight text-charcoal sm:text-4xl">Users</h1>
-        <p className="mt-2 text-city-dark">Search residents and staff, and review their roles and linked asset IDs.</p>
+        <p className="mt-2 text-city-dark">Search residents and admins, and review their roles and linked asset IDs.</p>
       </header>
 
       <section

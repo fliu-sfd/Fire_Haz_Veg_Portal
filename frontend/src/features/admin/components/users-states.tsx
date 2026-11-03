@@ -36,7 +36,7 @@ export function NoMatchingUsers({ onClearFilters }: { onClearFilters: () => void
 export function NoUsers() {
   return (
     <StateMessage icon={<Users aria-hidden="true" className="size-6" />} title="No users yet">
-      Accounts appear here once residents or staff sign up.
+      Accounts appear here once residents sign up.
     </StateMessage>
   );
 }

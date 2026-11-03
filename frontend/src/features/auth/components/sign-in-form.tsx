@@ -73,7 +73,7 @@ export function SignInForm() {
       </Button>
 
       <p className="text-center text-xs leading-5 text-city-dark">
-        Homeowners and authorized staff use the same secure sign-in.
+        Homeowners and administrators use the same secure sign-in.
       </p>
     </form>
   );

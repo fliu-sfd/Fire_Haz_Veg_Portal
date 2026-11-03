@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Department portal",
-  description: "Secure access for authorized fire-prevention personnel.",
+  description: "Secure access for authorized administrators.",
 };
 
 export default function DashboardPage() {
@@ -16,13 +16,13 @@ export default function DashboardPage() {
           </svg>
         </div>
         <p className="mt-8 text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">Department portal</p>
-        <h1 className="mt-3 text-4xl font-light tracking-tight text-charcoal sm:text-5xl">Authorized personnel access</h1>
+        <h1 className="mt-3 text-4xl font-light tracking-tight text-charcoal sm:text-5xl">Authorized admin access</h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-city-dark">
-          Sign in with your department account to manage vegetation assessments, review homeowner updates, and continue active cases.
+          Sign in with your admin account to manage vegetation assessments, review homeowner updates, and continue active cases.
         </p>
-        <Link href="/sign-in" className="mt-8 inline-flex rounded bg-denim px-5 py-3 font-bold text-white transition-colors hover:bg-deep-blue">Staff sign in</Link>
+        <Link href="/sign-in" className="mt-8 inline-flex rounded bg-denim px-5 py-3 font-bold text-white transition-colors hover:bg-deep-blue">Admin sign in</Link>
         <div className="mt-10 border-t border-city-light pt-6 text-sm leading-6 text-city-dark">
-          Need department access? Contact your administrator for an invitation or registration code.
+          Need admin access? Contact a current administrator.
         </div>
       </div>
     </div>
