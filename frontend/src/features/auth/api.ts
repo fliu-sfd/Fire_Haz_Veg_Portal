@@ -15,8 +15,6 @@ export type Account = {
 export type HomeownerSignup = {
   full_name: string;
   email: string;
-  property_address?: string;
-  asset_id: string;
   password: string;
 };
 
@@ -61,11 +59,10 @@ function parseAccount(data: unknown): Account {
 }
 
 export async function registerHomeowner(payload: HomeownerSignup): Promise<Account> {
-  const { property_address, ...requiredFields } = payload;
-  const address = property_address?.trim();
+  const { full_name, email, password } = payload;
   return parseAccount(await apiRequest<unknown>("/auth/signup", {
     method: "POST",
-    body: JSON.stringify({ ...requiredFields, ...(address ? { property_address: address } : {}) }),
+    body: JSON.stringify({ full_name, email, password }),
   }));
 }
 
