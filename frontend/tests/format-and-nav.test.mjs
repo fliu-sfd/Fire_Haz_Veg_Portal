@@ -42,8 +42,7 @@ test("admins see the admin group", () => {
   );
 });
 
-test("firefighters and residents do not see the admin group", () => {
-  assert.deepEqual(navGroupsFor(groups, "firefighter").map((group) => group.id), ["general"]);
+test("residents do not see the admin group", () => {
   const resident = navGroupsFor(groups, "resident");
   assert.deepEqual(resident.map((group) => group.id), ["general"]);
   assert.equal(resident[0].items[0].href, "/homeowner");
@@ -57,9 +56,9 @@ test("the deepest matching nav item is active", () => {
   assert.equal(activeNavHref("/dashboards", hrefs), undefined);
 });
 
-test("areaRedirect keeps residents and staff in their own areas", () => {
+test("areaRedirect keeps residents and admins in their own areas", () => {
   assert.equal(areaRedirect("resident", "/dashboard/users"), "/homeowner");
   assert.equal(areaRedirect("admin", "/homeowner"), "/dashboard");
-  assert.equal(areaRedirect("firefighter", "/dashboard/users"), null);
+  assert.equal(areaRedirect("admin", "/dashboard/users"), null);
   assert.equal(areaRedirect("resident", "/homeowner"), null);
 });

@@ -8,11 +8,9 @@ import {
   saveConfirmation,
   validateAssetId,
   validateEmail,
-  validateEmployeeId,
   validateForm,
   validateFullName,
   validatePhone,
-  validateStationCode,
 } from "@/features/admin/utils/user-form";
 
 const detail = {
@@ -26,18 +24,12 @@ const detail = {
   createdAt: "2026-10-01T15:30:00Z",
   lastLoginAt: null,
   assetIds: ["1732983"],
-  firefighter: null,
 };
 
 const initial = initialFormValues(detail);
 
-test("initial values fill blanks for missing phone and firefighter details", () => {
+test("initial values fill a blank for a missing phone", () => {
   assert.deepEqual(initialFormValues({ ...detail, phone: null }), { ...initial, phone: "" });
-  assert.equal(initial.employeeId, "");
-  assert.equal(initial.stationCode, "");
-  const firefighter = initialFormValues({ ...detail, firefighter: { employeeId: "E1", stationCode: null } });
-  assert.equal(firefighter.employeeId, "E1");
-  assert.equal(firefighter.stationCode, "");
 });
 
 // --- buildPatch ---
@@ -69,24 +61,6 @@ test("buildPatch sends role and status changes", () => {
   });
 });
 
-test("buildPatch sends firefighter details only for firefighters", () => {
-  const typed = { ...initial, employeeId: " e-200 ", stationCode: "617a" };
-  assert.deepEqual(buildPatch(initial, typed), {});
-  assert.deepEqual(buildPatch(initial, { ...typed, role: "firefighter" }), {
-    role: "firefighter",
-    firefighter: { employeeId: "E-200", stationCode: "617A" },
-  });
-});
-
-test("buildPatch leaves out unchanged firefighter details", () => {
-  const former = initialFormValues({ ...detail, role: "admin", firefighter: { employeeId: "E1", stationCode: "616C" } });
-  assert.deepEqual(buildPatch(former, { ...former, role: "firefighter" }), { role: "firefighter" });
-  assert.deepEqual(buildPatch(former, { ...former, role: "firefighter", stationCode: "" }), {
-    role: "firefighter",
-    firefighter: { employeeId: "E1", stationCode: null },
-  });
-});
-
 // --- validators (same rules as app/schemas/validators.py) ---
 
 const cases = {
@@ -102,14 +76,6 @@ const cases = {
     valid: ["", "  ", "4805550100", "(480) 555-0100", "+1 480 555 0100", "+44 20 7946 0958"],
     invalid: ["555-0100", "480-555-0100 ext 5", "1".repeat(16), "+1 (480) 555-0100 999", "480.555.0100", "1+4805550100"],
   },
-  validateEmployeeId: {
-    valid: ["E100", " e-200 ", "crew_7", "x".repeat(32)],
-    invalid: ["", " ", "E 100", "E#1", "x".repeat(33)],
-  },
-  validateStationCode: {
-    valid: ["", "616C", " 617a ", "x".repeat(16)],
-    invalid: ["x".repeat(17)],
-  },
   validateAssetId: {
     valid: ["1732983", " naos-77b "],
     invalid: ["", "17 32", "x".repeat(33), "A/1"],
@@ -120,8 +86,6 @@ const validators = {
   validateFullName,
   validateEmail,
   validatePhone,
-  validateEmployeeId,
-  validateStationCode,
   validateAssetId,
 };
 
@@ -138,21 +102,8 @@ for (const [name, { valid, invalid }] of Object.entries(cases)) {
   }
 }
 
-test("validateForm skips firefighter fields for other roles", () => {
-  assert.deepEqual(validateForm(initial, { ...initial, employeeId: "bad id" }), {});
-});
-
-test("validateForm requires an employee ID when becoming a firefighter", () => {
-  assert.deepEqual(Object.keys(validateForm(initial, { ...initial, role: "firefighter" })), ["employeeId"]);
-});
-
-test("validateForm lets a firefighter with no saved ID edit only their name", () => {
-  const firefighter = initialFormValues({ ...detail, role: "firefighter" });
-  assert.deepEqual(validateForm(firefighter, { ...firefighter, fullName: "Gus Grant" }), {});
-});
-
 test("validateForm reports every invalid field", () => {
-  const errors = validateForm(initial, { ...initial, fullName: "", email: "nope", phone: "12" });
+  const errors = validateForm({ ...initial, fullName: "", email: "nope", phone: "12" });
   assert.deepEqual(Object.keys(errors).sort(), ["email", "fullName", "phone"]);
 });
 

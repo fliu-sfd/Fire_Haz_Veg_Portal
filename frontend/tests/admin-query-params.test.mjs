@@ -42,6 +42,22 @@ test("falls back to defaults for invalid values", () => {
   assert.equal(parse("limit=1e2").limit, 25);
 });
 
+test("an old firefighter role link means no role filter", () => {
+  const query = parse("role=firefighter&q=ada");
+  assert.equal(query.role, null);
+  assert.equal(query.q, "ada");
+  assert.equal(usersQueryToApiParams(query).has("role"), false);
+  assert.equal(usersQueryToSearchParams(query).has("role"), false);
+});
+
+for (const role of ["resident", "admin"]) {
+  test(`the ${role} role filter is read and sent`, () => {
+    const query = parse(`role=${role}`);
+    assert.equal(query.role, role);
+    assert.equal(usersQueryToApiParams(query).get("role"), role);
+  });
+}
+
 test("normalizes search from the URL", () => {
   assert.equal(parse("q=%20%20ada%20%20%20lovelace%20").q, "ada lovelace");
   assert.equal(parse("q=%20%20%20").q, "");
@@ -56,7 +72,7 @@ test("normalizeSearch trims, collapses whitespace and caps length", () => {
 
 test("URL state omits defaults and round-trips", () => {
   assert.equal(usersQueryToSearchParams(DEFAULT_USERS_QUERY).toString(), "");
-  const query = { q: "a b", role: "firefighter", isActive: true, sort: "role", order: "asc", limit: 10, page: 4 };
+  const query = { q: "a b", role: "resident", isActive: true, sort: "role", order: "asc", limit: 10, page: 4 };
   assert.deepEqual(parseUsersQuery(usersQueryToSearchParams(query)), query);
   assert.equal(usersQueryToSearchParams({ ...query, isActive: false }).get("status"), "disabled");
 });

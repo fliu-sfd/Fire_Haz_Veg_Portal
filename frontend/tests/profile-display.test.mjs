@@ -4,15 +4,14 @@ import { accountFacts, joinedLabel } from "@/features/profile/utils/display";
 
 const profile = {
   id: "u1",
-  fullName: "Frank Ortiz",
-  email: "frank@example.com",
+  fullName: "Ava Admin",
+  email: "ava@example.com",
   phone: null,
-  role: "firefighter",
+  role: "admin",
   emailVerified: false,
   createdAt: "2026-10-07T15:30:00Z",
   lastLoginAt: null,
   assetIds: [],
-  firefighter: { employeeId: "E100", stationCode: "616C" },
 };
 
 test("joinedLabel uses Phoenix time", () => {
@@ -22,7 +21,7 @@ test("joinedLabel uses Phoenix time", () => {
 
 test("accountFacts shows Never for a user who has not signed in", () => {
   assert.deepEqual(accountFacts(profile, "UTC"), [
-    { label: "Role", value: "Firefighter" },
+    { label: "Role", value: "Admin" },
     { label: "Email verified", value: "No" },
     { label: "Last sign-in", value: "Never" },
     { label: "Member since", value: "Oct 7, 2026", dateTime: "2026-10-07T15:30:00Z" },
