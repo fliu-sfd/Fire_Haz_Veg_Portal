@@ -52,6 +52,26 @@ fastapi dev app/main.py
 The API is available at `http://127.0.0.1:8000`. Interactive API
 documentation is available at `http://127.0.0.1:8000/docs`.
 
+## Create the first admin
+
+The portal has two roles: `resident` and `admin`. Residents sign up on the website. The first
+admin is created from the command line by a developer with access to the server. After that,
+an admin can promote a resident in the Users page.
+
+```powershell
+uv run python -m app.cli.create_admin --email someone@example.com --name "Full Name"
+```
+
+With Docker, while the stack is running:
+
+```powershell
+docker compose exec api python -m app.cli.create_admin --email someone@example.com --name "Full Name"
+```
+
+The command asks for the password twice, without showing it. It is never an argument, so it
+stays out of shell history. The name, email and password follow the same rules as signup. If
+the email already belongs to an account, the command stops and changes nothing.
+
 ## Endpoints
 
 - `GET /` - API name and version
@@ -62,14 +82,13 @@ documentation is available at `http://127.0.0.1:8000/docs`.
 - `POST /api/v1/auth/logout` - clears the auth cookie (204)
 - `GET /api/v1/auth/me` - current user from the cookie (401 if not logged in)
 - `GET /api/v1/assessments/{asset_id}` - latest-season inspection details and safe crew-photo
-  metadata. Residents can view their linked assets; firefighters and administrators can view
+  metadata. Residents can view their linked assets; administrators can view
   any asset. Missing and unauthorized assets both return 404
 - `GET /api/v1/assessments/photos/{photo_id}` - protected crew-photo file. Uses the same
   property access rules and does not reveal whether an unauthorized photo exists
 - `GET /api/v1/me/profile` - any signed-in role (401 otherwise). The signed-in user's own
   account: `id`, `full_name`, `email`, `phone`, `role`, `email_verified`, `created_at`,
-  `last_login_at`, sorted `asset_ids` (empty for staff) and `firefighter` (`employee_id`,
-  `station_code`, only for firefighters) or `null`. Never the password hash
+  `last_login_at` and sorted `asset_ids` (empty for admins). Never the password hash
 - `PATCH /api/v1/me/profile` - any signed-in role. Changes your own `full_name` and `phone`
   (`null` clears it). Only fields in the body change; an empty body or any other field
   (`email`, `role`, ...) is a 422. Returns the updated profile
@@ -92,11 +111,11 @@ documentation is available at `http://127.0.0.1:8000/docs`.
   `order` (`asc` / `desc`), `limit` (1-100, default 25) and `offset`. Users who never
   signed in sort last in both directions. Each item has `is_active` and `last_login_at`
 - `GET /api/v1/admin/users/{user_id}` - administrators only. One user for the edit panel:
-  details, role, status, `email_verified`, `last_login_at`, sorted `asset_ids`, and
-  `firefighter` (`employee_id`, `station_code`) or `null`. Never the password hash
+  details, role, status, `email_verified`, `last_login_at` and sorted `asset_ids`. Never the
+  password hash
 - `PATCH /api/v1/admin/users/{user_id}` - administrators only. Changes `full_name`, `email`,
-  `phone` (`null` clears it), `role`, `is_active` and `firefighter` (`employee_id`,
-  `station_code`; replaces both). Only fields in the body change; an empty body is a 422
+  `phone` (`null` clears it), `role` (`resident` or `admin`) and `is_active`. Only fields in
+  the body change; an empty body is a 422
 - `POST /api/v1/admin/users/{user_id}/assets` - administrators only. Body `{"asset_id": ...}`
   links a resident to an asset ID found in the inspection data. Linking twice is a no-op
 - `DELETE /api/v1/admin/users/{user_id}/assets/{asset_id}` - administrators only. Unlinks
@@ -109,18 +128,14 @@ documentation is available at `http://127.0.0.1:8000/docs`.
   |---|---|---|
   | 404 | `user_not_found` | No user with that id |
   | 409 | `email_taken` | Another account has the email (case-insensitive) |
-  | 409 | `employee_id_taken` | Another firefighter has the employee ID |
   | 409 | `cannot_change_own_access` | An admin changes their own role or turns themselves off |
   | 409 | `last_admin` | The change would leave no active admin |
-  | 422 | `firefighter_details_required` | Role set to firefighter with no profile and no `firefighter` |
-  | 409 | `unlink_assets_first` | A resident with linked assets is moved to another role |
-  | 422 | `firefighter_not_applicable` | `firefighter` sent for a user who ends up not a firefighter |
+  | 409 | `unlink_assets_first` | A resident with linked assets is made an admin |
   | 404 | `property_not_found` | The asset ID is not in the inspection data |
   | 409 | `assets_residents_only` | Links managed for a user who is not a resident |
 
-  A firefighter who changes role keeps their profile row, and it is reused if they become a
-  firefighter again. Each change writes one log line with the admin id, the user id and the
-  changed field names (never the values).
+  Each change writes one log line with the admin id, the user id and the changed field names
+  (never the values).
 
   **Sessions:** `get_current_user` reads the user row on every request, so a disabled user
   gets 401 on their next request and a role change applies on the next request too.
