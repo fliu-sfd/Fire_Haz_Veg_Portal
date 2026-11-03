@@ -99,11 +99,9 @@ def list_user_properties(db: Session, user: User) -> list[PropertySummary]:
 
 
 def can_view_assessment(db: Session, user: User, assessment: Assessment) -> bool:
-    """Staff may open any assessment; a resident only those of properties they are linked to."""
-    if user.role in (UserRole.FIREFIGHTER, UserRole.ADMIN):
+    """Admins may open any assessment; a resident only those of properties they are linked to."""
+    if user.role is UserRole.ADMIN:
         return True
-    if user.role != UserRole.RESIDENT:
-        return False
     return bool(
         db.scalar(
             select(
