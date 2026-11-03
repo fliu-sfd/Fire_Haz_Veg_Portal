@@ -71,14 +71,11 @@ export function LinkedPropertiesCard(props: LinkedPropertiesCardProps) {
   return (
     <ProfileCard id="profile-properties" title="Your properties">
       <PropertyList {...props} />
-      <p className="mt-5 text-sm leading-6 text-city-dark">
-        To link another property, contact the Scottsdale Fire Department.
-      </p>
       <Link
         href="/homeowner"
-        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-denim underline-offset-4 hover:text-civic-blue hover:underline"
+        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-denim underline-offset-4 hover:text-civic-blue hover:underline"
       >
-        Go to my homeowner page
+        Add or remove properties
         <ArrowRight aria-hidden="true" className="size-4" />
       </Link>
     </ProfileCard>
