@@ -25,7 +25,7 @@ from app.services.admin_user_service import (
     unlink_asset,
     update_user,
 )
-from app.services.user_service import PropertyNotFoundError
+from app.services.property_service import PropertyNotFoundError
 
 router = APIRouter(
     prefix="/admin",

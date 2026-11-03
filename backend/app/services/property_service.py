@@ -14,6 +14,10 @@ from sqlalchemy.orm import Session
 from app.models import Assessment, ResidentAsset, User, UserRole
 
 
+class PropertyNotFoundError(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class PropertySummary:
     asset_id: str

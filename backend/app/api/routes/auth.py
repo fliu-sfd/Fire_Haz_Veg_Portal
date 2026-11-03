@@ -9,7 +9,6 @@ from app.services.user_service import (
     EmailAlreadyRegisteredError,
     InactiveAccountError,
     InvalidCredentialsError,
-    PropertyNotFoundError,
     authenticate,
     create_resident,
 )
@@ -59,15 +58,6 @@ def signup(payload: SignupRequest, response: Response, db: DbSession) -> UserOut
     except EmailAlreadyRegisteredError:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "An account with this email already exists."
-        ) from None
-    except PropertyNotFoundError:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            {
-                "code": "property_not_found",
-                "message": "We could not find that Asset ID. Check the number on your door tag.",
-                "field": "asset_id",
-            },
         ) from None
     set_auth_cookie(response, user)
     return user_out(user)
