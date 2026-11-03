@@ -8,9 +8,9 @@ from app.schemas.admin import (
     AdminUserDetail,
     AdminUserList,
     AdminUserUpdate,
-    AssetLinkRequest,
     UserListParams,
 )
+from app.schemas.residents import LinkPropertyRequest
 from app.schemas.validators import ASSET_ID_MAX_LENGTH
 from app.services.admin_user_service import (
     AssetsResidentsOnlyError,
@@ -141,7 +141,7 @@ def patch_user(
     },
 )
 def post_user_asset(
-    admin: AdminUser, user_id: uuid.UUID, payload: AssetLinkRequest, db: DbSession
+    admin: AdminUser, user_id: uuid.UUID, payload: LinkPropertyRequest, db: DbSession
 ) -> AdminUserDetail:
     """Link a resident to an asset ID from the inspection data. Administrators only."""
     try:
