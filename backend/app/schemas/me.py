@@ -6,10 +6,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 
 from app.models import UserRole
 from app.schemas import validators
-from app.schemas.firefighter import FirefighterOut
 from app.schemas.validators import PASSWORD_MAX_LENGTH
 
-__all__ = ["FirefighterOut", "PasswordChange", "ProfileOut", "ProfileUpdate"]
+__all__ = ["PasswordChange", "ProfileOut", "ProfileUpdate"]
 
 
 class ProfileOut(BaseModel):
@@ -24,8 +23,6 @@ class ProfileOut(BaseModel):
     created_at: datetime
     last_login_at: datetime | None
     asset_ids: list[str]
-    # only for firefighters
-    firefighter: FirefighterOut | None
 
 
 class ProfileUpdate(BaseModel):
