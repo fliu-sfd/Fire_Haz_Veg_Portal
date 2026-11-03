@@ -1,6 +1,6 @@
 # Homeowner user guide
 
-Draft · November 2, 2026 · Story #51 / Task #75
+Updated November 3, 2026 · Story #51 · Draft #75 / screenshots and validation #76
 
 Use this guide for a homeowner account. Administrators may call this role
 **Resident**. You can view only properties linked to your account, including
@@ -28,7 +28,9 @@ linked to the new account. An address alone cannot establish that link.
 | “An account with this email already exists.” | Use Sign in if this is your account. |
 | “We could not find that Asset ID. Check the number on your door tag.” | Follow H02 below. |
 
-Screenshot H01: pending real door-tag example and registration screen; confirm the tag label before adding an annotated image.
+![H01 — Homeowner registration using a demonstration Asset ID, November 3, 2026](screenshots/H01-registration-2026-11-03.png)
+
+A real door-tag example was not supplied. The exact printed position of its Asset ID remains unverified.
 
 ## H02 — If your Asset ID is not accepted — Available
 
@@ -41,7 +43,7 @@ an account. The department may need to check whether the inspection data has
 been loaded; the error alone does not prove the door tag is wrong. No support
 email address or phone number has been confirmed for this guide.
 
-Screenshot H02: pending rejected-ID message on the actual registration form.
+![H02 — Rejected Asset ID message, November 3, 2026](screenshots/H02-rejected-asset-2026-11-03.png)
 
 ## H03 — See your connected properties — Available
 
@@ -60,7 +62,7 @@ department. If **We could not load your properties** appears, read the error
 and select **Try again**. To link another property, contact the department as
 directed on Profile; there is no homeowner self-service linking action here.
 
-Screenshot H03: pending connected-property cards and empty/error states.
+![H03 — Connected property card and View assessment link, November 3, 2026](screenshots/H03-properties-2026-11-03.png)
 
 ## H04 — Read an assessment and crew photos — Available
 
@@ -82,7 +84,11 @@ An absent photo section means no crew photos are listed for that point.
 | “We could not reach the assessment service. Check your connection and try again.” | Check your connection and select Try again. |
 | “No inspection details recorded” | No inspection points are available for this record's current season; ask the department if you expect details. |
 
-Screenshot H04: pending full assessment and enlarged crew photo, including an example with several inspection points.
+![H04 — Assessment with two inspection points and a protected demonstration image, November 3, 2026](screenshots/H04-assessment-2026-11-03.png)
+
+![H04 — Protected image opened in a separate tab, November 3, 2026](screenshots/H04-crew-photo-2026-11-03.png)
+
+![H04 — Unavailable property message, November 3, 2026](screenshots/H04-unavailable-2026-11-03.png)
 
 ## H05 — Mark an issue fixed with photos — Planned (#38, #44)
 
