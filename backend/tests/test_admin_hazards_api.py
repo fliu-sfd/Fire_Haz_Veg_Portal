@@ -122,9 +122,8 @@ def test_requires_login(client, hazards) -> None:
     assert client.get(FILTERS_URL).status_code == 401
 
 
-@pytest.mark.parametrize("role", [UserRole.RESIDENT, UserRole.FIREFIGHTER])
-def test_non_admins_are_forbidden(client, db, role) -> None:
-    login_as(client, add_user(db, f"{role.value}@example.com", role))
+def test_non_admins_are_forbidden(client, db) -> None:
+    login_as(client, add_user(db, "resident@example.com", UserRole.RESIDENT))
     for url in (URL, FILTERS_URL):
         resp = client.get(url)
         assert resp.status_code == 403

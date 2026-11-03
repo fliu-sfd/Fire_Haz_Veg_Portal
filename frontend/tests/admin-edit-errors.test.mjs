@@ -9,8 +9,6 @@ const ruleError = (status, code, field) =>
 
 const fieldCodes = [
   [409, "email_taken", "email"],
-  [409, "employee_id_taken", "employeeId"],
-  [422, "firefighter_details_required", "employeeId"],
   [404, "property_not_found", "assetId"],
 ];
 
@@ -26,7 +24,6 @@ const alertCodes = [
   [409, "last_admin"],
   [409, "unlink_assets_first"],
   [409, "cannot_change_own_access"],
-  [422, "firefighter_not_applicable"],
   [409, "assets_residents_only"],
   [404, "user_not_found"],
 ];
@@ -41,9 +38,9 @@ for (const [status, code] of alertCodes) {
 
 test("a schema error is placed under its field", () => {
   const error = new ApiError(422, {
-    detail: [{ loc: ["body", "firefighter", "employee_id"], msg: "Value error, Employee ID is required" }],
+    detail: [{ loc: ["body", "phone"], msg: "Value error, Phone must have 10 to 15 digits" }],
   });
-  assert.deepEqual(editError(error), { field: "employeeId", message: "Employee ID is required" });
+  assert.deepEqual(editError(error), { field: "phone", message: "Phone must have 10 to 15 digits" });
 });
 
 test("a schema error on the whole body goes to the alert", () => {

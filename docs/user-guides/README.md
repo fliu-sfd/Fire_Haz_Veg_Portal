@@ -5,13 +5,13 @@ Drafted November 2, 2026 · Story #51 · Task #75
 Choose the guide for your account:
 
 - [Homeowner guide](homeowner.md): registration, connected properties, inspections and planned follow-up actions.
-- [Staff guide](staff.md): firefighter access and the boundary between the portal and field work.
 - [Administrator guide](administrator.md): accounts, the hazard map and planned review and request workflows.
 - [Shared account instructions](account.md): sign in, profile, password and sign out for every role.
 
 ## Draft status
 
-Instructions marked **Available** were checked against `dev` commit `74ae952`.
+Instructions marked **Available** were checked against `dev` commit `74ae952`,
+and the two-role changes of November 3, 2026 against the code that made them.
 This was a source review, not a live screen walkthrough. A **Planned** section
 describes a Sprint 5 workflow whose screen is absent from that build; do not
 try those steps yet. Planned button names, confirmations and errors must be
@@ -30,15 +30,15 @@ labelled **Open navigation** to reveal the same navigation and sign-out action.
 Quoted messages in Available sections are the current application wording.
 
 Homeowner accounts may be labelled **Resident** on administrator screens.
-Staff in these guides means a **Firefighter** account; an **Admin** account has
-separate permissions. A missing menu item may mean your role cannot use it.
+The portal has two roles, **Resident** and **Admin**. A missing menu item may
+mean your role cannot use it.
 
 ## What the portal does not do
 
 - It does not send email or text alerts for fix submissions or requests.
 - This sprint supports the 2026 dataset. Earlier-season history and repeat-hazard views are outside this guide.
 - It does not have a live ArcGIS connection. Assessment records and crew photos are imported from the City's supplied export.
-- Field work and original crew photo capture remain in ArcGIS and Survey123.
+- Field work and original crew photo capture remain in ArcGIS and Survey123. Field crews do not have portal accounts.
 - It does not provide a separate corrective-action guidance service. Read the inspection notes; ask the department if a finding is unclear.
 - QR entry links, scheduling full-assessment visits and reopening closed issues are outside the planned workflows.
 
@@ -57,10 +57,9 @@ No screenshot files have been created in this draft.
 | C01–C04 | Sign in, personal details, password, sign out/mobile navigation |
 | H01–H04 | Homeowner registration, rejected Asset ID, connected properties, assessment and enlarged crew photo |
 | H05–H07 | Fix submission, status/history with sent-back reason, full-assessment request |
-| S01 | Firefighter Home and navigation showing actual access |
 | A01–A04 | Users list, user edit panel, disable confirmation, linked properties |
 | A05–A06 | Hazard map/list with filters and counts, saved views |
-| A07–A09 | Staff-account creation, review queue and decision, full-assessment requests |
+| A08–A09 | Review queue and decision, full-assessment requests |
 
 Finalization must include an independent teammate running every Available
 procedure and each Planned procedure after release, without coaching. Record
@@ -74,7 +73,6 @@ they are not extra user actions.
 
 - `frontend/src/components/layout/nav-config.ts` and the role checks in the
   Users and hazard-map hooks restrict those pages to administrators.
-  Firefighter Home is currently an informational department landing page.
 - `frontend/src/features/admin/components/user-details-fields.tsx` and
   `linked-assets-editor.tsx` allow administrators to edit email and property
   links. The sprint proposal excluded those actions; this draft follows the code.
@@ -84,8 +82,7 @@ they are not extra user actions.
   The older proposal said other sessions would remain open; this draft follows the code.
 - `backend/app/services/admin_hazard_service.py` currently assigns **Open**
   to every hazard. Real pending/closed transitions depend on #44 and #39.
-- #38, #44, #45 and #39 workflows and the #65 staff-account creation screen
-  are not present in this build. Their draft steps need final labels, actual
+- #38, #44, #45 and #39 workflows are not present in this build. Their draft steps need final labels, actual
   success/error text and the team's confirmation of proposed rules.
 
 Common error text was checked in the authentication routes and the frontend

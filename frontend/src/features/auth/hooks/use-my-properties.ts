@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/api/client";
 
 /**
  * Mounted only after the resident guard passes; cache entries belong to the account.
- * Pass null to skip the request, as the profile page does for staff.
+ * Pass null to skip the request, as the profile page does for admins.
  */
 export function useMyProperties(accountId: string | null) {
   const router = useRouter();

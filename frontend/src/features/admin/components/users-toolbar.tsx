@@ -14,7 +14,6 @@ const ALL_ROLES = "all";
 const ROLE_OPTIONS: { value: UserRole | typeof ALL_ROLES; label: string }[] = [
   { value: ALL_ROLES, label: "All roles" },
   { value: "resident", label: "Resident" },
-  { value: "firefighter", label: "Firefighter" },
   { value: "admin", label: "Admin" },
 ];
 

@@ -4,8 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, verify_password
-from app.models import User, UserRole
-from app.schemas.firefighter import FirefighterOut
+from app.models import User
 from app.schemas.me import PasswordChange, ProfileOut, ProfileUpdate
 from app.schemas.validators import check_password_not_personal
 
@@ -25,7 +24,6 @@ class PersonalPasswordError(Exception):
 
 
 def get_profile(user: User) -> ProfileOut:
-    profile = user.firefighter_profile
     return ProfileOut(
         id=user.id,
         full_name=user.full_name,
@@ -36,12 +34,6 @@ def get_profile(user: User) -> ProfileOut:
         created_at=user.created_at,
         last_login_at=user.last_login_at,
         asset_ids=sorted(link.asset_id for link in user.resident_assets),
-        # an ex-firefighter keeps their old profile row, but it is not theirs to see now
-        firefighter=(
-            FirefighterOut(employee_id=profile.employee_id, station_code=profile.station_code)
-            if user.role is UserRole.FIREFIGHTER and profile is not None
-            else None
-        ),
     )
 
 

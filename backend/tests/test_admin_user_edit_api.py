@@ -6,7 +6,7 @@ import pytest
 
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password
-from app.models import Assessment, FirefighterProfile, ResidentAsset, User, UserRole
+from app.models import Assessment, ResidentAsset, User, UserRole
 
 pytestmark = pytest.mark.db
 
@@ -24,7 +24,6 @@ DETAIL_FIELDS = {
     "created_at",
     "last_login_at",
     "asset_ids",
-    "firefighter",
 }
 
 
@@ -76,14 +75,6 @@ def resident(db) -> User:
 
 
 @pytest.fixture
-def firefighter(db) -> User:
-    user = add_user(db, "frank@example.com", UserRole.FIREFIGHTER, name="Frank Ortiz")
-    user.firefighter_profile = FirefighterProfile(employee_id="E100", station_code="616C")
-    db.commit()
-    return user
-
-
-@pytest.fixture
 def admin_client(client, admin):
     login_as(client, admin)
     return client
@@ -101,11 +92,11 @@ ENDPOINTS = [
 
 
 @pytest.mark.parametrize(("method", "suffix", "body"), ENDPOINTS)
-@pytest.mark.parametrize("who", [None, "resident", "firefighter"])
-def test_admin_only(client, resident, firefighter, method, suffix, body, who) -> None:
+@pytest.mark.parametrize("signed_in", [False, True])
+def test_admin_only(client, resident, method, suffix, body, signed_in) -> None:
     expected = 401
-    if who is not None:
-        login_as(client, resident if who == "resident" else firefighter)
+    if signed_in:
+        login_as(client, resident)
         expected = 403
     kwargs = {"json": body} if body is not None else {}
     resp = client.request(method, url(resident) + suffix, **kwargs)
@@ -124,13 +115,7 @@ def test_detail_shape(admin_client, resident) -> None:
     assert body["asset_ids"] == ["1732983"]
     assert body["phone"] == "480-555-0100"
     assert body["is_active"] is True and body["email_verified"] is False
-    assert body["last_login_at"] is None and body["firefighter"] is None
-
-
-def test_detail_firefighter(admin_client, firefighter) -> None:
-    body = admin_client.get(url(firefighter)).json()
-    assert body["firefighter"] == {"employee_id": "E100", "station_code": "616C"}
-    assert body["asset_ids"] == []
+    assert body["last_login_at"] is None
 
 
 def test_detail_unknown_user(admin_client) -> None:
@@ -208,9 +193,9 @@ def test_unchanged_values_are_accepted(admin_client, resident) -> None:
         {"phone": "555-0100"},
         {"phone": "480-555-0100 ext 5"},
         {"phone": "1" * 21},
-        {"role": "firefighter", "firefighter": {"employee_id": "E 1"}},
-        {"role": "firefighter", "firefighter": {"employee_id": "E1", "station_code": "x" * 17}},
-        {"role": "firefighter", "firefighter": {"employee_id": "E1", "rank": "captain"}},
+        {"role": "firefighter"},
+        {"firefighter": {"employee_id": "E1"}},
+        {"role": "firefighter", "firefighter": {"employee_id": "E1"}},
     ],
 )
 def test_invalid_body_is_422(admin_client, resident, body) -> None:
@@ -241,8 +226,8 @@ def test_unchanged_values_write_no_log(admin_client, resident, caplog) -> None:
 # --- update: email ---
 
 
-def test_email_taken_ignores_case(admin_client, resident, firefighter) -> None:
-    resp = admin_client.patch(url(resident), json={"email": "FRANK@example.com"})
+def test_email_taken_ignores_case(admin_client, resident, second_admin) -> None:
+    resp = admin_client.patch(url(resident), json={"email": "BEN.ADMIN@example.com"})
     assert resp.status_code == 409
     assert resp.json()["detail"]["code"] == "email_taken"
     assert resp.json()["detail"]["field"] == "email"
@@ -312,36 +297,13 @@ def test_deactivated_user_is_locked_out(admin_client, client, db) -> None:
     assert resp.status_code == 403
 
 
-# --- update: role and firefighter fields ---
+# --- update: role ---
 
 
-def test_resident_to_firefighter_needs_employee_id(admin_client, db) -> None:
-    user = add_user(db, "erin@example.com")
-    resp = admin_client.patch(url(user), json={"role": "firefighter"})
-    assert resp.status_code == 422
-    assert resp.json()["detail"]["code"] == "firefighter_details_required"
-    assert resp.json()["detail"]["field"] == "firefighter.employee_id"
-
-    resp = admin_client.patch(
-        url(user),
-        json={
-            "role": "firefighter",
-            "firefighter": {"employee_id": " e-200 ", "station_code": "617a"},
-        },
-    )
-    assert resp.status_code == 200
-    assert resp.json()["role"] == "firefighter"
-    assert resp.json()["firefighter"] == {"employee_id": "E-200", "station_code": "617A"}
-
-
-def test_resident_with_links_cannot_become_staff(admin_client, resident) -> None:
-    for role in ("firefighter", "admin"):
-        body = {"role": role}
-        if role == "firefighter":
-            body["firefighter"] = {"employee_id": "E300"}
-        resp = admin_client.patch(url(resident), json=body)
-        assert resp.status_code == 409
-        assert error_code(resp) == "unlink_assets_first"
+def test_resident_with_links_cannot_become_admin(admin_client, resident) -> None:
+    resp = admin_client.patch(url(resident), json={"role": "admin"})
+    assert resp.status_code == 409
+    assert error_code(resp) == "unlink_assets_first"
 
     assert admin_client.delete(f"{url(resident)}/assets/1732983").status_code == 200
     resp = admin_client.patch(url(resident), json={"role": "admin"})
@@ -349,54 +311,13 @@ def test_resident_with_links_cannot_become_staff(admin_client, resident) -> None
     assert resp.json()["role"] == "admin"
 
 
-def test_employee_id_taken(admin_client, db, firefighter) -> None:
-    user = add_user(db, "erin@example.com")
-    resp = admin_client.patch(
-        url(user), json={"role": "firefighter", "firefighter": {"employee_id": "e100"}}
-    )
-    assert resp.status_code == 409
-    assert resp.json()["detail"]["code"] == "employee_id_taken"
-    assert resp.json()["detail"]["field"] == "firefighter.employee_id"
-
-
-def test_firefighter_can_keep_own_employee_id(admin_client, firefighter) -> None:
-    resp = admin_client.patch(
-        url(firefighter), json={"firefighter": {"employee_id": "E100", "station_code": None}}
-    )
+def test_admin_can_become_resident_and_back(admin_client, second_admin) -> None:
+    resp = admin_client.patch(url(second_admin), json={"role": "resident"})
     assert resp.status_code == 200
-    assert resp.json()["firefighter"] == {"employee_id": "E100", "station_code": None}
-
-
-def test_firefighter_fields_for_non_firefighter(admin_client, resident, firefighter) -> None:
-    resp = admin_client.patch(url(resident), json={"firefighter": {"employee_id": "E400"}})
-    assert resp.status_code == 422
-    assert error_code(resp) == "firefighter_not_applicable"
-
-    resp = admin_client.patch(
-        url(firefighter), json={"role": "admin", "firefighter": {"employee_id": "E100"}}
-    )
-    assert resp.status_code == 422
-    assert error_code(resp) == "firefighter_not_applicable"
-
-
-def test_firefighter_profile_is_kept_and_reused(admin_client, db, firefighter) -> None:
-    resp = admin_client.patch(url(firefighter), json={"role": "admin"})
+    assert resp.json()["role"] == "resident"
+    resp = admin_client.patch(url(second_admin), json={"role": "admin"})
     assert resp.status_code == 200
-    assert db.get(FirefighterProfile, firefighter.id) is not None
-
-    # no details needed on the way back: the old profile is reused
-    resp = admin_client.patch(url(firefighter), json={"role": "firefighter"})
-    assert resp.status_code == 200
-    assert resp.json()["firefighter"] == {"employee_id": "E100", "station_code": "616C"}
-
-    resp = admin_client.patch(url(firefighter), json={"firefighter": {"employee_id": "E101"}})
-    assert resp.json()["firefighter"] == {"employee_id": "E101", "station_code": None}
-
-
-def test_firefighter_without_profile_can_edit_name(admin_client, db) -> None:
-    user = add_user(db, "gus@example.com", UserRole.FIREFIGHTER)
-    resp = admin_client.patch(url(user), json={"full_name": "Gus Grant"})
-    assert resp.status_code == 200
+    assert resp.json()["role"] == "admin"
 
 
 # --- asset links ---
@@ -434,12 +355,12 @@ def test_link_invalid_body(admin_client, resident, body) -> None:
     assert admin_client.post(f"{url(resident)}/assets", json=body).status_code == 422
 
 
-def test_links_are_residents_only(admin_client, db, firefighter) -> None:
+def test_links_are_residents_only(admin_client, db, second_admin) -> None:
     add_assessment(db, "2045117")
-    resp = admin_client.post(f"{url(firefighter)}/assets", json={"asset_id": "2045117"})
+    resp = admin_client.post(f"{url(second_admin)}/assets", json={"asset_id": "2045117"})
     assert resp.status_code == 409
     assert error_code(resp) == "assets_residents_only"
-    resp = admin_client.delete(f"{url(firefighter)}/assets/2045117")
+    resp = admin_client.delete(f"{url(second_admin)}/assets/2045117")
     assert error_code(resp) == "assets_residents_only"
 
 

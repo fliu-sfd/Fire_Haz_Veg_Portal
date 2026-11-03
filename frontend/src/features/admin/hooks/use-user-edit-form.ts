@@ -5,6 +5,7 @@ import {
   buildPatch,
   initialFormValues,
   saveConfirmation,
+  validateField,
   validateForm,
   type Confirmation,
   type UserFormErrors,
@@ -76,8 +77,7 @@ export function useUserEditForm(
   const blurField = useCallback((field: UserFormField) => {
     setForm((state) => {
       if (!state) return state;
-      // A field the form will not send (firefighter fields of a non-firefighter) shows no error.
-      const error = validateForm(state.baseline, state.values)[field];
+      const error = validateField(field, state.values);
       const errors = { ...state.errors };
       if (error) errors[field] = error;
       else delete errors[field];
@@ -109,7 +109,7 @@ export function useUserEditForm(
 
   const submit = useCallback(() => {
     if (!current || !user || status === "saving") return;
-    const errors = validateForm(current.baseline, current.values);
+    const errors = validateForm(current.values);
     const invalid = Object.keys(errors) as UserFormField[];
     if (invalid.length > 0) {
       setForm({ ...current, errors: { ...current.errors, ...errors } });
@@ -142,7 +142,6 @@ export function useUserEditForm(
     isDirty,
     isSaving: status === "saving",
     isSaved: status === "saved" && !isDirty,
-    showFirefighterFields: current?.values.role === "firefighter",
     confirmation: pending?.confirmation ?? null,
     setField,
     blurField,

@@ -2,7 +2,6 @@ import type {
   AdminUser,
   AdminUserDetail,
   AdminUserList,
-  FirefighterDetails,
   UserUpdateInput,
   UsersQuery,
 } from "@/features/admin/types";
@@ -67,18 +66,6 @@ export async function listUsers(query: UsersQuery): Promise<AdminUserList> {
   return parseAdminUserList(await apiRequest<unknown>(usersPath(query)));
 }
 
-function parseFirefighter(data: unknown): FirefighterDetails | null {
-  if (data === null) return null;
-  if (
-    !isRecord(data) ||
-    typeof data.employee_id !== "string" ||
-    (data.station_code !== null && typeof data.station_code !== "string")
-  ) {
-    throw new ResponseFormatError(INVALID_USER);
-  }
-  return { employeeId: data.employee_id, stationCode: data.station_code };
-}
-
 export function parseAdminUserDetail(data: unknown): AdminUserDetail {
   if (
     !isRecord(data) ||
@@ -91,8 +78,7 @@ export function parseAdminUserDetail(data: unknown): AdminUserDetail {
     typeof data.email_verified !== "boolean" ||
     !isDate(data.created_at) ||
     !isOptionalDate(data.last_login_at) ||
-    !isStringList(data.asset_ids) ||
-    !("firefighter" in data)
+    !isStringList(data.asset_ids)
   ) {
     throw new ResponseFormatError(INVALID_USER);
   }
@@ -107,7 +93,6 @@ export function parseAdminUserDetail(data: unknown): AdminUserDetail {
     createdAt: data.created_at,
     lastLoginAt: data.last_login_at,
     assetIds: data.asset_ids,
-    firefighter: parseFirefighter(data.firefighter),
   };
 }
 
@@ -123,12 +108,6 @@ export function updateBody(patch: UserUpdateInput): Record<string, unknown> {
   if (patch.phone !== undefined) body.phone = patch.phone;
   if (patch.role !== undefined) body.role = patch.role;
   if (patch.isActive !== undefined) body.is_active = patch.isActive;
-  if (patch.firefighter !== undefined) {
-    body.firefighter = {
-      employee_id: patch.firefighter.employeeId,
-      station_code: patch.firefighter.stationCode,
-    };
-  }
   return body;
 }
 

@@ -4,7 +4,7 @@ import { activeNavHref, navGroupsFor } from "@/components/layout/nav";
 import { NAV_GROUPS, PROFILE_HREF } from "@/components/layout/nav-config";
 import { areaRedirect } from "@/features/auth/utils/access";
 
-const ROLES = ["resident", "firefighter", "admin"];
+const ROLES = ["resident", "admin"];
 
 for (const role of ROLES) {
   test(`${role} sees Profile after Home in the general group`, () => {

@@ -169,11 +169,10 @@ def test_resident_with_no_links_cannot_view_anything(db):
     assert can_view_assessment(db, nobody, row) is False
 
 
-@pytest.mark.parametrize("role", [UserRole.FIREFIGHTER, UserRole.ADMIN])
-def test_staff_can_view_any_assessment(db, role):
+def test_admin_can_view_any_assessment(db):
     row = add_assessment(db, "1001")
-    staff = add_user(db, f"{role.value}@example.com", role=role)
-    assert can_view_assessment(db, staff, row) is True
+    admin = add_user(db, "admin@example.com", role=UserRole.ADMIN)
+    assert can_view_assessment(db, admin, row) is True
 
 
 # ---- GET /residents/me/properties -----------------------------------------------------------
@@ -225,11 +224,10 @@ def test_route_returns_empty_list_for_resident_with_no_links(client, db):
     assert client.get(MINE).json() == []
 
 
-@pytest.mark.parametrize("role", [UserRole.FIREFIGHTER, UserRole.ADMIN])
-def test_route_is_forbidden_for_staff(client, db, role):
-    staff = add_user(db, f"{role.value}@example.com", role=role)
+def test_route_is_forbidden_for_admin(client, db):
+    admin = add_user(db, "admin@example.com", role=UserRole.ADMIN)
     db.commit()
-    sign_in(client, staff)
+    sign_in(client, admin)
     assert client.get(MINE).status_code == 403
 
 

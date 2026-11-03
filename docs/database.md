@@ -29,7 +29,6 @@ Reset: `docker compose down -v && docker compose up -d db`
 erDiagram
     users ||--o| resident_profiles : has
     users ||--o{ resident_assets : can_access
-    users ||--o| firefighter_profiles : has
     assessments ||--o{ crew_photos : has
 
     users {
@@ -38,7 +37,7 @@ erDiagram
         varchar password_hash
         varchar full_name
         varchar phone
-        user_role role "resident | firefighter | admin"
+        user_role role "resident | admin"
         bool is_active
         bool email_verified
         timestamptz last_login_at
@@ -59,11 +58,6 @@ erDiagram
         uuid user_id FK
         varchar asset_id "verified against assessments"
         timestamptz created_at
-    }
-    firefighter_profiles {
-        uuid user_id PK, FK
-        varchar employee_id "unique"
-        varchar station_code
     }
     assessments {
         uuid id PK
@@ -109,10 +103,11 @@ or stored.
 | Revision | Change |
 | --- | --- |
 | `0001` | enable `postgis`, `pgcrypto` |
-| `0002` | `users`, `resident_profiles`, `firefighter_profiles` |
+| `0002` | `users`, `resident_profiles`, and a profile table for a third role that `0006` removes |
 | `0003` | `assessments`, `crew_photos` |
 | `0004` | `resident_assets`; make resident ZIP optional because the imported address is stored as one value |
 | `0005` | `users.password_changed_at`; tokens issued before it are rejected |
+| `0006` | Limit `user_role` to `resident` and `admin` and drop the third role's profile table; stops with an error if any account still has that role |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
 

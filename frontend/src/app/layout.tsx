@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Vegetation Assessment", template: "%s | Vegetation Assessment" },
-  description: "Review vegetation assessments, complete corrective work, and share property progress with fire-prevention staff.",
+  description: "Review vegetation assessments, complete corrective work, and share property progress with fire department administrators.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

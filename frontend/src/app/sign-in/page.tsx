@@ -13,9 +13,9 @@ export default function SignInPage() {
     <AuthPageShell
       eyebrow="Secure account access"
       title="Welcome back"
-      description="Use your account email and password to continue to your homeowner portal or staff workspace."
+      description="Use your account email and password to continue to your homeowner portal or the admin workspace."
       panelTitle="Pick up where you left off."
-      panelDescription="One secure sign-in connects homeowners and fire-prevention staff to the right tools for their role."
+      panelDescription="One secure sign-in connects homeowners and administrators to the right tools for their role."
       highlights={[
         "Return to active property assessments",
         "Keep updates connected to the correct account",

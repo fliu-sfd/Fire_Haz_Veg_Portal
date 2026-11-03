@@ -21,15 +21,14 @@ from app.db.base import Base
 
 class UserRole(enum.StrEnum):
     RESIDENT = "resident"
-    FIREFIGHTER = "firefighter"
     ADMIN = "admin"
 
 
 class User(Base):
-    """Login account shared by all three roles.
+    """Login account shared by both roles.
 
-    Residents sign up themselves. Firefighter and admin accounts are
-    meant to be created by an admin (enforced in the API, not here).
+    Residents sign up themselves. Admins are created from the command line or
+    promoted by another admin (enforced in the API, not here).
     """
 
     __tablename__ = "users"
@@ -71,9 +70,6 @@ class User(Base):
     )
     resident_assets: Mapped[list["ResidentAsset"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
-    )
-    firefighter_profile: Mapped["FirefighterProfile | None"] = relationship(
-        back_populates="user", cascade="all, delete-orphan", uselist=False
     )
 
     def __repr__(self) -> str:
@@ -119,17 +115,3 @@ class ResidentAsset(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped[User] = relationship(back_populates="resident_assets")
-
-
-class FirefighterProfile(Base):
-    """Department details for field crew accounts."""
-
-    __tablename__ = "firefighter_profiles"
-
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
-    )
-    employee_id: Mapped[str] = mapped_column(String(32), unique=True)
-    station_code: Mapped[str | None] = mapped_column(String(16))  # crew code e.g. "616C"
-
-    user: Mapped[User] = relationship(back_populates="firefighter_profile")

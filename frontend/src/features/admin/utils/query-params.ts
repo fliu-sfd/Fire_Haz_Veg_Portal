@@ -1,7 +1,7 @@
 import type { UserRole } from "@/features/auth/api";
 import type { SortOrder, UserSortField, UsersQuery } from "@/features/admin/types";
 
-export const USER_ROLES: readonly UserRole[] = ["resident", "firefighter", "admin"];
+export const USER_ROLES: readonly UserRole[] = ["resident", "admin"];
 export const SORT_FIELDS: readonly UserSortField[] = [
   "full_name",
   "email",

@@ -57,6 +57,28 @@ def create_resident(db: Session, data: SignupRequest) -> User:
     return user
 
 
+def create_admin(db: Session, email: str, full_name: str, password: str) -> User:
+    """Add an active admin. The caller has already validated the three values."""
+    if get_user_by_email(db, email) is not None:
+        raise EmailAlreadyRegisteredError
+
+    user = User(
+        email=email,
+        password_hash=hash_password(password),
+        full_name=full_name,
+        role=UserRole.ADMIN,
+        is_active=True,
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise EmailAlreadyRegisteredError from exc
+    db.refresh(user)
+    return user
+
+
 def authenticate(db: Session, data: LoginRequest) -> User:
     """Check credentials and record the login.
 

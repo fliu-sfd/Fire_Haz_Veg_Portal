@@ -6,15 +6,14 @@ import { ResponseFormatError } from "@/lib/api/errors";
 
 const validProfile = {
   id: "8f9d2a8e-7b1c-4d7e-9a43-0c2f7f1e5b6a",
-  full_name: "Frank Ortiz",
-  email: "frank@example.com",
+  full_name: "Ava Admin",
+  email: "ava@example.com",
   phone: "480-555-0100",
-  role: "firefighter",
+  role: "admin",
   email_verified: false,
   created_at: "2026-10-07T15:30:00Z",
   last_login_at: null,
   asset_ids: [],
-  firefighter: { employee_id: "E100", station_code: null },
 };
 
 function mockRequests(t, response = Response.json(validProfile)) {
@@ -30,25 +29,24 @@ test("getProfile maps the profile to camelCase", async (t) => {
   const requests = mockRequests(t);
   assert.deepEqual(await getProfile(), {
     id: validProfile.id,
-    fullName: "Frank Ortiz",
-    email: "frank@example.com",
+    fullName: "Ava Admin",
+    email: "ava@example.com",
     phone: "480-555-0100",
-    role: "firefighter",
+    role: "admin",
     emailVerified: false,
     createdAt: "2026-10-07T15:30:00Z",
     lastLoginAt: null,
     assetIds: [],
-    firefighter: { employeeId: "E100", stationCode: null },
   });
   assert.match(requests[0].url.pathname, /\/me\/profile$/);
   assert.equal(requests[0].method, "GET");
   assert.equal(requests[0].credentials, "include");
 });
 
-test("parseProfile accepts a resident with properties and no firefighter details", () => {
-  const profile = parseProfile({ ...validProfile, role: "resident", asset_ids: ["1690011", "1732983"], firefighter: null });
+test("parseProfile accepts a resident with properties", () => {
+  const profile = parseProfile({ ...validProfile, role: "resident", asset_ids: ["1690011", "1732983"] });
   assert.deepEqual(profile.assetIds, ["1690011", "1732983"]);
-  assert.equal(profile.firefighter, null);
+  assert.equal(profile.role, "resident");
 });
 
 const malformed = {
@@ -58,14 +56,16 @@ const malformed = {
   "a missing email": { ...validProfile, email: undefined },
   "a missing phone": { ...validProfile, phone: undefined },
   "an unknown role": { ...validProfile, role: "chief" },
+  "a firefighter role": { ...validProfile, role: "firefighter" },
   "a string email_verified": { ...validProfile, email_verified: "no" },
   "an unparseable created_at": { ...validProfile, created_at: "yesterday" },
   "an unparseable last_login_at": { ...validProfile, last_login_at: "never" },
   "non-string asset_ids": { ...validProfile, asset_ids: [1732983] },
-  "a missing firefighter": { ...validProfile, firefighter: undefined },
-  "a firefighter without employee_id": { ...validProfile, firefighter: { station_code: "616C" } },
-  "a numeric station_code": { ...validProfile, firefighter: { employee_id: "E1", station_code: 616 } },
 };
+
+test("parseProfile ignores unknown extra fields", () => {
+  assert.equal(parseProfile({ ...validProfile, nickname: "Ava" }).id, validProfile.id);
+});
 
 for (const [name, payload] of Object.entries(malformed)) {
   test(`parseProfile rejects ${name}`, () => {

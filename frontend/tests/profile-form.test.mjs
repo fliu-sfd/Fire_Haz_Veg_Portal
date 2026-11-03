@@ -19,7 +19,6 @@ const profile = {
   createdAt: "2026-10-07T15:30:00Z",
   lastLoginAt: null,
   assetIds: ["1732983"],
-  firefighter: null,
 };
 
 const initial = initialProfileValues(profile);

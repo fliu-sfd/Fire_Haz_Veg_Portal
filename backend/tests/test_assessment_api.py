@@ -140,14 +140,23 @@ def test_owner_gets_latest_season_points_and_safe_photo_metadata(client, db):
     assert "old record" not in response.text
 
 
-@pytest.mark.parametrize("role", [UserRole.FIREFIGHTER, UserRole.ADMIN])
-def test_staff_can_open_any_asset(client, db, role):
+def test_admin_can_open_any_asset(client, db):
     add_assessment(db, "ASSET-1")
-    staff = add_user(db, f"{role.value}@example.com", role=role)
+    admin = add_user(db, "admin@example.com", role=UserRole.ADMIN)
     db.commit()
-    sign_in(client, staff)
+    sign_in(client, admin)
 
     assert client.get(DETAIL.format(asset_id="ASSET-1")).status_code == 200
+
+
+def test_resident_cannot_open_another_residents_asset(client, db):
+    add_assessment(db, "ASSET-1")
+    add_user(db, "owner@example.com", assets=["ASSET-1"])
+    stranger = add_user(db, "stranger@example.com", assets=["OTHER-ASSET"])
+    db.commit()
+    sign_in(client, stranger)
+
+    assert client.get(DETAIL.format(asset_id="ASSET-1")).status_code == 404
 
 
 def test_unknown_and_not_linked_assets_have_the_same_response(client, db):

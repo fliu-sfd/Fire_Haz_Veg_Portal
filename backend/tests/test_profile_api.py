@@ -7,7 +7,7 @@ import pytest
 
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models import FirefighterProfile, ResidentAsset, User, UserRole
+from app.models import ResidentAsset, User, UserRole
 
 pytestmark = pytest.mark.db
 
@@ -28,7 +28,6 @@ PROFILE_FIELDS = {
     "created_at",
     "last_login_at",
     "asset_ids",
-    "firefighter",
 }
 
 
@@ -95,11 +94,8 @@ def resident(db) -> User:
 
 
 @pytest.fixture
-def firefighter(db) -> User:
-    user = add_user(db, "frank@example.com", UserRole.FIREFIGHTER, name="Frank Ortiz")
-    user.firefighter_profile = FirefighterProfile(employee_id="E100", station_code="616C")
-    db.commit()
-    return user
+def other_user(db) -> User:
+    return add_user(db, "frank@example.com", name="Frank Ortiz")
 
 
 @pytest.fixture
@@ -139,7 +135,7 @@ def test_inactive_user_gets_401(client, db, resident, method, path, body) -> Non
     assert getattr(client, method)(path, **kwargs).status_code == 401
 
 
-@pytest.mark.parametrize("who", ["resident", "firefighter", "admin"])
+@pytest.mark.parametrize("who", ["resident", "admin"])
 def test_every_role_can_read_own_profile(client, request, who) -> None:
     user = request.getfixturevalue(who)
     login_as(client, user)
@@ -148,7 +144,7 @@ def test_every_role_can_read_own_profile(client, request, who) -> None:
     assert resp.json()["id"] == str(user.id)
 
 
-@pytest.mark.parametrize("who", ["resident", "firefighter", "admin"])
+@pytest.mark.parametrize("who", ["resident", "admin"])
 def test_every_role_can_update_own_profile(client, request, who) -> None:
     login_as(client, request.getfixturevalue(who))
     resp = client.patch(PROFILE, json={"phone": "(480) 555-0199"})
@@ -156,7 +152,7 @@ def test_every_role_can_update_own_profile(client, request, who) -> None:
     assert resp.json()["phone"] == "(480) 555-0199"
 
 
-@pytest.mark.parametrize("who", ["resident", "firefighter", "admin"])
+@pytest.mark.parametrize("who", ["resident", "admin"])
 def test_every_role_can_change_own_password(client, request, who) -> None:
     login_as(client, request.getfixturevalue(who))
     assert change(client).status_code == 204
@@ -175,7 +171,6 @@ def test_resident_profile_shape(resident_client, resident) -> None:
     assert body["email_verified"] is False
     assert body["last_login_at"] is None
     assert body["asset_ids"] == ["1690011", "1732983"]
-    assert body["firefighter"] is None
 
 
 def test_profile_never_has_password_hash(resident_client) -> None:
@@ -184,25 +179,11 @@ def test_profile_never_has_password_hash(resident_client) -> None:
     assert "argon2" not in resp.text
 
 
-def test_firefighter_sees_department_details(client, firefighter) -> None:
-    login_as(client, firefighter)
-    body = client.get(PROFILE).json()
-    assert body["firefighter"] == {"employee_id": "E100", "station_code": "616C"}
-    assert body["asset_ids"] == []
-
-
-def test_admin_sees_no_role_details(client, admin) -> None:
+def test_admin_profile_shape(client, admin) -> None:
     login_as(client, admin)
     body = client.get(PROFILE).json()
-    assert body["firefighter"] is None
+    assert set(body) == PROFILE_FIELDS
     assert body["asset_ids"] == []
-
-
-def test_former_firefighter_does_not_see_old_details(client, db, firefighter) -> None:
-    firefighter.role = UserRole.ADMIN
-    db.commit()
-    login_as(client, firefighter)
-    assert client.get(PROFILE).json()["firefighter"] is None
 
 
 def test_profile_shows_last_sign_in(client, resident) -> None:
@@ -213,42 +194,42 @@ def test_profile_shows_last_sign_in(client, resident) -> None:
 # --- only your own record ---
 
 
-def test_each_user_gets_only_their_own_profile(client, resident, firefighter) -> None:
-    login_as(client, firefighter)
-    assert client.get(PROFILE).json()["id"] == str(firefighter.id)
+def test_each_user_gets_only_their_own_profile(client, resident, other_user) -> None:
+    login_as(client, other_user)
+    assert client.get(PROFILE).json()["id"] == str(other_user.id)
     login_as(client, resident)
     assert client.get(PROFILE).json()["id"] == str(resident.id)
 
 
-def test_id_in_query_is_ignored(resident_client, resident, firefighter) -> None:
-    resp = resident_client.get(PROFILE, params={"id": str(firefighter.id)})
+def test_id_in_query_is_ignored(resident_client, resident, other_user) -> None:
+    resp = resident_client.get(PROFILE, params={"id": str(other_user.id)})
     assert resp.json()["id"] == str(resident.id)
 
 
-def test_id_path_does_not_exist(resident_client, firefighter) -> None:
-    assert resident_client.get(f"{PROFILE}/{firefighter.id}").status_code in (404, 405)
-    resp = resident_client.patch(f"{PROFILE}/{firefighter.id}", json={"full_name": "Hacker Name"})
+def test_id_path_does_not_exist(resident_client, other_user) -> None:
+    assert resident_client.get(f"{PROFILE}/{other_user.id}").status_code in (404, 405)
+    resp = resident_client.patch(f"{PROFILE}/{other_user.id}", json={"full_name": "Hacker Name"})
     assert resp.status_code in (404, 405)
 
 
 @pytest.mark.parametrize("key", ["id", "user_id"])
-def test_id_in_patch_body_is_422(resident_client, firefighter, key) -> None:
-    resp = resident_client.patch(PROFILE, json={key: str(firefighter.id), "full_name": "X Name"})
+def test_id_in_patch_body_is_422(resident_client, other_user, key) -> None:
+    resp = resident_client.patch(PROFILE, json={key: str(other_user.id), "full_name": "X Name"})
     assert resp.status_code == 422
 
 
-def test_patch_never_touches_another_user(resident_client, db, firefighter) -> None:
+def test_patch_never_touches_another_user(resident_client, db, other_user) -> None:
     resident_client.patch(PROFILE, json={"full_name": "Changed Name"})
-    db.refresh(firefighter)
-    assert firefighter.full_name == "Frank Ortiz"
+    db.refresh(other_user)
+    assert other_user.full_name == "Frank Ortiz"
 
 
-def test_password_change_never_touches_another_user(resident_client, db, firefighter) -> None:
-    old_hash = firefighter.password_hash
+def test_password_change_never_touches_another_user(resident_client, db, other_user) -> None:
+    old_hash = other_user.password_hash
     assert change(resident_client).status_code == 204
-    db.refresh(firefighter)
-    assert firefighter.password_hash == old_hash
-    assert firefighter.password_changed_at is None
+    db.refresh(other_user)
+    assert other_user.password_hash == old_hash
+    assert other_user.password_changed_at is None
 
 
 # --- update ---

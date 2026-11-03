@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { authErrorMessage, getMyProperties, registerHomeowner } from "@/features/auth/api";
+import { authErrorMessage, getCurrentAccount, getMyProperties, registerHomeowner } from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 
@@ -18,6 +18,18 @@ const account = {
   role: "resident",
   property_ids: [signup.asset_id],
 };
+
+for (const role of ["resident", "admin"]) {
+  test(`an account with the ${role} role is accepted`, async (t) => {
+    t.mock.method(globalThis, "fetch", async () => Response.json({ ...account, role }));
+    assert.equal((await getCurrentAccount()).role, role);
+  });
+}
+
+test("an account with a firefighter role is invalid", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => Response.json({ ...account, role: "firefighter" }));
+  await assert.rejects(getCurrentAccount(), /invalid account/);
+});
 
 for (const address of [undefined, "", "   "]) {
   test(`signup omits an optional address (${JSON.stringify(address)})`, async (t) => {

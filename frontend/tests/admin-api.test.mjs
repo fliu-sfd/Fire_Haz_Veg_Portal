@@ -122,13 +122,12 @@ const validDetail = {
   full_name: "Ada Lovelace",
   email: "ada@example.com",
   phone: null,
-  role: "firefighter",
+  role: "admin",
   is_active: true,
   email_verified: false,
   created_at: "2026-10-01T15:30:00Z",
   last_login_at: "2026-10-20T08:00:00Z",
   asset_ids: [],
-  firefighter: { employee_id: "E100", station_code: "616C" },
 };
 
 function mockRequests(t, response = Response.json(validDetail)) {
@@ -147,13 +146,12 @@ test("getUser maps the detail to camelCase", async (t) => {
     fullName: "Ada Lovelace",
     email: "ada@example.com",
     phone: null,
-    role: "firefighter",
+    role: "admin",
     isActive: true,
     emailVerified: false,
     createdAt: "2026-10-01T15:30:00Z",
     lastLoginAt: "2026-10-20T08:00:00Z",
     assetIds: [],
-    firefighter: { employeeId: "E100", stationCode: "616C" },
   });
   assert.match(requests[0].url.pathname, new RegExp(`/admin/users/${validUser.id}$`));
 });
@@ -165,13 +163,10 @@ test("updateUser sends only the given fields in snake_case", async (t) => {
   assert.deepEqual(JSON.parse(requests[0].body), { full_name: "Ada King", phone: null, is_active: false });
 });
 
-test("updateUser converts firefighter details", async (t) => {
+test("updateUser sends a role change", async (t) => {
   const requests = mockRequests(t);
-  await updateUser("u1", { role: "firefighter", firefighter: { employeeId: "E1", stationCode: null } });
-  assert.deepEqual(JSON.parse(requests[0].body), {
-    role: "firefighter",
-    firefighter: { employee_id: "E1", station_code: null },
-  });
+  await updateUser("u1", { role: "resident" });
+  assert.deepEqual(JSON.parse(requests[0].body), { role: "resident" });
 });
 
 test("linkAsset and unlinkAsset encode path parts", async (t) => {
@@ -190,12 +185,10 @@ const malformedDetail = {
   "a missing id": { ...validDetail, id: undefined },
   "a numeric phone": { ...validDetail, phone: 4805550100 },
   "an unknown role": { ...validDetail, role: "chief" },
+  "a firefighter role": { ...validDetail, role: "firefighter" },
   "a missing email_verified": { ...validDetail, email_verified: undefined },
   "an unparseable last_login_at": { ...validDetail, last_login_at: "soon" },
   "asset IDs that are not strings": { ...validDetail, asset_ids: [1] },
-  "a missing firefighter": { ...validDetail, firefighter: undefined },
-  "a firefighter without employee_id": { ...validDetail, firefighter: { station_code: "616C" } },
-  "a numeric station_code": { ...validDetail, firefighter: { employee_id: "E1", station_code: 616 } },
 };
 
 for (const [name, payload] of Object.entries(malformedDetail)) {
@@ -204,6 +197,18 @@ for (const [name, payload] of Object.entries(malformedDetail)) {
   });
 }
 
-test("parseAdminUserDetail accepts a user with no firefighter details", () => {
-  assert.equal(parseAdminUserDetail({ ...validDetail, firefighter: null }).firefighter, null);
+test("parseAdminUserDetail ignores unknown extra fields", () => {
+  assert.equal(parseAdminUserDetail({ ...validDetail, nickname: "Ada" }).id, validDetail.id);
+});
+
+for (const role of ["resident", "admin"]) {
+  test(`parseAdminUserList accepts the ${role} role`, () => {
+    const list = { items: [{ ...validUser, role }], total: 1, limit: 25, offset: 0 };
+    assert.equal(parseAdminUserList(list).items[0].role, role);
+  });
+}
+
+test("parseAdminUserList rejects a firefighter role", () => {
+  const list = { items: [{ ...validUser, role: "firefighter" }], total: 1, limit: 25, offset: 0 };
+  assert.throws(() => parseAdminUserList(list), ResponseFormatError);
 });

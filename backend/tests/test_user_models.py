@@ -1,8 +1,8 @@
 import pytest
 from sqlalchemy import select, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 
-from app.models import FirefighterProfile, ResidentAsset, ResidentProfile, User, UserRole
+from app.models import ResidentAsset, ResidentProfile, User, UserRole
 
 pytestmark = pytest.mark.db
 
@@ -11,6 +11,20 @@ FAKE_HASH = "$2b$12$notarealhashjustfortestingxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 def make_user(email="jane@example.com", role=UserRole.RESIDENT, **kw):
     return User(email=email, password_hash=FAKE_HASH, full_name="Jane Doe", role=role, **kw)
+
+
+def test_there_are_exactly_two_roles():
+    assert {role.value for role in UserRole} == {"resident", "admin"}
+
+
+def test_database_refuses_any_other_role(db):
+    with pytest.raises(DBAPIError, match="invalid input value for enum user_role"):
+        db.execute(
+            text(
+                "INSERT INTO users (email, password_hash, full_name, role) "
+                "VALUES ('frank@example.com', 'x', 'Frank Ortiz', 'firefighter')"
+            )
+        )
 
 
 def test_new_user_gets_defaults(db):
@@ -77,28 +91,16 @@ def test_resident_can_link_multiple_assets(db):
     assert [link.asset_id for link in u.resident_assets] == ["A-1001", "A-1002"]
 
 
-def test_firefighter_employee_id_unique(db):
-    a = make_user("ff1@scottsdale.test", UserRole.FIREFIGHTER)
-    a.firefighter_profile = FirefighterProfile(employee_id="E1001", station_code="616C")
-    b = make_user("ff2@scottsdale.test", UserRole.FIREFIGHTER)
-    b.firefighter_profile = FirefighterProfile(employee_id="E1001", station_code="615B")
-    db.add(a)
-    db.flush()
-    db.add(b)
-    with pytest.raises(IntegrityError):
-        db.flush()
-
-
 def test_deleting_user_removes_profile(db):
-    u = make_user("gone@example.com", UserRole.FIREFIGHTER)
-    u.firefighter_profile = FirefighterProfile(employee_id="E2002")
+    u = make_user("gone@example.com")
+    u.resident_profile = ResidentProfile(street_address="1 Elm Rd", zip_code="85251")
     db.add(u)
     db.flush()
     uid = u.id
 
     db.delete(u)
     db.flush()
-    left = db.scalar(select(FirefighterProfile).where(FirefighterProfile.user_id == uid))
+    left = db.scalar(select(ResidentProfile).where(ResidentProfile.user_id == uid))
     assert left is None
 
 
@@ -107,4 +109,3 @@ def test_admin_needs_no_profile(db):
     db.add(admin)
     db.flush()
     assert admin.resident_profile is None
-    assert admin.firefighter_profile is None

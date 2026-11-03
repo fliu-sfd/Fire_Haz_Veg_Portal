@@ -25,7 +25,7 @@ export function AuthPageShell({
   children,
   footer,
   panelTitle = "A clearer path to a safer property.",
-  panelDescription = "The vegetation assessment portal connects residents and fire-prevention staff around the work that matters.",
+  panelDescription = "The vegetation assessment portal connects residents and administrators around the work that matters.",
   highlights = defaultHighlights,
 }: AuthPageShellProps) {
   return (

@@ -7,7 +7,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 
 from app.models import UserRole
 from app.schemas import validators
-from app.schemas.firefighter import FirefighterOut
 from app.schemas.validators import EMAIL_MAX_LENGTH
 
 SEARCH_MAX_LENGTH = 100
@@ -84,27 +83,6 @@ class AdminUserDetail(BaseModel):
     created_at: datetime
     last_login_at: datetime | None
     asset_ids: list[str]
-    # kept after a firefighter changes role, so it can be reused if they come back
-    firefighter: FirefighterOut | None
-
-
-class FirefighterUpdate(BaseModel):
-    """Replaces both firefighter fields. Leaving out station_code clears it."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    employee_id: str
-    station_code: str | None = None
-
-    @field_validator("employee_id")
-    @classmethod
-    def clean_employee_id(cls, v: str) -> str:
-        return validators.clean_employee_id(v)
-
-    @field_validator("station_code")
-    @classmethod
-    def clean_station_code(cls, v: str | None) -> str | None:
-        return validators.clean_station_code(v)
 
 
 class AdminUserUpdate(BaseModel):
@@ -120,9 +98,8 @@ class AdminUserUpdate(BaseModel):
     phone: str | None = None
     role: UserRole | None = None
     is_active: bool | None = None
-    firefighter: FirefighterUpdate | None = None
 
-    @field_validator("full_name", "email", "role", "is_active", "firefighter")
+    @field_validator("full_name", "email", "role", "is_active")
     @classmethod
     def not_null(cls, v: object) -> object:
         # validators skip defaults, so this only runs when the field was sent

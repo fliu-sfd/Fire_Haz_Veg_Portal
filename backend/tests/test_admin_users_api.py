@@ -34,7 +34,7 @@ PEOPLE = [
         ["1733002", "1732991", "1732984"],
         3,
     ),
-    ("Frank Ortiz", "frank.ortiz@example.com", UserRole.FIREFIGHTER, [], 4),
+    ("Frank Ortiz", "frank.ortiz@example.com", UserRole.ADMIN, [], 4),
     ("dana_lee", "dana%lee@example.com", UserRole.RESIDENT, ["9087766"], 5),
 ]
 
@@ -80,7 +80,7 @@ def test_requires_login(client, people) -> None:
     assert resp.status_code == 401
 
 
-@pytest.mark.parametrize("email", ["carlos.rivera@example.com", "frank.ortiz@example.com"])
+@pytest.mark.parametrize("email", ["carlos.rivera@example.com", "beth.nguyen@example.com"])
 def test_non_admins_are_forbidden(client, people, email) -> None:
     login_as(client, people[email])
     resp = client.get(URL)
@@ -121,9 +121,9 @@ def test_community_account_returns_all_asset_ids_sorted(admin_client) -> None:
     assert item["asset_ids"] == ["1732984", "1732991", "1733002"]
 
 
-def test_staff_have_no_asset_ids(admin_client) -> None:
-    items = admin_client.get(URL, params={"role": "firefighter"}).json()["items"]
-    assert [i["asset_ids"] for i in items] == [[]]
+def test_admins_have_no_asset_ids(admin_client) -> None:
+    items = admin_client.get(URL, params={"role": "admin"}).json()["items"]
+    assert [i["asset_ids"] for i in items] == [[], []]
 
 
 def test_default_order_is_newest_first(admin_client) -> None:
@@ -164,7 +164,7 @@ def test_blank_search_returns_everyone(admin_client) -> None:
 # --- role filter ---
 
 
-@pytest.mark.parametrize(("role", "count"), [("resident", 4), ("firefighter", 1), ("admin", 1)])
+@pytest.mark.parametrize(("role", "count"), [("resident", 4), ("admin", 2)])
 def test_role_filter(admin_client, role, count) -> None:
     body = admin_client.get(URL, params={"role": role}).json()
     assert body["total"] == count
@@ -172,7 +172,7 @@ def test_role_filter(admin_client, role, count) -> None:
 
 
 def test_search_and_role_filter_combine(admin_client) -> None:
-    resp = admin_client.get(URL, params={"q": "example.com", "role": "firefighter"})
+    resp = admin_client.get(URL, params={"q": "frank", "role": "admin"})
     assert names(resp) == ["Frank Ortiz"]
 
 
@@ -285,6 +285,7 @@ def test_offset_past_end_is_empty(admin_client) -> None:
         ({"sort": "password_hash"}, "sort"),
         ({"order": "sideways"}, "order"),
         ({"role": "homeowner"}, "role"),
+        ({"role": "firefighter"}, "role"),
         ({"is_active": "maybe"}, "is_active"),
         ({"q": "x" * 101}, "q"),
         ({"include": "phone"}, "include"),
