@@ -6,7 +6,6 @@ import { usePasswordForm, type PasswordFormModel } from "@/features/profile/hook
 import { useProfile } from "@/features/profile/hooks/use-profile";
 import { useProfileActions } from "@/features/profile/hooks/use-profile-actions";
 import { useProfileForm, type ProfileFormModel } from "@/features/profile/hooks/use-profile-form";
-import type { FirefighterDetails } from "@/features/profile/types";
 import { accountFacts, joinedLabel, type AccountFact } from "@/features/profile/utils/display";
 
 type Loading = { status: "loading" };
@@ -32,8 +31,6 @@ type Ready = {
     isRetrying: boolean;
     retry: () => void;
   } | null;
-  /** Only for firefighters; null inside means no details are on file. */
-  department: { details: FirefighterDetails | null } | null;
   accountFacts: AccountFact[];
 };
 
@@ -50,7 +47,7 @@ export function useProfilePage(): ProfilePageModel {
     [profile],
   );
   const password = usePasswordForm(personal, actions.changePassword);
-  // Only homeowners have linked properties; staff never send the request.
+  // Only homeowners have linked properties; admins never send the request.
   const properties = useMyProperties(profile?.role === "resident" ? profile.id : null);
 
   useEffect(() => {
@@ -78,7 +75,6 @@ export function useProfilePage(): ProfilePageModel {
             retry: () => void properties.refresh(),
           }
         : null,
-    department: profile.role === "firefighter" ? { details: profile.firefighter } : null,
     accountFacts: accountFacts(profile),
   };
 }

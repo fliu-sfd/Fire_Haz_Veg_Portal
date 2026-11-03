@@ -1,7 +1,6 @@
 "use client";
 
 import { AccountInfoCard } from "@/features/profile/components/account-info-card";
-import { DepartmentDetailsCard } from "@/features/profile/components/department-details-card";
 import { LinkedPropertiesCard } from "@/features/profile/components/linked-properties-card";
 import { PasswordForm } from "@/features/profile/components/password-form";
 import { PersonalDetailsForm } from "@/features/profile/components/personal-details-form";
@@ -17,7 +16,7 @@ export function ProfileView() {
   }
   if (page.status === "loading") return <ProfileSkeleton />;
 
-  const { details, password, properties, department } = page;
+  const { details, password, properties } = page;
   // The form fills in on the render after the profile arrives.
   const values = details.values;
   if (!values) return <ProfileSkeleton />;
@@ -65,7 +64,6 @@ export function ProfileView() {
               onRetry={properties.retry}
             />
           ) : null}
-          {department ? <DepartmentDetailsCard details={department.details} /> : null}
         </div>
       </div>
     </div>

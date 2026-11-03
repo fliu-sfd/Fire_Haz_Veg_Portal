@@ -1,10 +1,5 @@
 import type { UserRole } from "@/features/auth/api";
 
-export type FirefighterDetails = {
-  employeeId: string;
-  stationCode: string | null;
-};
-
 /** The signed-in user's own account, from GET /me/profile. */
 export type Profile = {
   id: string;
@@ -15,10 +10,8 @@ export type Profile = {
   emailVerified: boolean;
   createdAt: string;
   lastLoginAt: string | null;
-  /** Sorted; empty for staff. */
+  /** Sorted; empty for admins. */
   assetIds: string[];
-  /** Only set for firefighters. */
-  firefighter: FirefighterDetails | null;
 };
 
 /** Only the fields present are sent. `phone: null` clears the phone. */

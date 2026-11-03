@@ -1,22 +1,10 @@
 import { isUserRole } from "@/features/admin/utils/query-params";
-import type { FirefighterDetails, PasswordChangeInput, Profile, ProfileUpdateInput } from "@/features/profile/types";
+import type { PasswordChangeInput, Profile, ProfileUpdateInput } from "@/features/profile/types";
 import { apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isDate, isOptionalDate, isRecord, isStringList } from "@/lib/api/guards";
 
 const INVALID_PROFILE = "The profile service returned an invalid profile.";
-
-function parseFirefighter(data: unknown): FirefighterDetails | null {
-  if (data === null) return null;
-  if (
-    !isRecord(data) ||
-    typeof data.employee_id !== "string" ||
-    (data.station_code !== null && typeof data.station_code !== "string")
-  ) {
-    throw new ResponseFormatError(INVALID_PROFILE);
-  }
-  return { employeeId: data.employee_id, stationCode: data.station_code };
-}
 
 export function parseProfile(data: unknown): Profile {
   if (
@@ -29,8 +17,7 @@ export function parseProfile(data: unknown): Profile {
     typeof data.email_verified !== "boolean" ||
     !isDate(data.created_at) ||
     !isOptionalDate(data.last_login_at) ||
-    !isStringList(data.asset_ids) ||
-    !("firefighter" in data)
+    !isStringList(data.asset_ids)
   ) {
     throw new ResponseFormatError(INVALID_PROFILE);
   }
@@ -44,7 +31,6 @@ export function parseProfile(data: unknown): Profile {
     createdAt: data.created_at,
     lastLoginAt: data.last_login_at,
     assetIds: data.asset_ids,
-    firefighter: parseFirefighter(data.firefighter),
   };
 }
 
