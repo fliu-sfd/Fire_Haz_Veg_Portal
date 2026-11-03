@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="p-7 sm:p-10">
           <p className="text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">For homeowners</p>
           <h2 className="mt-3 text-2xl font-light text-charcoal">Manage your property assessment</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-city-dark">Create an account using the property address and Asset ID included with your assessment notice.</p>
+          <p className="mt-3 max-w-2xl leading-7 text-city-dark">Create an account, then add the Asset ID from the tag left at your door.</p>
           <Link href="/sign-up/homeowner" className="mt-6 inline-flex font-bold text-denim underline-offset-4 hover:underline">
             Get started →
           </Link>
