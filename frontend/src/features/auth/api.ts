@@ -77,8 +77,7 @@ export async function getCurrentAccount(): Promise<Account> {
   return parseAccount(await apiRequest<unknown>("/auth/me"));
 }
 
-export async function getMyProperties(): Promise<PropertySummary[]> {
-  const data = await apiRequest<unknown>("/residents/me/properties");
+function parsePropertyList(data: unknown): PropertySummary[] {
   const invalidResponse = () => new ResponseFormatError("The service returned an invalid property list.");
   if (!Array.isArray(data)) throw invalidResponse();
 
@@ -100,6 +99,23 @@ export async function getMyProperties(): Promise<PropertySummary[]> {
       siteAddress: value.site_address,
     };
   });
+}
+
+export async function getMyProperties(): Promise<PropertySummary[]> {
+  return parsePropertyList(await apiRequest<unknown>("/residents/me/properties"));
+}
+
+export async function addMyProperty(assetId: string): Promise<PropertySummary[]> {
+  return parsePropertyList(await apiRequest<unknown>("/residents/me/properties", {
+    method: "POST",
+    body: JSON.stringify({ asset_id: assetId }),
+  }));
+}
+
+export async function removeMyProperty(assetId: string): Promise<PropertySummary[]> {
+  return parsePropertyList(await apiRequest<unknown>(`/residents/me/properties/${encodeURIComponent(assetId)}`, {
+    method: "DELETE",
+  }));
 }
 
 export function signOut(): Promise<void> {

@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { authErrorMessage, getCurrentAccount, getMyProperties, registerHomeowner } from "@/features/auth/api";
+import {
+  addMyProperty,
+  authErrorMessage,
+  getCurrentAccount,
+  getMyProperties,
+  registerHomeowner,
+  removeMyProperty,
+} from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 
@@ -116,5 +123,60 @@ for (const status of [401, 403, 500]) {
       assert.equal(error.status, status);
       return true;
     });
+  });
+}
+
+const parsedProperty = {
+  assetId: "A-100",
+  seasonYear: 2026,
+  latestStatus: "ISSUES",
+  latestInspectedAt: property.latest_inspected_at,
+  siteAddress: "123 Main St",
+};
+
+test("addMyProperty posts the Asset ID and parses the returned list", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.match(new URL(url).pathname, /\/residents\/me\/properties$/);
+    assert.equal(options.method, "POST");
+    assert.equal(options.credentials, "include");
+    assert.deepEqual(JSON.parse(options.body), { asset_id: "A-100" });
+    return Response.json([property]);
+  });
+  assert.deepEqual(await addMyProperty("A-100"), [parsedProperty]);
+});
+
+test("removeMyProperty deletes by Asset ID and parses the returned list", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.match(new URL(url).pathname, /\/residents\/me\/properties\/A-100$/);
+    assert.equal(options.method, "DELETE");
+    assert.equal(options.body, undefined);
+    return Response.json([property]);
+  });
+  assert.deepEqual(await removeMyProperty("A-100"), [parsedProperty]);
+});
+
+test("removeMyProperty encodes the path part", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url) => {
+    assert.ok(url.endsWith("/residents/me/properties/A%2F1%3Fx%3D1%23y"));
+    return Response.json([]);
+  });
+  assert.deepEqual(await removeMyProperty("A/1?x=1#y"), []);
+});
+
+for (const [name, call] of [["addMyProperty", addMyProperty], ["removeMyProperty", removeMyProperty]]) {
+  for (const [label, body] of [
+    ["a list that is not an array", { items: [] }],
+    ["a missing field", [{ asset_id: "A-100" }]],
+    ["a wrong-typed field", [{ ...property, season_year: "2026" }]],
+  ]) {
+    test(`${name} rejects ${label}`, async (t) => {
+      t.mock.method(globalThis, "fetch", async () => Response.json(body));
+      await assert.rejects(call("A-100"), ResponseFormatError);
+    });
+  }
+
+  test(`${name} keeps the API error for the caller`, async (t) => {
+    t.mock.method(globalThis, "fetch", async () => Response.json({ detail: { code: "already_linked" } }, { status: 409 }));
+    await assert.rejects(call("A-100"), (error) => error instanceof ApiError && error.status === 409);
   });
 }
