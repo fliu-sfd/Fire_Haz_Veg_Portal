@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
 import { useCurrentAccount } from "@/features/auth/hooks/use-current-account";
@@ -52,6 +54,15 @@ function ConnectedProperties({ accountId }: { accountId: string }) {
           </p>
           {property.seasonYear !== null ? <p className="mt-1 text-sm text-city-dark">Season: {property.seasonYear}</p> : null}
           {property.siteAddress ? <p className="mt-3 text-sm text-city-dark">{property.siteAddress}</p> : null}
+          {property.seasonYear !== null ? (
+            <Link
+              href={`/homeowner/properties/${encodeURIComponent(property.assetId)}`}
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-civic-blue hover:underline"
+            >
+              View assessment
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          ) : null}
         </li>
       ))}
     </ul>

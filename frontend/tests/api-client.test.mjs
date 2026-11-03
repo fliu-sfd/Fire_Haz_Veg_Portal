@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ApiError, apiRequest } from "../src/lib/api/client.ts";
+import { ApiError, apiRequest, apiUrl } from "../src/lib/api/client.ts";
 
 test("sends JSON and preserves custom headers", async (t) => {
   t.mock.method(globalThis, "fetch", async (url, options) => {
@@ -66,4 +66,6 @@ test("forwards cancellation and provides a default timeout signal", async (t) =>
 test("rejects absolute and protocol-relative API paths", async () => {
   await assert.rejects(apiRequest("https://example.com/health"));
   await assert.rejects(apiRequest("//example.com/health"));
+  assert.throws(() => apiUrl("https://example.com/health"));
+  assert.throws(() => apiUrl("//example.com/health"));
 });
