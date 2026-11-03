@@ -30,6 +30,8 @@ erDiagram
     users ||--o| resident_profiles : has
     users ||--o{ resident_assets : can_access
     assessments ||--o{ crew_photos : has
+    assessments ||--o{ assessment_status_changes : history
+    users |o--o{ assessment_status_changes : made
 
     users {
         uuid id PK
@@ -71,6 +73,7 @@ erDiagram
         varchar crew_code "indexed"
         timestamptz inspected_at
         bool photo_flag "the crew's flag, kept as given"
+        review_status review_status "indexed, open | pending_review | closed, null unless ISSUES"
         varchar site_address
         varchar site_type
         varchar inspection_type
@@ -87,6 +90,15 @@ erDiagram
         varchar storage_key "where the photo store keeps the file"
         timestamptz created_at
     }
+    assessment_status_changes {
+        uuid id PK
+        uuid assessment_id FK
+        review_status from_status "null for the first entry"
+        review_status to_status
+        uuid changed_by FK "null if the account was deleted"
+        text reason "shown to the homeowner on a rejection"
+        timestamptz created_at
+    }
 ```
 
 Profiles and resident asset links are deleted with their user. Admins have no profile.
@@ -98,6 +110,13 @@ picture itself is not in the database: `storage_key` points to a file in the pho
 (`PHOTO_STORAGE_DIR`, local disk for now). Staff emails (`sfd_edit_by`) are never read
 or stored.
 
+`status` is the crew's result for a point. `review_status` is the follow-up of an issue
+and is a separate thing: only points with `status = 'ISSUES'` have one, and it starts as
+`open` (set by the importer and by migration `0007`). Every move between states is
+added to `assessment_status_changes` with who made it and an optional reason; rows are
+never edited, and they go away with their assessment. Re-running the import does not
+reset a `review_status` that has already moved, because known rows are skipped.
+
 ## Migrations
 
 | Revision | Change |
@@ -108,6 +127,7 @@ or stored.
 | `0004` | `resident_assets`; make resident ZIP optional because the imported address is stored as one value |
 | `0005` | `users.password_changed_at`; tokens issued before it are rejected |
 | `0006` | Limit `user_role` to `resident` and `admin` and drop the third role's profile table; stops with an error if any account still has that role |
+| `0007` | `assessments.review_status` (existing `ISSUES` rows become `open`) and `assessment_status_changes` |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
 

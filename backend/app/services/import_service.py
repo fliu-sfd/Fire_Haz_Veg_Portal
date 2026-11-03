@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from app.importers.base import InspectionSource, PointRecord
-from app.models import Assessment, CrewPhoto
+from app.models import ISSUES_STATUS, Assessment, CrewPhoto, ReviewStatus
 from app.storage.base import PhotoStore
 
 BATCH_SIZE = 1000
@@ -59,6 +59,8 @@ def _point_row(rec: PointRecord, season_year: int) -> dict:
         "crew_code": rec.crew_code,
         "inspected_at": rec.inspected_at,
         "photo_flag": rec.photo_flag,
+        # only issues are followed up; a re-import skips known rows, so it never resets this
+        "review_status": ReviewStatus.OPEN if rec.status == ISSUES_STATUS else None,
         "site_address": _blank_to_none(rec.site_address),
         "site_type": rec.site_type,
         "inspection_type": rec.inspection_type,

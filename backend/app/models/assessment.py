@@ -1,10 +1,13 @@
+import enum
 import uuid
 from datetime import datetime
 
 from geoalchemy2 import Geometry, WKBElement
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
+    Enum,
     ForeignKey,
     Index,
     Integer,
@@ -19,6 +22,30 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+# the value of Assessment.status for a point where the crew found a problem
+ISSUES_STATUS = "ISSUES"
+
+
+class ReviewStatus(enum.StrEnum):
+    """Where one issue stands in the clean-up follow-up.
+
+    Not the same thing as Assessment.status, which is the crew's result. Only points
+    with the ISSUES result are followed up, so every other point has no review status.
+    """
+
+    OPEN = "open"
+    PENDING_REVIEW = "pending_review"
+    CLOSED = "closed"
+
+
+def _review_status_column(**kwargs):
+    return Enum(
+        ReviewStatus,
+        name="review_status",
+        values_callable=lambda e: [m.value for m in e],
+        **kwargs,
+    )
 
 
 class Assessment(Base):
@@ -54,6 +81,9 @@ class Assessment(Base):
     inspected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     photo_flag: Mapped[bool | None] = mapped_column(Boolean)
 
+    # follow-up state; null for points without an issue, see ReviewStatus
+    review_status: Mapped[ReviewStatus | None] = mapped_column(_review_status_column(), index=True)
+
     # where and what
     site_address: Mapped[str | None] = mapped_column(String(255))
     site_type: Mapped[str | None] = mapped_column(String(80))
@@ -67,6 +97,12 @@ class Assessment(Base):
 
     photos: Mapped[list["CrewPhoto"]] = relationship(
         back_populates="assessment", cascade="all, delete-orphan", passive_deletes=True
+    )
+    status_changes: Mapped[list["AssessmentStatusChange"]] = relationship(
+        back_populates="assessment",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="AssessmentStatusChange.created_at",
     )
 
     def __repr__(self) -> str:
@@ -101,3 +137,44 @@ class CrewPhoto(Base):
 
     def __repr__(self) -> str:
         return f"<CrewPhoto {self.file_name} ({self.size_bytes} bytes)>"
+
+
+class AssessmentStatusChange(Base):
+    """One step in the follow-up of an issue: who moved it, to what, and why.
+
+    Rows are only added, never edited. The current state is review_status on the
+    assessment; this table is the trail behind it. A rejection keeps its reason here so
+    the homeowner can be shown it.
+    """
+
+    __tablename__ = "assessment_status_changes"
+    __table_args__ = (
+        CheckConstraint(
+            "from_status IS NULL OR from_status <> to_status",
+            name="ck_assessment_status_changes_moves",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    assessment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("assessments.id", ondelete="CASCADE"), index=True
+    )
+    # null when the issue is first put under follow-up
+    from_status: Mapped[ReviewStatus | None] = mapped_column(
+        _review_status_column(create_type=False)
+    )
+    to_status: Mapped[ReviewStatus] = mapped_column(_review_status_column(create_type=False))
+    # the account that made the change; kept as null if that account is deleted later
+    changed_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    reason: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    assessment: Mapped[Assessment] = relationship(back_populates="status_changes")
+
+    def __repr__(self) -> str:
+        return f"<AssessmentStatusChange {self.from_status} -> {self.to_status}>"

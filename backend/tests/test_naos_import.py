@@ -7,7 +7,7 @@ from sqlalchemy import func, select, text
 
 from app.importers.base import PhotoRecord, PointRecord
 from app.importers.geodatabase import GeodatabaseSource
-from app.models import Assessment, CrewPhoto
+from app.models import Assessment, CrewPhoto, ReviewStatus
 from app.services.import_service import import_inspections
 from app.storage import LocalDiskStore
 
@@ -138,6 +138,31 @@ def test_photo_bytes_are_stored_under_a_safe_key(db, store, three_points, two_ph
     assert photo.size_bytes == len(JPEG)
     assert store.read(photo.storage_key) == JPEG
     assert photo.assessment_id == parent.id
+
+
+def test_only_issues_start_under_follow_up(db, store, three_points):
+    import_inspections(db, ListSource(three_points, []), YEAR, store)
+    states = dict(db.execute(select(Assessment.source_global_id, Assessment.review_status)).all())
+    print("states:", states)
+
+    assert states[GID_A] is ReviewStatus.OPEN
+    assert states[GID_B] is None
+    assert states[GID_C] is None
+
+
+def test_reimport_keeps_a_status_that_was_already_moved(db, store, three_points):
+    src = ListSource(three_points, [])
+    import_inspections(db, src, YEAR, store)
+    db.execute(
+        text("update assessments set review_status = 'closed' where source_global_id = :g"),
+        {"g": GID_A},
+    )
+    db.commit()
+
+    import_inspections(db, src, YEAR, store)
+    db.expire_all()
+    kept = db.scalar(select(Assessment.review_status).where(Assessment.source_global_id == GID_A))
+    assert kept is ReviewStatus.CLOSED
 
 
 def test_blank_comments_and_address_are_null(db, store, three_points):
