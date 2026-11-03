@@ -22,7 +22,7 @@ src/
   app/                          Next.js routes and layouts
     page.tsx                    Overview and connection example
     homeowner/page.tsx          Homeowner portal
-    dashboard/page.tsx          Staff portal
+    dashboard/page.tsx          Admin workspace
     dashboard/users/            Admin users list (page.tsx + client wiring)
     dashboard/hazards/          Admin hazard map (page.tsx + client wiring)
     loading.tsx                 Shared loading state
@@ -100,14 +100,19 @@ SWR configuration:
 
 ## Users
 
-`/dashboard/users` lists accounts from `GET /admin/users`, and an admin can edit any of them in a side panel. Notes for anyone changing it:
+`/dashboard/users` lists accounts from `GET /admin/users`, and an admin can edit any of them in a side panel. There are two roles, resident and admin. Notes for anyone changing it:
 
-- **Filters.** Search, role and status live in the URL as `q`, `role` and `status` (`active` / `disabled`). The API takes `is_active=true|false`, sent only when a status is chosen. Column choices are stored in `localStorage` under `admin.users.columns.v2`; the key changed when Status and Last sign-in were added, so older saved lists do not hide them.
+- **Filters.** Search, role and status live in the URL as `q`, `role` and `status` (`active` / `disabled`). The API takes `is_active=true|false`, sent only when a status is chosen. An unknown `role` in an old link means no role filter, and it is never sent to the API. Column choices are stored in `localStorage` under `admin.users.columns.v2`; the key changed when Status and Last sign-in were added, so older saved lists do not hide them.
 - **Edit panel.** Clicking a name or the pencil opens the panel and sets `?user=<id>`. That param is URL-only: `parseUsersQuery` never reads it, so it is not in the list request or its SWR key. The detail is cached under `["admin/user", id]`.
 - **Saving.** The form sends only changed fields (`buildPatch` in `utils/user-form.ts`), after the same cleanup the backend does. Field rules mirror `backend/app/schemas/validators.py`; change both together. Each write puts the returned user in the detail cache and revalidates every cached list page.
 - **Confirmations.** Turning an account off, changing a role, removing a linked property and closing with unsaved edits each ask first. Linked properties save right away, apart from the Save button.
-- **Errors.** `editError` in `utils/errors.ts` puts `email_taken`, `employee_id_taken`, `firefighter_details_required` and `property_not_found` under their field. Other errors show at the top of the panel.
+- **Errors.** `editError` in `utils/errors.ts` puts `email_taken` and `property_not_found` under their field. Other errors show at the top of the panel.
 - **Own account.** Role and Active are locked on the admin's own account. The server enforces this and the last-active-admin rule as well.
+- **First admin.** It is created from the command line. See "Create the first admin" in `backend/README.md`.
+
+## Profile
+
+`/profile` lets any signed-in user edit their name and phone and change their password. Residents also see their linked properties. Admins see no extra card.
 
 ## shadcn/ui
 
@@ -183,7 +188,7 @@ The tests cover the API client, the admin users and hazards APIs and their respo
 
 ## Starter scope
 
-Included: responsive shared layout, navigation, placeholder homeowner/staff pages, common UI components, loading/error/404 states, typed API client, and backend connection example.
+Included: responsive shared layout, navigation, placeholder homeowner and admin pages, common UI components, loading/error/404 states, typed API client, and backend connection example.
 
 Resident signup and sign-in are connected to FastAPI. Signup uses the door tag's Asset ID; the address is optional and omitted when blank. `/homeowner` loads linked properties from `GET /api/v1/residents/me/properties`, including their latest inspection result and date. This requires the backend property-link changes from `feature/42-property-link` until those changes are merged into `dev`. Still to implement as separate tasks: QR access, assessment-detail APIs, homeowner photo workflows, remote reviews, and property history.
 
@@ -196,7 +201,7 @@ The mocked-fetch tests check the API client contract; completion also requires t
 3. Find a real ID with `docker compose exec db psql -U fhv -d fire_hazard_veg -c "select distinct asset_id from assessments limit 5;"`.
 4. Run `npm run dev` here and open `http://localhost:3000`. Use the keyboard to complete homeowner signup with a fresh email, that Asset ID, and no address. Confirm that `/homeowner` shows the linked property, its latest result, and inspection date. Compare the card with the API response in the browser's Network panel. Repeat with an address filled in.
 5. Sign out and try another fresh email with a made-up Asset ID. Confirm the message is "We could not find that Asset ID. Check the number on your door tag." Verify that the failed signup created no user with `docker compose exec db psql -U fhv -d fire_hazard_veg -c "select count(*) from users where email = 'the-failed-signup-email@example.com';"`.
-6. Confirm sign-out returns to `/sign-in`, opening `/homeowner` while signed out redirects there, and a staff account opening `/homeowner` goes to `/dashboard`.
+6. Confirm sign-out returns to `/sign-in`, opening `/homeowner` while signed out redirects there, and an admin account opening `/homeowner` goes to `/dashboard`.
 7. Check loading with browser network throttling and the error/retry state by stopping and restarting the API after the account has loaded. Use development database fixtures for a resident with no links and a linked property with no assessment. Confirm "No properties are linked to this account yet." and "Not inspected yet" respectively. These fixtures supplement the imported-data check above.
 8. Run `npm run lint`, `npm run typecheck`, and `npm test`. All must pass. Check that every signup field has a label and that the form and retry button work with the keyboard.
 
