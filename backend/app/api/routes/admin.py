@@ -16,9 +16,6 @@ from app.services.admin_user_service import (
     AssetsResidentsOnlyError,
     CannotChangeOwnAccessError,
     EmailTakenError,
-    EmployeeIdTakenError,
-    FirefighterDetailsRequiredError,
-    FirefighterNotApplicableError,
     LastAdminError,
     UnlinkAssetsFirstError,
     UserNotFoundError,
@@ -52,24 +49,6 @@ _ERRORS: dict[type[Exception], tuple[int, str, str, str | None]] = {
         "email_taken",
         "Another account already uses this email.",
         "email",
-    ),
-    EmployeeIdTakenError: (
-        status.HTTP_409_CONFLICT,
-        "employee_id_taken",
-        "Another firefighter already has this employee ID.",
-        "firefighter.employee_id",
-    ),
-    FirefighterDetailsRequiredError: (
-        status.HTTP_422_UNPROCESSABLE_CONTENT,
-        "firefighter_details_required",
-        "Enter an employee ID to make this user a firefighter.",
-        "firefighter.employee_id",
-    ),
-    FirefighterNotApplicableError: (
-        status.HTTP_422_UNPROCESSABLE_CONTENT,
-        "firefighter_not_applicable",
-        "Firefighter details only apply to firefighter accounts.",
-        None,
     ),
     UnlinkAssetsFirstError: (
         status.HTTP_409_CONFLICT,
@@ -146,10 +125,7 @@ def get_user(_admin: AdminUser, user_id: uuid.UUID, db: DbSession) -> AdminUserD
 def patch_user(
     admin: AdminUser, user_id: uuid.UUID, payload: AdminUserUpdate, db: DbSession
 ) -> AdminUserDetail:
-    """Change details, role, status or firefighter fields. Only sent fields change.
-
-    Administrators only.
-    """
+    """Change details, role or status. Only sent fields change. Administrators only."""
     try:
         return update_user(db, admin, user_id, payload)
     except tuple(_ERRORS) as exc:
