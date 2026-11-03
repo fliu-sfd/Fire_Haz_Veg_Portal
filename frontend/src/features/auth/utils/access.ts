@@ -7,6 +7,6 @@ export function homePathFor(role: UserRole): string {
 /** Where a signed-in user must go instead of `pathname`, or null if they may stay. */
 export function areaRedirect(role: UserRole, pathname: string): string | null {
   if (role === "resident" && pathname.startsWith("/dashboard")) return "/homeowner";
-  if (role !== "resident" && pathname.startsWith("/homeowner")) return "/dashboard";
+  if (role === "admin" && pathname.startsWith("/homeowner")) return "/dashboard";
   return null;
 }

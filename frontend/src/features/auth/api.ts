@@ -2,7 +2,7 @@ import { ApiError, apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isRecord } from "@/lib/api/guards";
 
-export type UserRole = "resident" | "firefighter" | "admin";
+export type UserRole = "resident" | "admin";
 
 export type Account = {
   id: string;
@@ -39,7 +39,7 @@ function parseAccount(data: unknown): Account {
     throw new Error("The authentication service returned an invalid account.");
   }
   const value = data as Record<string, unknown>;
-  const roles: UserRole[] = ["resident", "firefighter", "admin"];
+  const roles: UserRole[] = ["resident", "admin"];
   if (
     typeof value.id !== "string" ||
     typeof value.email !== "string" ||

@@ -37,7 +37,6 @@ const CODE_PATTERN = /^[A-Z0-9_-]+$/;
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   resident: "Resident",
-  firefighter: "Firefighter",
   admin: "Admin",
 };
 
