@@ -1,3 +1,4 @@
+import type { Confirmation } from "@/components/ui/confirm-dialog";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isRecord } from "@/lib/api/guards";
@@ -41,4 +42,13 @@ export function propertyErrorMessage(error: unknown): PropertyError {
     return { field: "assetId", message: "Use only letters, numbers, hyphens, and underscores, up to 32 characters." };
   }
   return { message: "We could not save the change. Try again in a moment." };
+}
+
+export function removePropertyConfirmation(assetId: string): Confirmation {
+  return {
+    title: `Remove ${assetId} from your account?`,
+    description: "You can add it again later with the same Asset ID.",
+    actionLabel: "Remove property",
+    destructive: true,
+  };
 }

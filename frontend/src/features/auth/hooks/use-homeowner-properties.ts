@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useAddPropertyForm } from "@/features/auth/hooks/use-add-property-form";
 import { useMyProperties } from "@/features/auth/hooks/use-my-properties";
 import { usePropertyActions } from "@/features/auth/hooks/use-property-actions";
@@ -7,8 +7,10 @@ import { usePropertyActions } from "@/features/auth/hooks/use-property-actions";
 export function useHomeownerProperties(accountId: string) {
   const list = useMyProperties(accountId);
   const actions = usePropertyActions(accountId);
-  const { add: addProperty } = actions;
+  const { add: addProperty, remove: removeProperty, clearError, isSaving } = actions;
   const [notice, setNotice] = useState("");
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const returnFocusTo = useRef<Element | null>(null);
 
   const add = useCallback(
     async (assetId: string) => {
@@ -29,5 +31,51 @@ export function useHomeownerProperties(accountId: string) {
     clearServerError: actions.clearError,
   });
 
-  return { ...list, form, notice, isSaving: actions.isSaving };
+  const { focusInput } = form;
+
+  const requestRemove = useCallback(
+    (assetId: string) => {
+      returnFocusTo.current = document.activeElement;
+      clearError();
+      setNotice("");
+      setRemovingId(assetId);
+    },
+    [clearError],
+  );
+
+  const confirmRemove = useCallback(async () => {
+    if (!removingId) return;
+    const saved = await removeProperty(removingId);
+    if (saved) {
+      setNotice(`Removed ${removingId}.`);
+      setRemovingId(null);
+    }
+  }, [removeProperty, removingId]);
+
+  const cancelRemove = useCallback(() => {
+    if (isSaving) return;
+    clearError();
+    setRemovingId(null);
+  }, [clearError, isSaving]);
+
+  // A removed card takes its button with it, so focus then moves to the Asset ID input.
+  const dialogClosed = useCallback(() => {
+    const target = returnFocusTo.current;
+    returnFocusTo.current = null;
+    if (target instanceof HTMLElement && target !== document.body && target.isConnected) target.focus();
+    else focusInput();
+  }, [focusInput]);
+
+  return {
+    ...list,
+    form,
+    notice,
+    isSaving,
+    removingId,
+    removeError: actions.error?.action === "remove" ? actions.error.message : undefined,
+    requestRemove,
+    confirmRemove: () => void confirmRemove(),
+    cancelRemove,
+    dialogClosed,
+  };
 }

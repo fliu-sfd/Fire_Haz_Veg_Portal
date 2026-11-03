@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Trash2 } from "lucide-react";
 import type { PropertySummary } from "@/features/auth/api";
 
-export function PropertyCard({ property }: { property: PropertySummary }) {
+type PropertyCardProps = {
+  property: PropertySummary;
+  isSaving: boolean;
+  onRemove: () => void;
+};
+
+export function PropertyCard({ property, isSaving, onRemove }: PropertyCardProps) {
   return (
     <li className="rounded border border-city-light bg-city-gray p-4">
       <span className="text-xs font-bold uppercase tracking-[0.12em] text-civic-blue">Asset ID</span>
@@ -20,15 +26,27 @@ export function PropertyCard({ property }: { property: PropertySummary }) {
       </p>
       {property.seasonYear !== null ? <p className="mt-1 text-sm text-city-dark">Season: {property.seasonYear}</p> : null}
       {property.siteAddress ? <p className="mt-3 text-sm text-city-dark">{property.siteAddress}</p> : null}
-      {property.seasonYear !== null ? (
-        <Link
-          href={`/homeowner/properties/${encodeURIComponent(property.assetId)}`}
-          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-civic-blue hover:underline"
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        {property.seasonYear !== null ? (
+          <Link
+            href={`/homeowner/properties/${encodeURIComponent(property.assetId)}`}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-civic-blue hover:underline"
+          >
+            View assessment
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </Link>
+        ) : <span />}
+        <button
+          type="button"
+          aria-label={`Remove ${property.assetId}`}
+          disabled={isSaving}
+          onClick={onRemove}
+          className="inline-flex min-h-10 items-center gap-1.5 rounded px-2 text-sm font-semibold text-city-dark hover:text-fire-red hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-denim/15 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          View assessment
-          <ArrowRight aria-hidden="true" className="size-4" />
-        </Link>
-      ) : null}
+          <Trash2 aria-hidden="true" className="size-4" />
+          Remove
+        </button>
+      </div>
     </li>
   );
 }

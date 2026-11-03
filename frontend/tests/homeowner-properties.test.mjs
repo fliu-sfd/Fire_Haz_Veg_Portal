@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { propertyErrorMessage } from "@/features/auth/utils/properties";
+import { propertyErrorMessage, removePropertyConfirmation } from "@/features/auth/utils/properties";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { normalizeAssetId, validateAssetId } from "@/lib/validation/asset-id";
@@ -65,3 +65,12 @@ for (const [name, error, message] of [
     assert.doesNotMatch(result.message, /raw server text/);
   });
 }
+
+test("removing a property asks first and says it can be added back", () => {
+  assert.deepEqual(removePropertyConfirmation("A-100"), {
+    title: "Remove A-100 from your account?",
+    description: "You can add it again later with the same Asset ID.",
+    actionLabel: "Remove property",
+    destructive: true,
+  });
+});

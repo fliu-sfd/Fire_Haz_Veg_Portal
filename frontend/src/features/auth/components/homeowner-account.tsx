@@ -6,6 +6,7 @@ import { FormAlert } from "@/components/ui/form-alert";
 import { AddPropertyForm } from "@/features/auth/components/add-property-form";
 import { PropertiesEmptyState } from "@/features/auth/components/properties-empty-state";
 import { PropertyCard } from "@/features/auth/components/property-card";
+import { RemovePropertyDialog } from "@/features/auth/components/remove-property-dialog";
 import { useCurrentAccount } from "@/features/auth/hooks/use-current-account";
 import { useHomeownerProperties } from "@/features/auth/hooks/use-homeowner-properties";
 import { useRequireRole } from "@/features/auth/hooks/use-require-role";
@@ -53,10 +54,25 @@ function ConnectedProperties({ accountId }: { accountId: string }) {
         <>
           <p className="mt-3 leading-7 text-city-dark">These Asset IDs were verified against the City assessment data.</p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-            {properties.map((property) => <PropertyCard key={property.assetId} property={property} />)}
+            {properties.map((property) => (
+              <PropertyCard
+                key={property.assetId}
+                property={property}
+                isSaving={page.isSaving}
+                onRemove={() => page.requestRemove(property.assetId)}
+              />
+            ))}
           </ul>
         </>
       )}
+      <RemovePropertyDialog
+        assetId={page.removingId}
+        error={page.removeError}
+        isRemoving={page.isSaving}
+        onConfirm={page.confirmRemove}
+        onCancel={page.cancelRemove}
+        onClosed={page.dialogClosed}
+      />
     </>
   );
 }
