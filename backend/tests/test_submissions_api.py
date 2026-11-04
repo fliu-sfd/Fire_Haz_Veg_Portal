@@ -1,16 +1,31 @@
 import uuid
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 from io import BytesIO
+from threading import Barrier
 
 import pytest
+from fastapi import HTTPException
 from PIL import Image
 from sqlalchemy import event, func, select
+from sqlalchemy.orm import Session
 
 from app.api.deps import get_photo_store
 from app.api.routes.submissions import MAX_UPLOAD_BYTES
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.main import app
-from app.models import Assessment, ResidentAsset, Submission, SubmissionPhoto, User, UserRole
+from app.models import (
+    Assessment,
+    CrewPhoto,
+    ResidentAsset,
+    Submission,
+    SubmissionPhoto,
+    User,
+    UserRole,
+)
+from app.schemas.submissions import ReviewDecision
+from app.services.submission_review_service import review_submission
 from app.services.submission_service import MAX_PHOTO_BYTES
 from app.storage import LocalDiskStore
 
@@ -500,6 +515,8 @@ def test_review_inbox_notifies_admin_of_owner_property_and_photo_count(client, e
     assert body["items"][0]["homeowner_name"] == "owner"
     assert body["items"][0]["asset_id"] == "1001"
     assert body["items"][0]["photo_count"] == 1
+    assert body["items"][0]["inspection_comments"] == "Trim this vegetation"
+    assert body["items"][0]["inspected_at"] is None
     assert "storage_key" not in str(body)
     assert client.get(f"{BASE}/admin/submissions/count").json() == {"pending": 1}
 
@@ -510,6 +527,7 @@ def test_only_admin_can_list_and_review_submissions(client, evidence, who, statu
     login(client, evidence[who])
     assert client.get(f"{BASE}/admin/submissions").status_code == status
     assert client.get(f"{BASE}/admin/submissions/count").status_code == status
+    assert client.get(f"{BASE}/admin/submissions/{saved['id']}").status_code == status
     assert review(client, saved).status_code == status
 
 
@@ -517,6 +535,7 @@ def test_review_inbox_and_decision_require_login(client, evidence):
     saved = submit(client, evidence).json()
     client.cookies.clear()
     assert client.get(f"{BASE}/admin/submissions").status_code == 401
+    assert client.get(f"{BASE}/admin/submissions/{saved['id']}").status_code == 401
     assert review(client, saved).status_code == 401
 
 
@@ -600,3 +619,179 @@ def test_inbox_pagination_is_bounded(client, evidence):
     assert client.get(f"{BASE}/admin/submissions?offset=-1").status_code == 422
     body = client.get(f"{BASE}/admin/submissions?limit=1&offset=1").json()
     assert body["total"] == 1 and body["items"] == []
+
+
+def test_review_inbox_orders_oldest_first_with_inspection_context(client, db, evidence):
+    first = submit(client, evidence).json()
+    second = client.post(
+        f"{BASE}/assessments/{evidence['second'].id}/submissions",
+        files=[("photos", ("evidence.png", image_bytes(), "image/png"))],
+    ).json()
+    db.get(Submission, uuid.UUID(first["id"])).created_at = datetime(2026, 11, 4, 10, tzinfo=UTC)
+    db.get(Submission, uuid.UUID(second["id"])).created_at = datetime(2026, 11, 4, 9, tzinfo=UTC)
+    evidence["second"].inspected_at = datetime(2026, 10, 28, 17, tzinfo=UTC)
+    db.commit()
+    login(client, evidence["admin"])
+    body = client.get(f"{BASE}/admin/submissions?limit=1").json()
+    assert body["total"] == 2 and len(body["items"]) == 1
+    assert body["items"][0]["submission_id"] == second["id"]
+    assert body["items"][0]["inspection_comments"] == "Clear this other point"
+    assert body["items"][0]["inspected_at"].startswith("2026-10-28T17:00:00")
+
+
+def test_review_detail_returns_exact_finding_private_photo_metadata_and_history(
+    client, db, evidence
+):
+    data = image_bytes()
+    key = evidence["store"].save("crew/original.png", data, "image/png")
+    photo = CrewPhoto(
+        assessment_id=evidence["issue"].id,
+        source_global_id=uuid.uuid4(),
+        file_name="original.png",
+        content_type="image/png",
+        size_bytes=len(data),
+        storage_key=key,
+    )
+    db.add(photo)
+    db.commit()
+    saved = submit(client, evidence, data={"comment": "Completed the trimming"}).json()
+    login(client, evidence["admin"])
+    response = client.get(f"{BASE}/admin/submissions/{saved['id']}")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["asset_id"] == "1001" and body["season_year"] == 2026
+    assert body["homeowner_name"] == "owner"
+    assert body["inspection"]["id"] == saved["assessment_id"]
+    assert body["inspection"]["comments"] == "Trim this vegetation"
+    assert body["inspection"]["photos"][0]["id"] == str(photo.id)
+    assert body["submission"]["id"] == saved["id"]
+    assert body["submission"]["comment"] == "Completed the trimming"
+    assert body["submission"]["can_review"]
+    assert body["history"] == [body["submission"]]
+    assert "storage_key" not in str(body) and "password_hash" not in str(body)
+    assert client.get(f"{BASE}/assessments/photos/{photo.id}").content == data
+    homeowner_photo = client.get(f"{BASE}/submission-photos/{saved['photos'][0]['id']}")
+    assert homeowner_photo.status_code == 200 and homeowner_photo.content == data
+    assert homeowner_photo.headers["cache-control"] == "private, no-store"
+
+
+def test_detail_preserves_selected_submission_when_newer_evidence_exists(client, evidence):
+    first = submit(client, evidence).json()
+    login(client, evidence["admin"])
+    assert review(client, first, "rejected", "Please include the full area.").status_code == 200
+    login(client, evidence["owner"])
+    second = submit(client, evidence).json()
+    login(client, evidence["admin"])
+    old = client.get(f"{BASE}/admin/submissions/{first['id']}").json()
+    assert old["submission"]["id"] == first["id"]
+    assert not old["submission"]["can_review"]
+    assert old["submission"]["review_comment"] == "Please include the full area."
+    assert [item["id"] for item in old["history"]] == [second["id"], first["id"]]
+    current = client.get(f"{BASE}/admin/submissions/{second['id']}").json()
+    assert current["submission"]["can_review"]
+
+
+def test_detail_not_found_and_past_season_is_read_only(client, db, evidence):
+    saved = submit(client, evidence).json()
+    db.add(
+        Assessment(
+            season_year=2027, source_global_id=uuid.uuid4(), asset_id="1001", status="ISSUES"
+        )
+    )
+    db.commit()
+    login(client, evidence["admin"])
+    assert client.get(f"{BASE}/admin/submissions/{uuid.uuid4()}").status_code == 404
+    body = client.get(f"{BASE}/admin/submissions/{saved['id']}").json()
+    assert body["season_year"] == 2026 and not body["submission"]["can_review"]
+
+
+@pytest.mark.parametrize("decision,state", [("approved", "closed"), ("rejected", "open")])
+def test_review_decision_updates_map_counts_without_overwriting_crew_result(
+    client, db, evidence, decision, state
+):
+    evidence["issue"].location = "SRID=4326;POINT(-111.9 33.6)"
+    evidence["second"].status = "NO ISSUES"
+    db.commit()
+    saved = submit(client, evidence).json()
+    login(client, evidence["admin"])
+    before = client.get(f"{BASE}/admin/hazards").json()
+    assert before["summary"]["by_state"]["pending_review"] == 1
+    assert review(client, saved, decision, "Review complete").status_code == 200
+    after = client.get(f"{BASE}/admin/hazards").json()
+    assert after["summary"]["by_state"]["pending_review"] == 0
+    assert after["summary"]["by_state"][state] == 1
+    assert after["items"][0]["state"] == state
+    db.refresh(evidence["issue"])
+    assert evidence["issue"].status == "ISSUES"
+
+
+def test_two_administrators_cannot_decide_the_same_submission(test_engine):
+    # Independent committed sessions are needed to exercise the real row locks.
+    assessment_id, submission_id = uuid.uuid4(), uuid.uuid4()
+    admin_ids = [uuid.uuid4(), uuid.uuid4()]
+    with Session(test_engine) as setup:
+        setup.add(
+            Assessment(
+                id=assessment_id,
+                season_year=2026,
+                source_global_id=uuid.uuid4(),
+                asset_id=f"RACE-{uuid.uuid4().hex[:12]}",
+                status="ISSUES",
+            )
+        )
+        setup.add_all(
+            User(
+                id=admin_id,
+                email=f"{admin_id}@example.com",
+                full_name="Review Administrator",
+                role=UserRole.ADMIN,
+                password_hash="not-a-real-hash",
+            )
+            for admin_id in admin_ids
+        )
+        setup.flush()
+        setup.add(
+            Submission(
+                id=submission_id,
+                assessment_id=assessment_id,
+                photos=[
+                    SubmissionPhoto(
+                        file_name="test.png",
+                        content_type="image/png",
+                        size_bytes=10,
+                        storage_key=f"test/{submission_id}.png",
+                    )
+                ],
+            )
+        )
+        setup.commit()
+    barrier = Barrier(2)
+
+    def decide(admin_id):
+        with Session(test_engine) as session:
+            user = session.get(User, admin_id)
+            barrier.wait(timeout=10)
+            try:
+                review_submission(
+                    session,
+                    user,
+                    submission_id,
+                    ReviewDecision(decision="approved", expected_version=1),
+                )
+                return 200
+            except HTTPException as error:
+                return error.status_code
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            assert sorted(pool.map(decide, admin_ids)) == [200, 409]
+        with Session(test_engine) as check:
+            row = check.get(Submission, submission_id)
+            assert row.version == 2 and row.status == "approved"
+            assert row.reviewed_by in admin_ids and row.reviewed_at is not None
+    finally:
+        with Session(test_engine) as cleanup:
+            cleanup.delete(cleanup.get(Assessment, assessment_id))
+            for admin_id in admin_ids:
+                cleanup.delete(cleanup.get(User, admin_id))
+            cleanup.commit()

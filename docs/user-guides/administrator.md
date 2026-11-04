@@ -150,12 +150,12 @@ No screenshot: the command line step has no portal screen, and A02 covers the ro
 ## A08 — Review homeowner fix submissions — Available
 
 1. Sign in as an administrator and open **Review inbox**. Its sidebar badge shows waiting submissions; the page lists who submitted, property, time, and photo count. It refreshes every 30 seconds; **Refresh** checks immediately.
-2. Select **Review submission** on the notification and verify the property and inspection point. You can also use **Hazard map → select property → View assessment & submissions**.
-3. Compare the original finding and crew photos with the homeowner's photos and comment. Enlarge photos as needed.
-4. Read **Submission history**, the homeowner's comment, and any updated timestamp. **View photo** previews an image; the thumbnail opens the protected image in a new tab. Admins cannot edit the homeowner's evidence.
+2. Select **Review submission** on the notification. The comparison page opens that exact submission; verify the Asset ID, season and homeowner. **View full property assessment** opens the surrounding inspection points if you need more context.
+3. Compare **Original crew finding** with **Homeowner completion evidence**. The panels appear side by side on desktop and stack on a phone. Select a crew thumbnail to enlarge it. **View photo** loads a homeowner image; its thumbnail opens the protected image in a new tab.
+4. Read the homeowner's comment and any updated timestamp. Earlier submissions appear in **Submission history** when present. Admins cannot edit the homeowner's evidence.
 5. Under **Review this submission**, select **Approve — completed work verified** or **Send back — more work or evidence needed**. Enter a **Department comment** (required for Send back; optional for Approve).
-6. Select **Save decision**. The decision, comment, and review time appear in history for both the department and homeowner. The reviewed record cannot be edited or decided again.
-7. Return to **Review inbox**; the item is no longer waiting. Sending back lets the homeowner submit new evidence. Map counts update; a property closes only when all issue points are approved.
+6. Select **Save decision**. The comparison page returns to **Review inbox** and shows **Review saved** with the outcome. The reviewed item leaves the inbox. The decision, comment and review time remain in history for the department and homeowner; the reviewed record cannot be edited or decided again.
+7. Check the refreshed pending count. Sending back lets the homeowner submit new evidence. Map counts update; a property closes only when all issue points are approved.
 
 Expected result: approval moves that issue to Closed; sending it
 back returns it to Open with the reason visible to the homeowner. The decision
@@ -164,7 +164,7 @@ A second decision on the same submission must be refused; refresh if another
 administrator has already reviewed it.
 
 If the homeowner changed the evidence or another administrator already decided,
-the server refuses the decision. Refresh the assessment, compare the latest evidence,
+the server refuses the decision. Select **Refresh evidence**, compare the latest evidence,
 and decide only if it is still pending. No email or text alert is included.
 
 Screenshot A08: placeholder for queue/count, side-by-side photos, approve result and required send-back reason.

@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: "Homeowner completion submissions awaiting department review.",
 };
 
-export default function ReviewInboxPage() {
-  return <ReviewInboxView />;
+export default async function ReviewInboxPage({ searchParams }: PageProps<"/dashboard/reviews">) {
+  const { decision } = await searchParams;
+  return <ReviewInboxView decision={decision === "approved" || decision === "rejected" ? decision : undefined} />;
 }

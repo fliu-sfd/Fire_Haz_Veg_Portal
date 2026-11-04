@@ -8,9 +8,17 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.models import Assessment, Submission, User
-from app.schemas.submissions import ReviewDecision, ReviewInboxItem, ReviewInboxOut, SubmissionOut
+from app.schemas.assessments import InspectionPointOut
+from app.schemas.submissions import (
+    ReviewDecision,
+    ReviewDetailOut,
+    ReviewInboxItem,
+    ReviewInboxOut,
+    SubmissionOut,
+)
 from app.services.submission_service import (
     latest_submission_id,
+    list_submissions,
     require_uploadable,
     submission_out,
 )
@@ -54,7 +62,7 @@ def pending_count(db: Session) -> int:
 
 def review_inbox(db: Session, limit: int, offset: int) -> ReviewInboxOut:
     rows = db.execute(
-        select(Submission, Assessment.asset_id, Assessment.site_address, User.full_name)
+        select(Submission, Assessment, User.full_name)
         .join(Assessment, Assessment.id == Submission.assessment_id)
         .outerjoin(User, User.id == Submission.homeowner_id)
         .options(selectinload(Submission.photos))
@@ -68,18 +76,54 @@ def review_inbox(db: Session, limit: int, offset: int) -> ReviewInboxOut:
             ReviewInboxItem(
                 submission_id=row.id,
                 assessment_id=row.assessment_id,
-                asset_id=asset,
-                site_address=address,
+                asset_id=assessment.asset_id,
+                site_address=assessment.site_address,
                 homeowner_name=name or "Former homeowner",
                 created_at=row.created_at,
                 updated_at=row.updated_at,
                 photo_count=len(row.photos),
+                inspected_at=assessment.inspected_at,
+                inspection_comments=assessment.comments,
             )
-            for row, asset, address, name in rows
+            for row, assessment, name in rows
         ],
         total=pending_count(db),
         limit=limit,
         offset=offset,
+    )
+
+
+def review_detail(db: Session, user: User, submission_id: uuid.UUID) -> ReviewDetailOut:
+    row = db.get(Submission, submission_id)
+    if row is None:
+        raise HTTPException(404, "Submission not found.")
+    assessment = db.scalar(
+        select(Assessment)
+        .where(Assessment.id == row.assessment_id)
+        .options(selectinload(Assessment.photos))
+    )
+    history = list_submissions(db, row.assessment_id)
+    latest_id = history[0].id
+    latest_year = db.scalar(
+        select(func.max(Assessment.season_year)).where(
+            func.lower(Assessment.asset_id) == assessment.asset_id.lower()
+        )
+    )
+    current_issue = assessment.status == "ISSUES" and assessment.season_year == latest_year
+    items = [
+        submission_out(item, user, is_latest=item.id == latest_id and current_issue)
+        for item in history
+    ]
+    name = db.scalar(select(User.full_name).where(User.id == row.homeowner_id))
+    return ReviewDetailOut(
+        asset_id=assessment.asset_id,
+        season_year=assessment.season_year,
+        homeowner_name=name or "Former homeowner",
+        inspection=InspectionPointOut.model_validate(assessment).model_copy(
+            update={"submission_status": history[0].status}
+        ),
+        submission=next(item for item in items if item.id == submission_id),
+        history=items,
     )
 
 

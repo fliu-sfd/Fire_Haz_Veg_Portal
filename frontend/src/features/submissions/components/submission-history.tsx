@@ -9,7 +9,7 @@ import { evidenceDate } from "../utils";
 import { SubmissionStatus } from "./evidence-status";
 import { ReviewDecisionForm } from "@/features/reviews/components/review-decision-form";
 
-function PrivatePhoto({ photo }: { photo: SubmissionPhoto }) {
+export function SubmissionPhotoPreview({ photo }: { photo: SubmissionPhoto }) {
   const { url, error, loading, linkState, copyLink, show } = usePrivatePhoto(photo.id);
 
   return (
@@ -78,7 +78,7 @@ export function SubmissionHistory({ submissions, besideForm = false, onEdit, onR
                     </div>
                   ) : null}
                   <ul className="grid min-w-0 grid-cols-2 gap-2">
-                    {submission.photos.map((photo) => <PrivatePhoto key={photo.id} photo={photo} />)}
+                    {submission.photos.map((photo) => <SubmissionPhotoPreview key={photo.id} photo={photo} />)}
                   </ul>
                   {submission.canEdit && onEdit ? <Button type="button" variant="secondary" className="mt-3 min-h-11" onClick={() => onEdit(submission)}>Edit submission</Button> : null}
                   {submission.canReview && onReviewed ? <ReviewDecisionForm key={`${submission.id}:${submission.version}`} submission={submission} onReviewed={onReviewed} /> : null}

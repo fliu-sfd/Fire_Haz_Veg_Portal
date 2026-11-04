@@ -6,10 +6,16 @@ from app.api.deps import AdminUser, DbSession
 from app.schemas.submissions import (
     PendingReviewCount,
     ReviewDecision,
+    ReviewDetailOut,
     ReviewInboxOut,
     SubmissionOut,
 )
-from app.services.submission_review_service import pending_count, review_inbox, review_submission
+from app.services.submission_review_service import (
+    pending_count,
+    review_detail,
+    review_inbox,
+    review_submission,
+)
 
 router = APIRouter(prefix="/admin/submissions", tags=["admin review"])
 
@@ -37,3 +43,8 @@ def post_review(
     db: DbSession,
 ):
     return review_submission(db, user, submission_id, decision)
+
+
+@router.get("/{submission_id}", response_model=ReviewDetailOut)
+def get_review_detail(submission_id: uuid.UUID, user: AdminUser, db: DbSession):
+    return review_detail(db, user, submission_id)

@@ -32,7 +32,7 @@ function parsePhoto(value: unknown): CrewPhoto {
   };
 }
 
-function parseInspection(value: unknown): InspectionPoint {
+export function parseInspection(value: unknown): InspectionPoint {
   if (
     !isRecord(value) ||
     typeof value.id !== "string" ||
