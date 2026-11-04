@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, CircleAlert, CircleCheck, Home, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "@/components/ui/loader";
+import { HomeownerAssessmentRequest } from "@/features/assessment-requests/components/homeowner-assessment-request";
 import { AssessmentError, AssessmentLoading, NoInspectionPoints } from "@/features/assessments/components/assessment-states";
 import { InspectionCard } from "@/features/assessments/components/inspection-card";
 import { usePropertyAssessment } from "@/features/assessments/hooks/use-property-assessment";
@@ -75,6 +76,8 @@ export function PropertyAssessmentView({ assetId, departmentView = false }: { as
           ) : null}
         </div>
       </header>
+
+      {!departmentView ? <HomeownerAssessmentRequest assetId={assessment.assetId} /> : null}
 
       <section className="mt-8" aria-labelledby="inspection-findings">
         <div className="mb-4 flex items-end justify-between gap-4">
