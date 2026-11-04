@@ -36,6 +36,20 @@ export function nextStep(inspection: InspectionPoint): string {
   return "No corrective work is listed for this inspection point. Continue routine vegetation maintenance.";
 }
 
+export type ReviewState = "open" | "pending_review" | "closed";
+
+export function isReviewState(value: unknown): value is ReviewState {
+  return value === "open" || value === "pending_review" || value === "closed";
+}
+
+/** One line for a property card. Null means the property has no issue, so nothing is shown. */
+export function reviewStateLine(state: ReviewState | null): string | null {
+  if (state === "open") return "Completion photos are still needed.";
+  if (state === "pending_review") return "Photos submitted. Waiting for department review.";
+  if (state === "closed") return "Approved by the department.";
+  return null;
+}
+
 export function inspectionProgress(inspection: InspectionPoint) {
   if (inspection.status !== "ISSUES") return "no_issues";
   if (inspection.submissionStatus === "pending_review") return "pending_review";

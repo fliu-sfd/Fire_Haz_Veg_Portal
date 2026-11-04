@@ -68,6 +68,7 @@ const property = {
   latest_status: "ISSUES",
   latest_inspected_at: "2026-10-14T15:30:00Z",
   site_address: "123 Main St",
+  review_state: "pending_review",
 };
 
 test("getMyProperties maps fields and sends the session cookie", async (t) => {
@@ -77,17 +78,17 @@ test("getMyProperties maps fields and sends the session cookie", async (t) => {
     return Response.json([property, { ...property, asset_id: "A-200", latest_status: "NO ISSUES" }]);
   });
   assert.deepEqual(await getMyProperties(), [
-    { assetId: "A-100", seasonYear: 2026, latestStatus: "ISSUES", latestInspectedAt: property.latest_inspected_at, siteAddress: "123 Main St" },
-    { assetId: "A-200", seasonYear: 2026, latestStatus: "NO ISSUES", latestInspectedAt: property.latest_inspected_at, siteAddress: "123 Main St" },
+    { assetId: "A-100", seasonYear: 2026, latestStatus: "ISSUES", latestInspectedAt: property.latest_inspected_at, siteAddress: "123 Main St", reviewState: "pending_review" },
+    { assetId: "A-200", seasonYear: 2026, latestStatus: "NO ISSUES", latestInspectedAt: property.latest_inspected_at, siteAddress: "123 Main St", reviewState: "pending_review" },
   ]);
 });
 
 test("getMyProperties accepts a linked property with no inspection", async (t) => {
   t.mock.method(globalThis, "fetch", async () => Response.json([{
-    asset_id: "A-100", season_year: null, latest_status: null, latest_inspected_at: null, site_address: null,
+    asset_id: "A-100", season_year: null, latest_status: null, latest_inspected_at: null, site_address: null, review_state: null,
   }]));
   assert.deepEqual(await getMyProperties(), [{
-    assetId: "A-100", seasonYear: null, latestStatus: null, latestInspectedAt: null, siteAddress: null,
+    assetId: "A-100", seasonYear: null, latestStatus: null, latestInspectedAt: null, siteAddress: null, reviewState: null,
   }]);
 });
 
@@ -106,6 +107,8 @@ const invalidProperties = {
   "a string season": [{ ...property, season_year: "2026" }],
   "an invalid date": [{ ...property, latest_inspected_at: "not-a-date" }],
   "a numeric address": [{ ...property, site_address: 123 }],
+  "an unknown review state": [{ ...property, review_state: "approved" }],
+  "a missing review state": [{ ...property, review_state: undefined }],
   "a missing field": [{ asset_id: "A-100" }],
 };
 
@@ -133,6 +136,7 @@ const parsedProperty = {
   latestStatus: "ISSUES",
   latestInspectedAt: property.latest_inspected_at,
   siteAddress: "123 Main St",
+  reviewState: "pending_review",
 };
 
 test("addMyProperty posts the Asset ID and parses the returned list", async (t) => {

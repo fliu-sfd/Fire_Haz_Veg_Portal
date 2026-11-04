@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { hasIssues, inspectionDate, inspectionProgress, nextStep, propertyProgress, statusLabel } from "@/features/assessments/utils/display";
+import { hasIssues, inspectionDate, inspectionProgress, isReviewState, nextStep, propertyProgress, reviewStateLine, statusLabel } from "@/features/assessments/utils/display";
 
 const inspection = {
   id: "inspection-1",
@@ -53,4 +53,19 @@ test("property progress still requires action if another inspection has no evide
   assert.equal(propertyProgress({ inspections: [assessment.inspections[0]] }), "pending_review");
   assert.equal(propertyProgress({ inspections: [{ ...inspection, submissionStatus: "rejected" }] }), "action_needed");
   assert.equal(propertyProgress({ inspections: [{ ...inspection, submissionStatus: "approved" }] }), "approved");
+});
+
+test("isReviewState accepts only the three states the API sends", () => {
+  for (const ok of ["open", "pending_review", "closed"]) assert.equal(isReviewState(ok), true);
+  for (const bad of ["approved", "rejected", "OPEN", "", null, undefined, 1]) assert.equal(isReviewState(bad), false);
+});
+
+test("reviewStateLine gives a property card one plain sentence per state", () => {
+  assert.equal(reviewStateLine("open"), "Completion photos are still needed.");
+  assert.equal(reviewStateLine("pending_review"), "Photos submitted. Waiting for department review.");
+  assert.equal(reviewStateLine("closed"), "Approved by the department.");
+});
+
+test("reviewStateLine shows nothing for a property without an issue", () => {
+  assert.equal(reviewStateLine(null), null);
 });
