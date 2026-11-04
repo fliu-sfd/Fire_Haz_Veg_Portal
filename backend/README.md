@@ -80,7 +80,10 @@ the email already belongs to an account, the command stops and changes nothing.
 - `POST /api/v1/auth/signup` - resident self-signup. Body `{full_name, email, password}`; any
   other field, including `asset_id` and `property_address`, is a 422. Creates the account with
   no linked properties and signs the resident in
-- `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user (401 bad credentials, 403 disabled)
+- `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user. A wrong email or
+  password is a 401. A disabled account with the correct password is a 403 with
+  `{"detail": {"code": "account_disabled", "message": "..."}}`, where `message` is the text an
+  admin set (see "Editable messages"). No cookie is set in either case
 - `POST /api/v1/auth/logout` - clears the auth cookie (204)
 - `GET /api/v1/auth/me` - current user from the cookie (401 if not logged in)
 - `GET /api/v1/residents/me/properties` - residents only (401 / 403 otherwise). The signed-in
@@ -190,9 +193,56 @@ the email already belongs to an account, the command stops and changes nothing.
 - `GET /api/v1/admin/hazards/filters` - administrators only. The season's crews and
   property types, for the map's filter controls
 
+- `GET /api/v1/admin/settings/messages` - administrators only. `{"items": [...]}` with every
+  editable message
+- `GET /api/v1/admin/settings/messages/{key}` - administrators only. One message
+- `PUT /api/v1/admin/settings/messages/{key}` - administrators only. Body `{message}`. Saves the
+  text and returns the message
+- `DELETE /api/v1/admin/settings/messages/{key}` - administrators only. Resets the message to
+  its default and returns it. Safe to repeat
+
+  All four return 401 signed out and 403 for residents. A message has `key`, `label`,
+  `description`, `message`, `default_message`, `is_default`, `min_length`, `max_length`,
+  `max_lines`, `updated_at` and `updated_by_name` (null if that admin was removed). Errors:
+
+  | Status | Code | Field | When |
+  |---|---|---|---|
+  | 404 | `message_not_found` | | No message has this key |
+  | 422 | `invalid_message` | `message` | The text breaks a rule (see "Editable messages") |
+  | 422 | | | Body is not `{message: string}` (standard validation error) |
+
 Protect an endpoint by adding a `user: CurrentUser` parameter (from `app/api/deps.py`).
 The frontend must send requests with `credentials: "include"` so the cookie is sent.
 Allowed browser origins come from `CORS_ORIGINS` in `.env`.
+
+## Editable messages
+
+Admins can reword messages the portal shows to people, under Settings in the portal. The
+defaults and limits live in `app/services/editable_messages.py`. Edited text is stored in
+`app_settings`, and with no saved row the default applies.
+
+Text rules (`clean_message` in `app/schemas/validators.py`, mirrored in the frontend's
+`features/settings/utils/message.ts`, so change both together):
+
+- Spaces at both ends of the message and of each line are trimmed. Runs of spaces become one.
+- Line breaks are kept. Three or more in a row become two.
+- Control characters (anything below U+0020 except the line break) are removed.
+- More than `max_lines` lines is rejected. Blank lines count.
+- The length after cleaning must be between `min_length` and `max_length`.
+- Plain text only. `<` and `>` are ordinary characters, so every place that shows a message must
+  render it as plain text.
+
+### Add another editable message
+
+1. Add one entry to `EDITABLE_MESSAGES` in `app/services/editable_messages.py` with its key,
+   label, description, default, and limits.
+2. Where the message is shown, call `message_text(db, "<key>")` instead of writing the text in code.
+3. If it needs a custom preview, add one entry to `frontend/src/features/settings/components/previews.tsx`.
+   Otherwise it gets the plain preview.
+4. Run the registry test (`uv run pytest tests/test_editable_messages_registry.py`). It checks
+   the new entry is valid.
+
+No new endpoint, table, migration, or page is needed.
 
 ## Quality checks
 
