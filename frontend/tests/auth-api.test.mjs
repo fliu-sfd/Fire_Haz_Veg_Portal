@@ -7,6 +7,7 @@ import {
   getMyProperties,
   registerHomeowner,
   removeMyProperty,
+  signInProblem,
 } from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
@@ -180,3 +181,31 @@ for (const [name, call] of [["addMyProperty", addMyProperty], ["removeMyProperty
     await assert.rejects(call("A-100"), (error) => error instanceof ApiError && error.status === 409);
   });
 }
+
+test("account_disabled becomes the disabled kind with the message", () => {
+  const error = new ApiError(403, { detail: { code: "account_disabled", message: "Call the department." } });
+  assert.deepEqual(signInProblem(error), { kind: "disabled", message: "Call the department." });
+});
+
+test("a message keeps its line breaks and characters as sent", () => {
+  const message = "Line one\n<script>alert(1)</script>";
+  const error = new ApiError(403, { detail: { code: "account_disabled", message } });
+  assert.equal(signInProblem(error).message, message);
+});
+
+test("other sign-in errors become the failed kind", () => {
+  assert.deepEqual(signInProblem(new ApiError(401, { detail: "Invalid email or password" })), {
+    kind: "failed",
+    message: "Invalid email or password",
+  });
+  const otherCode = new ApiError(403, { detail: { code: "something_else", message: "No." } });
+  assert.deepEqual(signInProblem(otherCode), { kind: "failed", message: "No." });
+  assert.equal(signInProblem(new TypeError("fetch failed")).kind, "failed");
+});
+
+test("a 403 with a plain string detail still works", () => {
+  assert.deepEqual(signInProblem(new ApiError(403, { detail: "Account is disabled." })), {
+    kind: "failed",
+    message: "Account is disabled.",
+  });
+});
