@@ -1,6 +1,6 @@
 # Homeowner user guide
 
-Draft · November 2, 2026 · Story #51 / Task #75
+Updated November 3, 2026 · Story #51 · Draft #75 / screenshots and validation #76
 
 Use this guide for a homeowner account. Administrators may call this role
 **Resident**. You can view only properties linked to your account, including
@@ -27,6 +27,9 @@ shows **No properties on your account yet.** Follow H02 to add your property.
 | “Passwords do not match.” | Re-enter matching passwords. This can also appear beside Confirm password. |
 | “An account with this email already exists.” | Use Sign in if this is your account. |
 
+![H01 — Homeowner registration using a demonstration Asset ID, November 3, 2026](screenshots/H01-registration-2026-11-03.png)
+
+A real door-tag example was not supplied. The exact printed position of its Asset ID remains unverified.
 Screenshot H01: pending registration screen.
 
 ## H02 — Add or remove a property — Available
@@ -59,6 +62,7 @@ To remove a property:
 Expected result: the card disappears. Inspection records are not changed, and you
 can add the property again later with the same Asset ID.
 
+![H02 — Rejected Asset ID message, November 3, 2026](screenshots/H02-rejected-asset-2026-11-03.png)
 Screenshot H02: pending add form with a rejected-ID message, and the remove confirmation.
 
 ## H03 — See your connected properties — Available
@@ -76,7 +80,7 @@ inspection results, not confirmation that an administrator has approved a fix.
 If **No properties on your account yet.** appears, follow H02. If **We could not load your properties** appears, read the error
 and select **Try again**.
 
-Screenshot H03: pending connected-property cards and empty/error states.
+![H03 — Connected property card and View assessment link, November 3, 2026](screenshots/H03-properties-2026-11-03.png)
 
 ## H04 — Read an assessment and crew photos — Available
 
@@ -98,7 +102,11 @@ An absent photo section means no crew photos are listed for that point.
 | “We could not reach the assessment service. Check your connection and try again.” | Check your connection and select Try again. |
 | “No inspection details recorded” | No inspection points are available for this record's current season; ask the department if you expect details. |
 
-Screenshot H04: pending full assessment and enlarged crew photo, including an example with several inspection points.
+![H04 — Assessment with two inspection points and a protected demonstration image, November 3, 2026](screenshots/H04-assessment-2026-11-03.png)
+
+![H04 — Protected image opened in a separate tab, November 3, 2026](screenshots/H04-crew-photo-2026-11-03.png)
+
+![H04 — Unavailable property message, November 3, 2026](screenshots/H04-unavailable-2026-11-03.png)
 
 ## H05 — Submit completion photos — Available (#38)
 

@@ -1,6 +1,6 @@
 # Administrator user guide
 
-Draft · November 2, 2026 · Story #51 / Task #75
+Updated November 3, 2026 · Story #51 · Draft #75 / screenshots and validation #76
 
 This is the separate guide for an **Admin** account. Sign in using
 [C01](account.md#c01--sign-in). You need an existing active administrator account
@@ -21,7 +21,7 @@ hide an expected user, clear them and search again. **Administrator access
 required.** means the account lacks access. **Your session has ended. Sign in
 again to continue.** means you need to sign in again.
 
-Screenshot A01: pending Users list, search, role/status filters and pagination.
+![A01 — Users search and account actions, November 3, 2026](screenshots/A01-users-2026-11-03.png)
 
 ## A02 — Edit an account — Available
 
@@ -44,7 +44,7 @@ the original sprint proposal; this guide describes the current screen.
 | “You can't change your own role or turn off your own account.” | Have another authorized administrator manage access if needed. |
 | “This is the only active admin. Make another user an admin before changing this account.” | Preserve an active administrator before retrying. |
 
-Screenshot A02: pending details/access panel, role-change confirmation and validation messages.
+![A02 — Saved account details in the edit panel, November 3, 2026](screenshots/A02-edit-user-2026-11-03.png)
 
 ## A03 — Deactivate or reactivate an account — Available
 
@@ -61,12 +61,12 @@ Reactivation restores sign-in eligibility. You
 cannot disable yourself or the last active administrator; use the error table
 in A02 to resolve those cases. Disabling does not delete the account.
 
-Screenshot A03: pending active switch, disable confirmation and Disabled list badge.
+![A03 — Account disable confirmation, November 3, 2026](screenshots/A03-disable-confirmation-2026-11-03.png)
 
 ## A04 — Correct a homeowner's linked properties — Available
 
 1. Open the Resident account and find **Linked properties**.
-2. To add a property, enter its Asset ID in the add-property field and select **Add**.
+2. To add a property, enter its Asset ID in **Add an asset ID** and select **Add**.
 3. To remove a link, select its remove action and confirm **Remove property**.
 4. Verify the linked-ID list after each operation.
 
@@ -79,7 +79,7 @@ If **No inspection record has this asset ID. Check it and try again.** appears,
 check the door tag and imported records. If **The property change was not saved**
 appears, read the accompanying error and check the list before retrying.
 
-Screenshot A04: pending linked-property list, Add action and removal confirmation.
+![A04 — Immediately saved linked-property changes, November 3, 2026](screenshots/A04-linked-properties-2026-11-03.png)
 
 ## A05 — Use the hazard map, filters and counts — Available with status limitation
 
@@ -115,7 +115,11 @@ provisional, so confirm property type before relying on it for decisions.
 | “We could not load hazards” | Read the error and select Retry. |
 | “Administrator access required” | Sign in with the correct role or contact the department administrator. |
 
-Screenshot A05: pending desktop map/list, phone filter panel, selected asset and summary counts.
+![A05 — Hazard map, list and summary counts, November 3, 2026](screenshots/A05-hazard-map-2026-11-03.png)
+
+![A05 — No matching hazards and Clear filters, November 3, 2026](screenshots/A05-empty-filters-2026-11-03.png)
+
+![A05 — Phone filter panel, November 3, 2026](screenshots/A05-mobile-filters-2026-11-03.png)
 
 ## A06 — Save a filter view — Available
 
@@ -129,23 +133,31 @@ a department-wide saved view and does not synchronize across devices. Use the
 entry's delete action to remove an unwanted view. Follow any name/limit message
 shown before saving.
 
-Screenshot A06: pending Views menu, save form and applied saved view.
+![A06 — Saving a named filter view, November 3, 2026](screenshots/A06-save-view-2026-11-03.png)
 
 ## A07 — Create an administrator account — Available
 
 There is no account-creation form in the portal. An administrator comes from one
 of two places:
 
-- **An existing homeowner account.** Follow A02 to change its **Role** to **Admin**,
-  after removing any linked properties.
-- **The command line.** The first administrator is created this way, by a developer
-  with access to the server. See "Create the first admin" in `backend/README.md`.
+1. For an existing homeowner account, find it using A01 and remove its linked properties using A04.
+2. In its edit panel, change **Role** to **Admin**, select **Save changes**, then confirm **Change role**.
+3. Confirm the **Admin** badge appears, then have the user sign in again.
+
+If no administrator exists yet, ask the developer with server access to follow
+[Create the first admin](../../backend/README.md#create-the-first-admin).
+The command line is the bootstrap path; there is no public administrator signup.
 
 Expected result: the account appears in **Users** with the **Admin** role and can
+sign in using [C01](account.md#c01--sign-in). When creating an account through the
+command line, an email already in use is refused and nothing changes. Promotion
+keeps the existing account. Homeowners continue to self-register with Asset IDs.
+
+![A07 — Existing account promoted to Admin, November 3, 2026](screenshots/A07-promote-admin-2026-11-03.png)
 sign in using [C01](account.md#c01--sign-in). An email already in use is refused and
 nothing changes. Homeowners continue to self-register and add their own Asset IDs.
 
-No screenshot: the command line step has no portal screen, and A02 covers the role change.
+The command-line bootstrap has no portal screen.
 
 ## A08 — Review homeowner fix submissions — Available
 
