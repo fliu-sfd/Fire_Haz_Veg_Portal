@@ -9,9 +9,10 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import exists, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import Assessment, ResidentAsset, User, UserRole
+from app.services.review_state import ISSUES_RESULT, property_review_state
 
 
 class PropertyNotFoundError(Exception):
@@ -25,6 +26,8 @@ class PropertySummary:
     latest_status: str | None
     latest_inspected_at: datetime | None
     site_address: str | None
+    # open, pending_review or closed for the latest season; None when it has no issue
+    review_state: str | None = None
 
 
 def resolve_property(db: Session, property_id: str | None) -> str | None:
@@ -87,6 +90,15 @@ def list_user_properties(db: Session, user: User) -> list[PropertySummary]:
     newest = {}
     for row in rows:
         newest.setdefault(row.asset_id, row)
+
+    issue_points: dict[str, list[Assessment]] = {}
+    for point in db.scalars(
+        select(Assessment)
+        .options(selectinload(Assessment.submissions))
+        .where(Assessment.asset_id.in_(linked), Assessment.status == ISSUES_RESULT)
+    ):
+        if point.season_year == newest[point.asset_id].season_year:
+            issue_points.setdefault(point.asset_id, []).append(point)
     result = []
     for asset_id in linked:
         row = newest.get(asset_id)
@@ -97,6 +109,7 @@ def list_user_properties(db: Session, user: User) -> list[PropertySummary]:
                 latest_status=row.status if row else None,
                 latest_inspected_at=row.inspected_at if row else None,
                 site_address=row.site_address if row else None,
+                review_state=property_review_state(issue_points.get(asset_id, [])),
             )
         )
     return result
