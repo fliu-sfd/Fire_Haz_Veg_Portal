@@ -5,6 +5,7 @@ with the message the client sees. Wrap them in a field_validator on the schema.
 """
 
 import re
+from typing import Protocol
 
 FULL_NAME_MIN_LENGTH = 2
 FULL_NAME_MAX_LENGTH = 120  # users.full_name column
@@ -99,3 +100,32 @@ def check_password_not_personal(password: str, email: str, full_name: str) -> No
         part = part.strip("'.-").lower()
         if len(part) >= 3 and part in lowered:
             raise ValueError("Password must not contain your name or email")
+
+
+class MessageLimits(Protocol):
+    """The limits clean_message reads from a registry entry."""
+
+    min_length: int
+    max_length: int
+    max_lines: int
+
+
+_LINE_BREAK_RE = re.compile(r"\r\n?")
+_CONTROL_CHARS_RE = re.compile(r"[\x00-\x09\x0b-\x1f]")
+_SPACES_RE = re.compile(r" +")
+_EXTRA_BREAKS_RE = re.compile(r"\n{3,}")
+
+
+def clean_message(text: str, spec: MessageLimits) -> str:
+    """Plain text only, so < and > are left alone. Mirrored in the frontend's utils/message.ts."""
+    text = _CONTROL_CHARS_RE.sub("", _LINE_BREAK_RE.sub("\n", text))
+    lines = [_SPACES_RE.sub(" ", line).strip(" ") for line in text.split("\n")]
+    text = _EXTRA_BREAKS_RE.sub("\n\n", "\n".join(lines)).strip("\n")
+
+    if text.count("\n") + 1 > spec.max_lines:
+        raise ValueError(f"Message must be at most {spec.max_lines} lines")
+    if len(text) < spec.min_length:
+        raise ValueError(f"Message must be at least {spec.min_length} characters")
+    if len(text) > spec.max_length:
+        raise ValueError(f"Message must be at most {spec.max_length} characters")
+    return text
