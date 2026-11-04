@@ -25,6 +25,7 @@ src/
     dashboard/page.tsx          Admin workspace
     dashboard/users/            Admin users list (page.tsx + client wiring)
     dashboard/hazards/          Admin hazard map (page.tsx + client wiring)
+    dashboard/settings/         Admin settings (page.tsx + client wiring)
     loading.tsx                 Shared loading state
     error.tsx                   Shared error boundary
     not-found.tsx               404 page
@@ -45,6 +46,11 @@ src/
       hooks/                    useHazards, useHazardFilters, useHazardQueryState, useHazardSelection,
                                 useHazardList, useHazardViews, useHazardsPage
       components/               Leaflet map, markers, popup, filter bar, legend, states
+    settings/                   Admin settings: editable messages
+      api.ts, types.ts          listMessages, saveMessage, resetMessage and response parsing
+      utils/                    Text rules, cached list update, last-changed text, errors
+      hooks/                    useMessages, useMessageActions, useMessageForm, useSettingsPage
+      components/               Message card, previews, last-changed line, states
     auth/                       Sign-in, sign-up, account hooks and access helpers
     system/                     Health check example
   hooks/                        Generic hooks (useDebouncedValue, useLocalStorage, useUrlSearchInput)
@@ -109,6 +115,16 @@ SWR configuration:
 - **Errors.** `editError` in `utils/errors.ts` puts `email_taken` and `property_not_found` under their field. Other errors show at the top of the panel.
 - **Own account.** Role and Active are locked on the admin's own account. The server enforces this and the last-active-admin rule as well.
 - **First admin.** It is created from the command line. See "Create the first admin" in `backend/README.md`.
+
+## Settings
+
+`/dashboard/settings` lets an admin reword messages the portal shows to people. Notes for anyone changing it:
+
+- **Built from the API.** The page shows one card per item from `GET /admin/settings/messages`. Label, description, text and limits all come from the response, so a new entry in the backend's registry appears as a new card with no change here. See "Add another editable message" in `backend/README.md`.
+- **Previews.** `components/previews.tsx` is a lookup keyed by message `key`. Add an entry when a message needs a custom preview. Any other key gets a plain bordered box. The disabled account preview renders the same `AccountDisabledBox` the sign-in page uses, with `announce` off so it does not take focus while an admin types.
+- **Text rules.** `normalizeMessage` in `utils/message.ts` mirrors `clean_message` in `backend/app/schemas/validators.py`; change both together. Length is counted in code points, as Python does, not with `String.length`.
+- **Saving.** Each card has its own form, so one failing does not affect the others. The response replaces that one item in the cached list with no refetch. The form sends the cleaned text, and an unchanged message is not "dirty" even if only spaces were typed.
+- **Plain text.** Messages are only ever rendered as React text, with `whitespace-pre-line` for line breaks. The sign-in page reads the message from the login error and never calls these admin endpoints.
 
 ## Profile
 

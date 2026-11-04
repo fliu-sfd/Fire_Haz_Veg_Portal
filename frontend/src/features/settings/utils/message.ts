@@ -14,7 +14,6 @@ export type NormalizedMessage = {
 export function normalizeMessage(raw: string, limits: MessageLimits): NormalizedMessage {
   const lines = raw
     .replace(/\r\n?/g, "\n")
-    // eslint-disable-next-line no-control-regex -- removing these characters is the point
     .replace(/[\u0000-\u0009\u000b-\u001f]/g, "")
     .split("\n")
     .map((line) => line.replace(/ +/g, " ").replace(/^ | $/g, ""));

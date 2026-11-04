@@ -42,7 +42,8 @@ test("a message never changed has no date or name", () => {
 
 for (const field of Object.keys(raw)) {
   test(`a message missing ${field} is rejected`, () => {
-    const { [field]: _removed, ...rest } = raw;
+    const rest = { ...raw };
+    delete rest[field];
     assert.throws(() => parseMessage(rest), ResponseFormatError);
   });
 }

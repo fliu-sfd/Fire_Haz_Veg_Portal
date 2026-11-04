@@ -60,6 +60,7 @@ No screenshot files have been created in this draft.
 | A01–A04 | Users list, user edit panel, disable confirmation, linked properties |
 | A05–A06 | Hazard map/list with filters and counts, saved views |
 | A08–A09 | Review queue and decision, full-assessment requests |
+| A10 | Settings card with preview |
 
 Finalization must include an independent teammate running every Available
 procedure and each Planned procedure after release, without coaching. Record
