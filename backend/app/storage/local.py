@@ -26,8 +26,11 @@ class LocalDiskStore:
         target.parent.mkdir(parents=True, exist_ok=True)
         # write beside the final name, then swap in, so a crash never leaves half a photo
         partial = target.with_name(target.name + ".part")
-        partial.write_bytes(data)
-        partial.replace(target)
+        try:
+            partial.write_bytes(data)
+            partial.replace(target)
+        finally:
+            partial.unlink(missing_ok=True)
         return key
 
     def read(self, key: str) -> bytes:

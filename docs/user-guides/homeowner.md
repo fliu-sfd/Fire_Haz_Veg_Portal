@@ -100,36 +100,46 @@ An absent photo section means no crew photos are listed for that point.
 
 Screenshot H04: pending full assessment and enlarged crew photo, including an example with several inspection points.
 
-## H05 — Mark an issue fixed with photos — Planned (#38, #44)
+## H05 — Submit completion photos — Available (#38)
 
-This action is absent from the reviewed build. The following is draft workflow
-text, subject to the merged screens and the team's confirmation of photo limits.
+Open the existing property assessment page to submit evidence for a current-season
+inspection point with an issue. The original inspection result remains unchanged.
 
 1. Open your linked property's assessment and select an **open issue**. A point with **NO ISSUES** is not a fix-submission target.
-2. Select the planned **Mark as fixed** action.
+2. Find **Submit completion photos** below that point's notes and crew photos.
 3. Choose 1–5 JPEG or PNG photos, each no larger than 5 MB. Review previews and remove any wrong file. Add an optional comment.
-4. Submit once and wait for confirmation. If a validation error appears, correct it and retry.
+4. Select **Submit for review** once and wait for the green **Submitted** badge and
+   **Your action is complete — photos submitted** confirmation.
+   If a validation error appears, correct it and retry. After a connection error,
+   reload the property and check history before retrying to avoid a duplicate.
 
-Expected result after release: the submission and photos are saved and the
-issue becomes **Pending review**. Uploading photos does not close an issue.
+Expected result: **Submission history** shows the saved evidence with **Pending review**.
+Uploading photos does not close an issue or change the original inspection finding.
 No-photo submissions, unsupported or disguised file types, oversized files,
 more than five files and submissions for another property must be refused.
-An already pending issue cannot receive another submission.
+The blank upload form is hidden while evidence is pending. To change your evidence,
+select **Edit submission** under **This is your submission**. Change the comment or
+choose replacement photos, then **Save changes**. Leaving the picker empty keeps
+the saved photos; choosing new photos replaces the entire set. Editing updates the
+same submission and displays its updated time. Only the submitting homeowner can
+edit pending evidence; reviewed submissions are read-only.
 
 Pending review means an administrator must inspect the evidence. Check the
-portal for progress; no email or text alert is planned. Actual submit labels,
-confirmation and error messages must be recorded after #38 merges.
+portal for progress; no email or text alert is planned. **View photo** previews an
+image; select its thumbnail to open it in a new tab. **Copy photo link** copies a
+stable private image URL. Anyone opening it must sign in and have access to this
+property. A localhost link only works on the computer running the portal.
 
 Screenshot H05: placeholder for the released picker, previews, limits, errors and successful pending state.
 
-## H06 — Read status history and respond to a sent-back issue — Planned (#44, #39)
+## H06 — Read department decisions and respond to a sent-back issue — Available
 
-1. Open the assessment and find the issue's planned status/history area.
-2. Read changes in date order, including the review decision and any reason.
+1. Open or refresh the assessment and find **Submission history**.
+2. Read **Department decision**, the review time, and the department's comment.
 3. If the administrator sends the issue back, read the reason and address the concern.
 4. Once the issue is open again, follow H05 to submit new photos.
 
-Expected result after release: **Open** awaits a fix, **Pending review** awaits
+Expected result: **Open** awaits a fix, **Pending review** awaits
 administrator review, and **Closed** means an administrator approved the fix.
 “Sent back” is a review event returning the issue to Open, not a fourth status.
 Earlier submissions remain part of the record. A closed issue cannot be reopened

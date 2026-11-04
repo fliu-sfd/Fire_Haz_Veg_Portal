@@ -31,6 +31,9 @@ erDiagram
     users ||--o{ resident_assets : can_access
     users |o--o{ app_settings : last_changed
     assessments ||--o{ crew_photos : has
+    assessments ||--o{ submissions : receives
+    users |o--o{ submissions : submitted_by
+    submissions ||--|{ submission_photos : contains
 
     users {
         uuid id PK
@@ -122,8 +125,26 @@ key is not in that registry are ignored and never deleted automatically. No hist
 | `0005` | `users.password_changed_at`; tokens issued before it are rejected |
 | `0006` | Limit `user_role` to `resident` and `admin` and drop the third role's profile table; stops with an error if any account still has that role |
 | `0007` | `app_settings` for text admins can edit; inserts no rows |
+| `0008` | `submissions` and `submission_photos` for private homeowner completion evidence |
+| `0009` | Nullable `submissions.updated_at` for edits to pending evidence |
+| `0010` | Evidence version, department review comment, reviewer FK, and review timestamp |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
+
+`submissions` holds the assessment and submitting homeowner IDs, optional comment,
+`pending_review` / `approved` / `rejected` status, and creation time. `submission_photos`
+holds generated IDs, original display name, MIME type, byte count, and a unique private
+storage key. The image bytes live in the Docker `photos` volume at
+`/app/photo_storage/homeowner/<assessment UUID>/<submission UUID>/<photo UUID>.jpg|png`.
+The API never returns storage keys. Deleting an account keeps its evidence with a null
+homeowner ID; deleting an assessment cascades the submission/photo metadata. There is no
+assessment-deletion API: an operational deletion must also remove that assessment's files
+from the volume. See [photo upload storage](homeowner-photo-upload.md).
+
+`submissions.version` increases on edits and decisions. Department decisions also store
+`reviewed_by` (administrator FK, SET NULL if removed), `reviewed_at`, and `review_comment`.
+Reviewed evidence is immutable. The Review inbox is queried from current latest pending
+submissions rather than duplicating private photo data into a notification table.
 
 ## Importing NAOS inspections
 

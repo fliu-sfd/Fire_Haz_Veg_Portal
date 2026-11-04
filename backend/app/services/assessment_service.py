@@ -41,7 +41,7 @@ def get_latest_property_assessment(db: Session, user: User, asset_id: str) -> Pr
     rows = list(
         db.scalars(
             select(Assessment)
-            .options(selectinload(Assessment.photos))
+            .options(selectinload(Assessment.photos), selectinload(Assessment.submissions))
             .where(
                 func.lower(Assessment.asset_id) == wanted.lower(),
                 Assessment.season_year == latest_season,

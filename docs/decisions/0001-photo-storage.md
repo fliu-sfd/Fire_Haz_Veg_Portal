@@ -2,7 +2,7 @@
 
 Date: 2026-10-15  
 Story: Taiga #41 (N7 in the Sprint 4 Build Guide)  
-Status: Proposed; teammate review and sponsor confirmation pending
+Status: Docker volume selected by the team for development; production hosting and sponsor approval pending
 
 ## Context
 
@@ -66,6 +66,23 @@ tests from the shared application/database fixtures; the full backend suite was
 not run for this documentation change.
 
 ## Consequences and conditions for changing the decision
+
+### November 4, 2026 implementation update (#38)
+
+Homeowner uploads now use the same `PhotoStore` and Docker `photos` volume as crew
+photos. Migration `0008` adds submission/photo metadata. JPEG/PNG, 1–5 files,
+5 MiB per image and a 25-megapixel decoding limit are enforced. Generated homeowner
+keys include assessment, submission, and photo UUIDs. The UI is integrated into the
+existing property assessment page. The stable image route checks sign-in and property
+access on every request; copied links are private, not public bearer links. These
+implemented upload/view routes supersede the future-tense route descriptions above.
+Homeowners can edit their own pending evidence, with `updated_at` recorded by migration
+`0009`; photo replacements are committed before old files are removed. Admins can view
+evidence through the hazard map's assessment link, and its pending counts reflect saved
+submissions. The department Review inbox now lists waiting submissions, and admins
+save Approve/Send back decisions with comments. Migration `0010` records reviewer,
+review time, comment, and evidence version; stale or repeated decisions are refused. See
+[implementation and demo notes](../homeowner-photo-upload.md).
 
 A named volume survives container replacement, but not loss of its host or
 deliberate volume deletion [1]. `docker compose down -v` deletes the local named

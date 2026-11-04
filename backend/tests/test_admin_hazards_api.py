@@ -5,7 +5,7 @@ import pytest
 
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.models import Assessment, CrewPhoto, User, UserRole
+from app.models import Assessment, CrewPhoto, Submission, User, UserRole
 from app.services import admin_hazard_service
 
 pytestmark = pytest.mark.db
@@ -112,6 +112,67 @@ def hazards(db) -> None:
 
 def asset_ids(resp) -> list[str]:
     return [i["asset_id"] for i in resp.json()["items"]]
+
+
+def test_map_surfaces_pending_evidence_without_clearing_original_issue(admin_client, db):
+    row = add_row(db, "PENDING-38")
+    db.add(Submission(assessment_id=row.id, status="pending_review"))
+    db.commit()
+    response = admin_client.get(URL, params={"state": "pending_review"})
+    assert response.status_code == 200
+    assert response.json()["items"][0]["state"] == "pending_review"
+    assert response.json()["summary"]["by_state"]["pending_review"] == 1
+    db.refresh(row)
+    assert row.status == "ISSUES"
+
+
+def test_map_uses_latest_submission_and_ignores_old_pending_evidence(admin_client, db):
+    row = add_row(db, "LATEST-38")
+    db.add_all(
+        [
+            Submission(
+                assessment_id=row.id,
+                status="pending_review",
+                created_at=datetime(2026, 1, 1, tzinfo=UTC),
+            ),
+            Submission(
+                assessment_id=row.id, status="rejected", created_at=datetime(2026, 1, 2, tzinfo=UTC)
+            ),
+        ]
+    )
+    db.commit()
+    assert admin_client.get(URL).json()["items"][0]["state"] == "open"
+
+
+def test_map_prioritizes_waiting_review_when_another_point_still_needs_evidence(admin_client, db):
+    pending = add_row(db, "MULTIPOINT-38", day=1)
+    add_row(db, "MULTIPOINT-38", day=2)
+    db.add(Submission(assessment_id=pending.id, status="pending_review"))
+    db.commit()
+    response = admin_client.get(URL).json()
+    assert response["total"] == 1
+    assert response["items"][0]["state"] == "pending_review"
+
+
+def test_map_closes_asset_only_when_all_issue_points_are_approved(admin_client, db):
+    first = add_row(db, "CLOSE-38", day=1)
+    second = add_row(db, "CLOSE-38", day=2)
+    db.add(Submission(assessment_id=first.id, status="approved"))
+    db.commit()
+    assert admin_client.get(URL).json()["items"][0]["state"] == "open"
+    db.add(Submission(assessment_id=second.id, status="approved"))
+    db.commit()
+    response = admin_client.get(URL, params={"state": "closed"}).json()
+    assert response["total"] == 1
+    assert response["summary"]["by_state"]["closed"] == 1
+
+
+def test_unapproved_point_without_coordinates_prevents_false_closed_state(admin_client, db):
+    located = add_row(db, "NO-GEO-38")
+    add_row(db, "NO-GEO-38", lon=None)
+    db.add(Submission(assessment_id=located.id, status="approved"))
+    db.commit()
+    assert admin_client.get(URL).json()["items"][0]["state"] == "open"
 
 
 # --- access ---

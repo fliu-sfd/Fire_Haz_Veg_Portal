@@ -85,3 +85,19 @@ def test_root_folder_is_created_on_startup(tmp_path):
     target = tmp_path / "does" / "not" / "exist"
     made = LocalDiskStore(target)
     assert made.root.is_dir()
+
+
+def test_failed_replace_removes_partial_and_preserves_existing_file(store, monkeypatch):
+    from pathlib import Path
+
+    key = "crew/a/p.jpg"
+    store.save(key, b"existing", "image/jpeg")
+
+    def fail_replace(*args):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+    with pytest.raises(OSError, match="disk unavailable"):
+        store.save(key, b"replacement", "image/jpeg")
+    assert store.read(key) == b"existing"
+    assert list(store.root.rglob("*.part")) == []
