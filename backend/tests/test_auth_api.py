@@ -87,7 +87,8 @@ def test_inactive_user_gets_403_only_with_correct_password(client, db, user) -> 
     resp = login(client)
     print("inactive ->", resp.status_code, resp.json())
     assert resp.status_code == 403
-    assert "disabled" in resp.json()["detail"]
+    assert resp.json()["detail"]["code"] == "account_disabled"
+    assert "disabled" in resp.json()["detail"]["message"]
     assert "set-cookie" not in resp.headers
 
 
