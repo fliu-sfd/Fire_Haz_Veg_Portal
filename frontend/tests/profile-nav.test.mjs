@@ -30,7 +30,7 @@ test("Settings is last in the Admin group for an admin", () => {
   const admin = navGroupsFor(NAV_GROUPS, "admin").find((group) => group.id === "admin");
   assert.deepEqual(
     admin.items.map((item) => [item.label, item.href]),
-    [["Users", "/dashboard/users"], ["Hazard map", "/dashboard/hazards"], ["Settings", "/dashboard/settings"]],
+    [["Users", "/dashboard/users"], ["Hazard map", "/dashboard/hazards"], ["Review inbox", "/dashboard/reviews"], ["Settings", "/dashboard/settings"]],
   );
 });
 

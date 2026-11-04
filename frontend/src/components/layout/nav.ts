@@ -5,6 +5,7 @@ export type NavItem<Icon> = {
   /** A function when the target depends on the role, like Home. */
   href: string | ((role: UserRole) => string);
   icon: Icon;
+  badge?: number;
 };
 
 export type NavGroup<Icon> = {
