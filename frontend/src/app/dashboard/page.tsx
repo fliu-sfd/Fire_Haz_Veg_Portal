@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, MapIcon, Settings, Users } from "lucide-react";
+import { Bell, ClipboardList, MapIcon, Settings, Users } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Department portal",
@@ -11,6 +11,7 @@ const sections = [
   { href: "/dashboard/users", label: "Users", description: "Search and review portal accounts.", icon: Users },
   { href: "/dashboard/hazards", label: "Hazard map", description: "See open and closed vegetation hazards on a map.", icon: MapIcon },
   { href: "/dashboard/reviews", label: "Review inbox", description: "Homeowner completion submissions awaiting department review.", icon: Bell },
+  { href: "/dashboard/assessment-requests", label: "Assessment requests", description: "Full property assessment requests from homeowners.", icon: ClipboardList },
   { href: "/dashboard/settings", label: "Settings", description: "Edit the wording of messages the portal shows to people.", icon: Settings },
 ];
 

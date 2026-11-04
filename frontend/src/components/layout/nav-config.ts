@@ -1,4 +1,4 @@
-import { Bell, House, MapIcon, Settings, UserRound, Users, type LucideIcon } from "lucide-react";
+import { Bell, ClipboardList, House, MapIcon, Settings, UserRound, Users, type LucideIcon } from "lucide-react";
 import type { NavGroup } from "@/components/layout/nav";
 import { homePathFor } from "@/features/auth/utils/access";
 
@@ -21,6 +21,7 @@ export const NAV_GROUPS: NavGroup<LucideIcon>[] = [
       { label: "Users", href: "/dashboard/users", icon: Users },
       { label: "Hazard map", href: "/dashboard/hazards", icon: MapIcon },
       { label: "Review inbox", href: "/dashboard/reviews", icon: Bell },
+      { label: "Assessment requests", href: "/dashboard/assessment-requests", icon: ClipboardList },
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
     ],
   },
