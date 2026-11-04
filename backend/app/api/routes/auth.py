@@ -5,6 +5,8 @@ from app.core.config import settings
 from app.core.security import create_access_token
 from app.models import User
 from app.schemas.auth import LoginRequest, SignupRequest, UserOut
+from app.services.editable_messages import DISABLED_ACCOUNT_MESSAGE_KEY
+from app.services.settings_service import message_text
 from app.services.user_service import (
     EmailAlreadyRegisteredError,
     InactiveAccountError,
@@ -68,7 +70,10 @@ def signup(payload: SignupRequest, response: Response, db: DbSession) -> UserOut
     response_model=UserOut,
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Invalid email or password"},
-        status.HTTP_403_FORBIDDEN: {"description": "Account is disabled"},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Account is disabled, and the password was correct. "
+            "The detail has code account_disabled and the message an admin set."
+        },
     },
 )
 def login(payload: LoginRequest, response: Response, db: DbSession) -> UserOut:
@@ -80,7 +85,10 @@ def login(payload: LoginRequest, response: Response, db: DbSession) -> UserOut:
     except InactiveAccountError:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "Account is disabled. Contact the Scottsdale Fire Department.",
+            {
+                "code": "account_disabled",
+                "message": message_text(db, DISABLED_ACCOUNT_MESSAGE_KEY),
+            },
         ) from None
 
     set_auth_cookie(response, user, remember_me=payload.remember_me)

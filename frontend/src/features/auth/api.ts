@@ -141,3 +141,15 @@ export function authErrorMessage(error: unknown): string {
   }
   return "The request could not be completed. Review the information and try again.";
 }
+
+export type SignInProblem = { kind: "disabled" | "failed"; message: string };
+
+/** Which box the sign-in form shows. The message is plain text from the server. */
+export function signInProblem(error: unknown): SignInProblem {
+  const disabled =
+    error instanceof ApiError &&
+    isRecord(error.detail) &&
+    isRecord(error.detail.detail) &&
+    error.detail.detail.code === "account_disabled";
+  return { kind: disabled ? "disabled" : "failed", message: authErrorMessage(error) };
+}

@@ -74,10 +74,10 @@ export function UsersError({ message, isRetrying, onRetry }: UsersErrorProps) {
   );
 }
 
-export function AdminAccessRequired() {
+export function AdminAccessRequired({ action = "view users" }: { action?: string }) {
   return (
     <StateMessage role="alert" icon={<ShieldAlert aria-hidden="true" className="size-6" />} title="Administrator access required">
-      Your account does not have permission to view users. Contact an administrator if you need access.
+      Your account does not have permission to {action}. Contact an administrator if you need access.
     </StateMessage>
   );
 }

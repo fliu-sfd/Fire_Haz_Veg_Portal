@@ -20,7 +20,7 @@ An administrator reaches **Department portal** on `/dashboard`.
 | Message | What to do |
 | --- | --- |
 | “Invalid email or password” under “Sign in failed” | Check both fields and try again. |
-| “Account is disabled. Contact the Scottsdale Fire Department.” | Contact the department about account access. |
+| A box titled “Account disabled”, usually with “Account is disabled. Contact the Scottsdale Fire Department.” An administrator can change this wording. | Follow the message, or contact the department about account access. You only see this after entering the correct password. |
 | “We could not reach the service. Check your connection and try again.” | Check your connection, then retry. |
 
 Screenshot C01: pending real sign-in capture, including a failed sign-in example.

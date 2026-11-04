@@ -29,6 +29,7 @@ Reset: `docker compose down -v && docker compose up -d db`
 erDiagram
     users ||--o| resident_profiles : has
     users ||--o{ resident_assets : can_access
+    users |o--o{ app_settings : last_changed
     assessments ||--o{ crew_photos : has
 
     users {
@@ -87,6 +88,12 @@ erDiagram
         varchar storage_key "where the photo store keeps the file"
         timestamptz created_at
     }
+    app_settings {
+        varchar key PK "matches a key in the code's registry"
+        text value
+        timestamptz updated_at
+        uuid updated_by FK "null if that admin was removed"
+    }
 ```
 
 Profiles and resident asset links are deleted with their user. Admins have no profile.
@@ -100,6 +107,10 @@ or stored.
 
 `resident_profiles` is no longer written at sign-up. Older accounts may still hold an address there.
 
+`app_settings` holds text an admin has edited, one row per key. With no row, the default in
+`app/services/editable_messages.py` applies, so resetting a message deletes its row. Rows whose
+key is not in that registry are ignored and never deleted automatically. No history is kept.
+
 ## Migrations
 
 | Revision | Change |
@@ -110,6 +121,7 @@ or stored.
 | `0004` | `resident_assets`; make resident ZIP optional because the imported address is stored as one value |
 | `0005` | `users.password_changed_at`; tokens issued before it are rejected |
 | `0006` | Limit `user_role` to `resident` and `admin` and drop the third role's profile table; stops with an error if any account still has that role |
+| `0007` | `app_settings` for text admins can edit; inserts no rows |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
 
