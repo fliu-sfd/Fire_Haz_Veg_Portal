@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.schemas.assessments import InspectionPointOut
+
 
 class SubmissionPhotoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -60,6 +62,17 @@ class ReviewInboxItem(BaseModel):
     created_at: datetime
     updated_at: datetime | None
     photo_count: int
+    inspected_at: datetime | None
+    inspection_comments: str | None
+
+
+class ReviewDetailOut(BaseModel):
+    asset_id: str
+    season_year: int
+    homeowner_name: str
+    inspection: InspectionPointOut
+    submission: SubmissionOut
+    history: list[SubmissionOut]
 
 
 class ReviewInboxOut(BaseModel):

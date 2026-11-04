@@ -107,15 +107,24 @@ include `is_own_submission`, `can_edit`, and `updated_at` without exposing uploa
 The admin map marks an asset **Pending review** if any current issue's latest submission
 is pending. From a marker, **View assessment & submissions** opens the admin assessment
 view with original crew photos and homeowner evidence. **Review inbox** lists pending
-submissions with homeowner name, property, date, and a sidebar count (refreshes every
-30 seconds). **Review this submission** offers **Approve**, **Send back**, a department
+submissions with homeowner name, property, inspection date/notes, submission date, and a
+sidebar count (refreshes every 30 seconds). **Review submission** opens the selected
+submission at `/dashboard/reviews/{submissionId}`, with the crew finding and homeowner
+photos side by side on desktop and stacked on phones. **Refresh evidence** reloads
+changed evidence before deciding. **Review this submission** offers **Approve**, **Send back**, a department
 comment, and **Save decision**. Sending back requires a reason. Homeowners see the decision
 and comment in history; sent-back issues can receive new evidence. Removing a property
-link revokes access but preserves evidence.
+link revokes access but preserves evidence. Saving on the comparison screen returns to
+the inbox with confirmation and refreshes the count, assessment, evidence, and map caches.
 
 - `GET /api/v1/admin/submissions?limit=25&offset=0`: paginated review inbox, oldest first;
   only the latest pending evidence for current-season issue points is included.
 - `GET /api/v1/admin/submissions/count`: pending-inbox count. Admin-only, as is the inbox.
+- `GET /api/v1/admin/submissions/{id}`: administrator-only review detail with the exact
+  selected submission, homeowner name, original inspection and crew-photo metadata,
+  and submission history. Missing IDs return 404. Reviewed, superseded and past-season
+  submissions remain readable with review controls disabled. Photo bytes still come
+  from the existing protected crew and submission-photo routes; no storage keys are returned.
 - `POST /api/v1/admin/submissions/{id}/review`: admin-only JSON
   `{decision: "approved"|"rejected", comment: string|null, expected_version: number}`.
   Records reviewer ID, time, and comment; 409 refuses repeated decisions, stale evidence
