@@ -123,7 +123,8 @@ def clean_message(text: str, spec: MessageLimits) -> str:
     text = _EXTRA_BREAKS_RE.sub("\n\n", "\n".join(lines)).strip("\n")
 
     if text.count("\n") + 1 > spec.max_lines:
-        raise ValueError(f"Message must be at most {spec.max_lines} lines")
+        unit = "line" if spec.max_lines == 1 else "lines"
+        raise ValueError(f"Message must be at most {spec.max_lines} {unit}")
     if len(text) < spec.min_length:
         raise ValueError(f"Message must be at least {spec.min_length} characters")
     if len(text) > spec.max_length:

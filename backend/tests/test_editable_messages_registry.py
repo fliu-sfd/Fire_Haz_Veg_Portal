@@ -97,5 +97,19 @@ def test_clean_message_rejects_text_outside_the_limits(raw: str, error: str) -> 
         clean_message(raw, SPEC)
 
 
+def test_a_one_line_limit_reads_correctly() -> None:
+    one_line = EditableMessage(
+        key="one_line",
+        label="One line",
+        description="Used in tests.",
+        default="Default text.",
+        min_length=1,
+        max_length=40,
+        max_lines=1,
+    )
+    with pytest.raises(ValueError, match="Message must be at most 1 line$"):
+        clean_message("first\nsecond", one_line)
+
+
 def test_length_is_measured_after_cleaning() -> None:
     assert clean_message(" " * 100 + "x" * 40 + " " * 100, SPEC) == "x" * 40
