@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader } from "@/components/ui/loader";
 import { AdminAccessRequired } from "@/features/admin/components/users-states";
 import { MessageCard } from "@/features/settings/components/message-card";
 import { SettingsLoadError, SettingsSkeleton } from "@/features/settings/components/settings-states";
@@ -25,7 +26,7 @@ export function SettingsView() {
 
   // Render nothing admin-specific until the role check passes, so a redirect never flashes the page.
   if (page.access !== "allowed") {
-    return <p role="status" className="text-city-dark">Checking access…</p>;
+    return <Loader label="Checking access…" />;
   }
 
   return (

@@ -1,8 +1,9 @@
 "use client";
 
-import { CircleCheck, LoaderCircle } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
+import { Loader } from "@/components/ui/loader";
 import { useAssessmentEvidence } from "../hooks/use-assessment-evidence";
 import { SubmissionHistory } from "./submission-history";
 import { UploadForm } from "./upload-form";
@@ -16,7 +17,7 @@ export function AssessmentEvidence({ assessmentId, needsAction }: {
 
   return (
     <section id={`evidence-${assessmentId}`} aria-label="Completion photos" className="mt-6 min-w-0 scroll-mt-6 border-t border-city-light pt-6">
-      {!account || isLoading ? <p role="status" className="flex items-center gap-2 text-sm text-city-dark"><LoaderCircle aria-hidden="true" className="size-4 animate-spin motion-reduce:animate-none" />Loading completion photos…</p> : null}
+      {!account || isLoading ? <Loader inline label="Loading completion photos…" /> : null}
       {errorMessage ? (
         <div className="mb-5 space-y-3">
           <FormAlert variant="error" title="We could not load the submission history">{errorMessage}</FormAlert>

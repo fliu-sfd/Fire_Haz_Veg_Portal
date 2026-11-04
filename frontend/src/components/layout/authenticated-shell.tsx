@@ -8,6 +8,7 @@ import { useSWRConfig } from "swr";
 import { AccountAvatar, SidebarAccount, SidebarBrand, SidebarNav } from "@/components/layout/sidebar-nav";
 import { PROFILE_HREF } from "@/components/layout/nav-config";
 import { useNavItems } from "@/components/layout/use-nav-items";
+import { Loader } from "@/components/ui/loader";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { authErrorMessage, signOut } from "@/features/auth/api";
@@ -55,9 +56,11 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
   if (!account || redirectTo) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-city-gray px-6">
-        <p role="status" className="text-city-dark">
-          {isSigningOut ? "Signing out…" : error ?? "Loading your account…"}
-        </p>
+        {error && !isSigningOut ? (
+          <p role="status" className="text-city-dark">{error}</p>
+        ) : (
+          <Loader label={isSigningOut ? "Signing out…" : "Loading your account…"} />
+        )}
       </main>
     );
   }

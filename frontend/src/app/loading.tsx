@@ -1,3 +1,5 @@
+import { Loader } from "@/components/ui/loader";
+
 export default function Loading() {
-  return <p role="status" className="text-city-dark">Loading page…</p>;
+  return <Loader label="Loading page…" />;
 }

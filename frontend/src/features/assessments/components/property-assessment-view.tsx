@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, CircleAlert, CircleCheck, Home, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Loader } from "@/components/ui/loader";
 import { AssessmentError, AssessmentLoading, NoInspectionPoints } from "@/features/assessments/components/assessment-states";
 import { InspectionCard } from "@/features/assessments/components/inspection-card";
 import { usePropertyAssessment } from "@/features/assessments/hooks/use-property-assessment";
@@ -11,7 +12,7 @@ import { propertyProgress } from "@/features/assessments/utils/display";
 export function PropertyAssessmentView({ assetId, departmentView = false }: { assetId: string; departmentView?: boolean }) {
   const { assessment, errorMessage, isLoading, isValidating, isRedirecting, refresh } = usePropertyAssessment(assetId);
 
-  if (isRedirecting) return <p role="status" className="text-city-dark">Redirecting…</p>;
+  if (isRedirecting) return <Loader label="Redirecting…" />;
   if (errorMessage) {
     return <AssessmentError message={errorMessage} isRetrying={isValidating} onRetry={() => void refresh()} />;
   }
