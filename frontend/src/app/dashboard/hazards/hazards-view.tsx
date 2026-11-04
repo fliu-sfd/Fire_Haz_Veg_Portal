@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader } from "@/components/ui/loader";
 import { HazardFilterBar } from "@/features/hazards/components/hazard-filter-bar";
 import { HazardSummaryStrip } from "@/features/hazards/components/hazard-summary-strip";
 import { HazardLegend } from "@/features/hazards/components/hazard-legend";
@@ -29,7 +30,7 @@ export function HazardsView() {
 
   // Render nothing admin-specific until the role check passes, so a redirect never flashes the map.
   if (page.access !== "allowed") {
-    return <p role="status" className="text-city-dark">Checking access…</p>;
+    return <Loader label="Checking access…" />;
   }
 
   const centered = page.isForbidden ? (

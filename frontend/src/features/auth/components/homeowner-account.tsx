@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
+import { Loader } from "@/components/ui/loader";
 import { AddPropertyForm } from "@/features/auth/components/add-property-form";
 import { PropertiesEmptyState } from "@/features/auth/components/properties-empty-state";
 import { PropertyCard } from "@/features/auth/components/property-card";
@@ -15,7 +16,7 @@ function ConnectedProperties({ accountId }: { accountId: string }) {
   const page = useHomeownerProperties(accountId);
   const { properties, errorMessage, isLoading, isValidating, isRedirecting, refresh, form } = page;
 
-  if (isRedirecting) return <p role="status" className="mt-5 text-city-dark">Redirecting…</p>;
+  if (isRedirecting) return <Loader label="Redirecting…" />;
 
   if (errorMessage) {
     return (
@@ -31,7 +32,7 @@ function ConnectedProperties({ accountId }: { accountId: string }) {
   }
 
   if (isLoading || !properties) {
-    return <p role="status" className="mt-5 text-city-dark">Loading your properties…</p>;
+    return <Loader inline label="Loading your properties…" />;
   }
 
   const isEmpty = properties.length === 0;
@@ -92,7 +93,7 @@ export function HomeownerAccount() {
   }
 
   if (!account || status !== "allowed") {
-    return <p role="status" className="text-center text-city-dark">Loading your property account…</p>;
+    return <Loader label="Loading your property account…" />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Loader } from "@/components/ui/loader";
 import { UsersView } from "./users-view";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function UsersPage() {
   // useSearchParams in UsersView needs a Suspense boundary for the static build.
   return (
-    <Suspense fallback={<p role="status" className="text-city-dark">Loading users…</p>}>
+    <Suspense fallback={<Loader label="Loading users…" />}>
       <UsersView />
     </Suspense>
   );

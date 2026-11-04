@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Bell, CircleCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
+import { Loader } from "@/components/ui/loader";
 import { useReviewInbox } from "../hooks/use-review-inbox";
 import { evidenceDate } from "@/features/submissions/utils";
 
@@ -21,7 +22,7 @@ export function ReviewInboxView() {
         <Button variant="secondary" onClick={page.refresh} disabled={page.isValidating} className="inline-flex min-h-11 items-center justify-center gap-2"><RefreshCw aria-hidden="true" className={`size-4 ${page.isValidating ? "animate-spin motion-reduce:animate-none" : ""}`} />Refresh</Button>
       </header>
       {page.errorMessage ? <div className="mt-6"><FormAlert variant="error" title="We could not load the review inbox">{page.errorMessage}</FormAlert></div> : null}
-      {page.isLoading ? <p role="status" className="mt-8 text-city-dark">Loading submissions…</p> : null}
+      {page.isLoading ? <Loader inline label="Loading submissions…" /> : null}
       {page.data?.total === 0 ? <div className="mt-8 flex items-start gap-3 rounded-lg border border-city-light bg-white p-6"><CircleCheck aria-hidden="true" className="size-5 shrink-0 text-success-green" /><div><h2 className="font-semibold text-charcoal">You are all caught up</h2><p className="mt-1 text-sm text-city-dark">New homeowner submissions will appear here.</p></div></div> : null}
       <ul className="mt-6 space-y-3">
         {page.data?.items.map((item) => (
