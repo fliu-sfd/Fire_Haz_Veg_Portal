@@ -13,6 +13,7 @@ pytestmark = pytest.mark.db
 LOGIN = "/api/v1/auth/login"
 LOGOUT = "/api/v1/auth/logout"
 ME = "/api/v1/auth/me"
+MESSAGE = "/api/v1/admin/settings/messages/disabled_account_message"
 COOKIE = settings.auth_cookie_name
 EMAIL = "jane.doe@example.com"
 PASSWORD = "Wildfire#Safe2026"
@@ -90,6 +91,52 @@ def test_inactive_user_gets_403_only_with_correct_password(client, db, user) -> 
     assert resp.json()["detail"]["code"] == "account_disabled"
     assert "disabled" in resp.json()["detail"]["message"]
     assert "set-cookie" not in resp.headers
+
+
+def test_disabled_user_gets_the_default_message(client, db, user) -> None:
+    user.is_active = False
+    db.commit()
+
+    resp = login(client)
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == {
+        "code": "account_disabled",
+        "message": "Account is disabled. Contact the Scottsdale Fire Department.",
+    }
+    assert "set-cookie" not in resp.headers
+
+
+def test_disabled_user_gets_the_message_an_admin_saved(client, db, user) -> None:
+    user.is_active = False
+    admin = User(
+        email="ava.admin@example.com",
+        password_hash=hash_password(PASSWORD),
+        full_name="Ava Admin",
+        role=UserRole.ADMIN,
+    )
+    db.add(admin)
+    db.commit()
+    saved = "Please call the department at 555-0100."
+    client.cookies.set(COOKIE, create_access_token(admin.id))
+    assert client.put(MESSAGE, json={"message": saved}).status_code == 200
+    client.cookies.clear()
+
+    resp = login(client)
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == {"code": "account_disabled", "message": saved}
+    assert "set-cookie" not in resp.headers
+
+
+def test_disabled_user_with_wrong_password_never_sees_the_message(client, db, user) -> None:
+    user.is_active = False
+    db.commit()
+
+    wrong = login(client, password="Wildfire#Safe2027")
+    unknown = login(client, email="nobody@example.com")
+    assert wrong.status_code == unknown.status_code == 401
+    assert wrong.json() == unknown.json() == {"detail": "Invalid email or password"}
+    assert "set-cookie" not in wrong.headers
+    assert "set-cookie" not in unknown.headers
 
 
 def test_invalid_login_payload_returns_422(client) -> None:
