@@ -15,9 +15,13 @@ from app.schemas.admin import (
     UserListParams,
     UserSortField,
 )
-from app.services.property_service import link_user_to_property, resolve_property
+from app.services.property_service import (
+    PropertyNotFoundError,
+    link_user_to_property,
+    resolve_property,
+)
 from app.services.text_search import LIKE_ESCAPE, like_pattern
-from app.services.user_service import PropertyNotFoundError, get_user_by_email
+from app.services.user_service import get_user_by_email
 
 logger = logging.getLogger(__name__)
 

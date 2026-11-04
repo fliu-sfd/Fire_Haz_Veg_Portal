@@ -32,8 +32,6 @@ export function HomeownerSignUpForm() {
       await registerHomeowner({
         full_name: String(formData.get("full_name") ?? ""),
         email: String(formData.get("email") ?? ""),
-        property_address: String(formData.get("property_address") ?? ""),
-        asset_id: String(formData.get("asset_id") ?? ""),
         password: String(password ?? ""),
       });
       router.replace("/homeowner");
@@ -47,7 +45,7 @@ export function HomeownerSignUpForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormAlert variant="info" title="Homeowner account">
-        Use the Asset ID from your door tag.
+        You will add your property after you create your account.
       </FormAlert>
 
       <TextField
@@ -65,26 +63,6 @@ export function HomeownerSignUpForm() {
         label="Email address"
         autoComplete="email"
         inputMode="email"
-        required
-      />
-
-      <TextField
-        id="property-address"
-        name="property_address"
-        label="Property address"
-        optional
-        minLength={5}
-        maxLength={255}
-        autoComplete="street-address"
-      />
-
-      <TextField
-        id="asset-id"
-        name="asset_id"
-        label="Asset ID"
-        hint="Enter the Asset ID from your door tag."
-        autoComplete="off"
-        spellCheck={false}
         required
       />
 
@@ -121,10 +99,6 @@ export function HomeownerSignUpForm() {
           <path d="M4 10h12m-4-4 4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </Button>
-
-      <p className="text-center text-xs leading-5 text-city-dark">
-        Your Asset ID must match an assessment in the City&apos;s data.
-      </p>
     </form>
   );
 }

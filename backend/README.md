@@ -77,10 +77,30 @@ the email already belongs to an account, the command stops and changes nothing.
 - `GET /` - API name and version
 - `GET /api/v1/health` - health check
 - `GET /api/v1/health/db` - database + PostGIS check (503 if unreachable)
-- `POST /api/v1/auth/signup` - resident self-signup; verifies `property_address` + `asset_id` against imported assessments, creates the property link, and signs the resident in
+- `POST /api/v1/auth/signup` - resident self-signup. Body `{full_name, email, password}`; any
+  other field, including `asset_id` and `property_address`, is a 422. Creates the account with
+  no linked properties and signs the resident in
 - `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user (401 bad credentials, 403 disabled)
 - `POST /api/v1/auth/logout` - clears the auth cookie (204)
 - `GET /api/v1/auth/me` - current user from the cookie (401 if not logged in)
+- `GET /api/v1/residents/me/properties` - residents only (401 / 403 otherwise). The signed-in
+  resident's linked properties with their latest inspection result
+- `POST /api/v1/residents/me/properties` - residents only. Body `{asset_id}`. Links the Asset ID
+  from the door tag, ignoring letter case and surrounding spaces, and returns the updated list.
+  An account can have up to 25 properties. An Asset ID already on another account can still be
+  linked (the rule lives in `can_link`, `app/services/resident_property_service.py`). Errors:
+
+  | Status | Code | Field | When |
+  |---|---|---|---|
+  | 404 | `property_not_found` | `asset_id` | Asset ID is not in the inspection data |
+  | 409 | `already_linked` | `asset_id` | Already on this account |
+  | 409 | `too_many_properties` | | Account already has 25 properties |
+  | 422 | | `asset_id` | Empty, too long, or has symbols (standard validation error) |
+
+- `DELETE /api/v1/residents/me/properties/{asset_id}` - residents only. Removes the Asset ID from
+  the signed-in resident and returns the updated list. Removing one that is not linked changes
+  nothing. Assessments, photos and hazards stay. These routes only act on the user in the
+  cookie. Each successful link or unlink logs the user id and the Asset ID
 - `GET /api/v1/assessments/{asset_id}` - latest-season inspection details and safe crew-photo
   metadata. Residents can view their linked assets; administrators can view
   any asset. Missing and unauthorized assets both return 404

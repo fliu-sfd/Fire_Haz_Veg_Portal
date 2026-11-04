@@ -98,6 +98,8 @@ picture itself is not in the database: `storage_key` points to a file in the pho
 (`PHOTO_STORAGE_DIR`, local disk for now). Staff emails (`sfd_edit_by`) are never read
 or stored.
 
+`resident_profiles` is no longer written at sign-up. Older accounts may still hold an address there.
+
 ## Migrations
 
 | Revision | Change |

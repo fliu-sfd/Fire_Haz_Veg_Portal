@@ -2,6 +2,8 @@
 
 > Superseded on November 3, 2026: the portal has two roles (resident and admin). Staff
 > registration, firefighter accounts, and access codes are not part of the product.
+>
+> Sign-up no longer takes an Asset ID or address. Residents add properties after sign-up.
 
 > Historical planning document. The resident authentication flow is now implemented.
 > The current contract is defined by `backend/app/schemas/auth.py`: resident signup uses

@@ -35,7 +35,7 @@ Screenshot C01: pending real sign-in capture, including a failed sign-in example
 Expected result: **Saved** appears after a successful save. Before saving, changed
 fields produce **You have unsaved changes**. Email is read-only on your own
 profile; contact the department if it needs correction. A homeowner also sees
-**Your properties** and can select **Go to my homeowner page** to open assessments.
+**Your properties** and can select **Add or remove properties** to open the homeowner page.
 
 | Message | What to do |
 | --- | --- |
