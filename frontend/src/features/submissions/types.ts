@@ -20,4 +20,3 @@ export type Submission = {
   reviewComment: string | null;
   photos: SubmissionPhoto[];
 };
-

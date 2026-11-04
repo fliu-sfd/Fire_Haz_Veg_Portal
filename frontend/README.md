@@ -126,6 +126,46 @@ SWR configuration:
 - **Saving.** Each card has its own form, so one failing does not affect the others. The response replaces that one item in the cached list with no refetch. The form sends the cleaned text, and an unchanged message is not "dirty" even if only spaces were typed.
 - **Plain text.** Messages are only ever rendered as React text, with `whitespace-pre-line` for line breaks. The sign-in page reads the message from the login error and never calls these admin endpoints.
 
+## Homeowner completion photos
+
+From **Connected properties → View assessment**, residents can submit completion
+photos on each inspection point with an issue. This extends the merged assessment
+page and keeps crew notes/photos, property add/remove controls, and editable messages intact.
+
+`features/submissions/` contains the API parsers, validation helpers, data/form/photo
+hooks, upload form, status badges, and submission history. It uses the shared API
+client and City colors/components. The form includes drag-and-drop, previews, removal,
+an optional comment, validation messages, and a saved confirmation. Upload/history
+columns stack on smaller screens. Evidence caches are scoped to account and inspection.
+
+Each saved photo has **View photo** and **Copy photo link**. The copied URL is the
+protected API URL and rechecks access on every open; preview blob URLs stay in browser
+memory. Links require sign-in and access to the property. Browser clipboard failures
+show a selectable link field instead. Uploading leaves the issue open for department
+review. See [Docker storage and demo](../docs/homeowner-photo-upload.md).
+
+After submission the inspection badge turns green **Submitted**, the next step explains
+that department verification is pending, and the empty upload form is replaced by saved
+evidence. **Edit submission** updates the submitting resident's pending record; keeping
+the picker empty retains photos, while selecting new photos replaces the saved set.
+The assessment summary revalidates after a save so status survives refresh.
+
+Admins open **Hazard map → select an asset → View assessment & submissions** at
+`/dashboard/hazards/[assetId]`. They see crew findings and homeowner evidence without
+homeowner upload/edit controls. The map's pending count includes waiting evidence.
+Admins can select **Review submission**, compare photos, choose **Approve** or **Send back**,
+write a department comment, and **Save decision**. Sending back requires a reason;
+approving can include an optional comment. The homeowner sees the saved decision and
+comment in history. Evidence versions prevent decisions against stale homeowner edits.
+
+**Review inbox** (`/dashboard/reviews`) is the department notification page: homeowner,
+property, date, photo count, and a link to review. It is paginated and polls every 30
+seconds, as does its pending-count sidebar badge. Reviewed items leave the inbox and
+remain in property history. This is an in-app queue, not email/SMS or an unread-message log.
+
+The Docker frontend uses Node 24 to match `package.json`. Compose sets its browser
+API URL and API CORS origin from `API_PORT` and `FRONTEND_PORT` for local development.
+
 ## Profile
 
 `/profile` lets any signed-in user edit their name and phone and change their password. Residents also see their linked properties. Admins see no extra card.

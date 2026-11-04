@@ -74,6 +74,60 @@ the email already belongs to an account, the command stops and changes nothing.
 
 ## Endpoints
 
+### Homeowner completion photos (#38)
+
+On the existing property assessment page, each inspection with `ISSUES` accepts
+completion photos from a resident linked to that property:
+
+- `POST /api/v1/assessments/{assessment_id}/submissions`: multipart `photos` (1–5
+  JPEG/PNG files, at most 5 MiB and 25 megapixels each), plus optional `comment`
+  (2,000 characters). File contents are decoded and checked, not just the extension.
+  Returns 201 with a `pending_review` submission. Only current-season issues accept uploads.
+- `GET /api/v1/assessments/{assessment_id}/submissions`: saved evidence, newest first.
+  Linked residents and administrators can read it.
+- `PATCH /api/v1/assessments/{assessment_id}/submissions/{submission_id}`: submitting
+  resident only, while pending and still linked to a current-season issue. Multipart
+  `comment` updates or clears the comment; optional `photos` replaces the complete
+  saved set. With no new files, existing photos stay. The same record is updated with
+  `updated_at`; failed writes preserve the original evidence. Reviewed evidence is read-only.
+- `GET /api/v1/submission-photos/{photo_id}`: stable, authenticated image link.
+  Every request checks the current session and property access. No session returns
+  401; an unrelated or unlinked resident gets 404. Responses use `private, no-store`.
+
+The UI's **Copy photo link** copies that protected image URL, not a temporary
+browser blob URL. The recipient must sign in on the same host and have access.
+The URL contains no bearer token or filesystem path. See
+[`../docs/homeowner-photo-upload.md`](../docs/homeowner-photo-upload.md) for Docker storage and demo instructions.
+
+Uploads preserve the original crew finding and do not clear the issue. Homeowners see
+green **Submitted** confirmation and **This is your submission**, with **Edit submission**
+for their own pending evidence. The form is hidden once evidence is pending. Read responses
+include `is_own_submission`, `can_edit`, and `updated_at` without exposing uploader identity.
+
+The admin map marks an asset **Pending review** if any current issue's latest submission
+is pending. From a marker, **View assessment & submissions** opens the admin assessment
+view with original crew photos and homeowner evidence. **Review inbox** lists pending
+submissions with homeowner name, property, date, and a sidebar count (refreshes every
+30 seconds). **Review this submission** offers **Approve**, **Send back**, a department
+comment, and **Save decision**. Sending back requires a reason. Homeowners see the decision
+and comment in history; sent-back issues can receive new evidence. Removing a property
+link revokes access but preserves evidence.
+
+- `GET /api/v1/admin/submissions?limit=25&offset=0`: paginated review inbox, oldest first;
+  only the latest pending evidence for current-season issue points is included.
+- `GET /api/v1/admin/submissions/count`: pending-inbox count. Admin-only, as is the inbox.
+- `POST /api/v1/admin/submissions/{id}/review`: admin-only JSON
+  `{decision: "approved"|"rejected", comment: string|null, expected_version: number}`.
+  Records reviewer ID, time, and comment; 409 refuses repeated decisions, stale evidence
+  versions, or superseded submissions. Edits increment the evidence version. Reviewed
+  records are immutable. Duplicate pending uploads are refused in favor of editing.
+
+Map state is Pending review when any issue awaits review, Closed only when every issue's
+latest evidence is approved, and Open otherwise. Crew inspection results remain unchanged.
+The inbox is an in-app notification/work queue; it does not send email or SMS.
+
+### Other endpoints
+
 - `GET /` - API name and version
 - `GET /api/v1/health` - health check
 - `GET /api/v1/health/db` - database + PostGIS check (503 if unreachable)
@@ -171,7 +225,9 @@ the email already belongs to an account, the command stops and changes nothing.
   with the latest issue row's crew, date, comments and address. Repeatable `state`
   (`open`, `pending_review`, `closed`) and `crew`, plus `property_type` (`naos` /
   `residential`). Not paged; capped at 5000 items, and `total` is the count before the cap.
-  Every hazard is `open` until the review workflow exists. More filters:
+  A hazard is `pending_review` if a current issue's latest evidence is pending,
+  `closed` only when all issue points have approved latest evidence, otherwise `open`.
+  Uploads alone do not clear hazards. More filters:
   - `q` (up to 100 characters): case-insensitive "contains" match on asset ID or address.
     `%` and `_` are plain characters.
   - `inspected_from` / `inspected_to` (`YYYY-MM-DD`, inclusive): compared with the latest

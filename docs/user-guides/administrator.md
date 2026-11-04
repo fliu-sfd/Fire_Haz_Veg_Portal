@@ -98,13 +98,11 @@ be the exact location of each finding. No-issue-only properties are not hazards.
 | Count | Meaning in the reviewed build |
 | --- | --- |
 | Total | Hazard assets matching all current filters; not a count of all inspection points. |
-| Open / Pending review / Closed | Counts matching the other filters while ignoring the selected state filter, so you can see alternative states. Currently every hazard is assigned Open; pending and closed transitions are not implemented yet. |
+| Open / Pending review / Closed | Counts matching the other filters while ignoring the selected state filter. An asset is Pending review when any current issue's latest submission is pending, Closed when all issues have approved evidence, and Open otherwise. |
 | Needs attention | Hazard assets missing a photo or comment in the map's summarized record. This count follows other filters but ignores the Needs attention toggle. It is a record-quality indicator, not a separate review state. |
 
-Do not treat the current **Open** label as a completed review audit. Once #44
-and #39 merge, recheck counts and describe the final per-issue/combined-asset
-state rules. The proposed combined state is Pending review if any issue is
-pending, Closed only when all issues are closed, and Open otherwise.
+Do not treat a pending submission as an approved resolution. Pending review means
+evidence is waiting for department verification. Closed requires an administrator decision.
 
 The map currently labels non-NAOS records Residential; classification is
 provisional, so confirm property type before relying on it for decisions.
@@ -149,23 +147,25 @@ nothing changes. Homeowners continue to self-register and add their own Asset ID
 
 No screenshot: the command line step has no portal screen, and A02 covers the role change.
 
-## A08 — Review homeowner fix submissions — Planned (#39, #38, #44)
+## A08 — Review homeowner fix submissions — Available
 
-1. After release, open the planned **Review queue** under Admin. Check its pending count; this is the planned in-portal alert.
-2. Open the oldest waiting submission and verify the property and inspection point.
+1. Sign in as an administrator and open **Review inbox**. Its sidebar badge shows waiting submissions; the page lists who submitted, property, time, and photo count. It refreshes every 30 seconds; **Refresh** checks immediately.
+2. Select **Review submission** on the notification and verify the property and inspection point. You can also use **Hazard map → select property → View assessment & submissions**.
 3. Compare the original finding and crew photos with the homeowner's photos and comment. Enlarge photos as needed.
-4. If the evidence is sufficient, select the planned **Approve** action. Otherwise select **Send back**, enter a short reason the homeowner can act on and submit the decision.
-5. Confirm the decision and return to the queue. Recheck the issue status and map counts with filters cleared as needed.
+4. Read **Submission history**, the homeowner's comment, and any updated timestamp. **View photo** previews an image; the thumbnail opens the protected image in a new tab. Admins cannot edit the homeowner's evidence.
+5. Under **Review this submission**, select **Approve — completed work verified** or **Send back — more work or evidence needed**. Enter a **Department comment** (required for Send back; optional for Approve).
+6. Select **Save decision**. The decision, comment, and review time appear in history for both the department and homeowner. The reviewed record cannot be edited or decided again.
+7. Return to **Review inbox**; the item is no longer waiting. Sending back lets the homeowner submit new evidence. Map counts update; a property closes only when all issue points are approved.
 
-Expected result after release: approval moves that issue to Closed; sending it
+Expected result: approval moves that issue to Closed; sending it
 back returns it to Open with the reason visible to the homeowner. The decision
 records who acted and when. The original inspection result stays unchanged.
 A second decision on the same submission must be refused; refresh if another
 administrator has already reviewed it.
 
-Exact queue labels, decision confirmations, required-reason errors and concurrent
-review errors must be copied from the released screens. No email or text alert
-is included. The in-portal notification approach still needs sponsor confirmation.
+If the homeowner changed the evidence or another administrator already decided,
+the server refuses the decision. Refresh the assessment, compare the latest evidence,
+and decide only if it is still pending. No email or text alert is included.
 
 Screenshot A08: placeholder for queue/count, side-by-side photos, approve result and required send-back reason.
 
