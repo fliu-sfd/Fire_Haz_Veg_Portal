@@ -7,17 +7,20 @@ import { CheckboxField } from "@/components/ui/checkbox-field";
 import { FormAlert } from "@/components/ui/form-alert";
 import { TextField } from "@/components/ui/text-field";
 import { PasswordField } from "@/features/auth/components/password-field";
-import { authErrorMessage, signIn } from "@/features/auth/api";
+import { AccountDisabledBox } from "@/features/auth/components/account-disabled-box";
+import { signIn, signInProblem, type SignInProblem } from "@/features/auth/api";
 
 export function SignInForm() {
   const router = useRouter();
-  const [submitError, setSubmitError] = useState<string>();
+  const [problem, setProblem] = useState<SignInProblem>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // React clears currentTarget once this handler first awaits.
+    const passwordInput = event.currentTarget.elements.namedItem("password");
     const formData = new FormData(event.currentTarget);
-    setSubmitError(undefined);
+    setProblem(undefined);
     setIsSubmitting(true);
     try {
       const account = await signIn({
@@ -27,7 +30,9 @@ export function SignInForm() {
       });
       router.replace(account.role === "resident" ? "/homeowner" : "/dashboard");
     } catch (error) {
-      setSubmitError(authErrorMessage(error));
+      const next = signInProblem(error);
+      setProblem(next);
+      if (next.kind === "disabled" && passwordInput instanceof HTMLInputElement) passwordInput.value = "";
     } finally {
       setIsSubmitting(false);
     }
@@ -59,9 +64,10 @@ export function SignInForm() {
         label="Keep me signed in on this device"
       />
 
-      {submitError ? (
+      {problem?.kind === "disabled" ? <AccountDisabledBox message={problem.message} announce /> : null}
+      {problem?.kind === "failed" ? (
         <FormAlert variant="error" title="Sign in failed">
-          {submitError}
+          {problem.message}
         </FormAlert>
       ) : null}
 

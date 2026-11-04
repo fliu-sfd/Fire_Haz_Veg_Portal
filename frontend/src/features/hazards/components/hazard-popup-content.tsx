@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { CopyLinkButton } from "@/features/hazards/components/copy-link-button";
 import { StateBadge } from "@/features/hazards/components/state-glyph";
 import type { Hazard } from "@/features/hazards/types";
@@ -35,7 +36,7 @@ export function HazardPopupContent({ hazard }: { hazard: Hazard }) {
         </Row>
         <Row label="Days since inspection">{relativeAge(hazard.ageDays)}</Row>
         <Row label="Station/Shift">{hazard.crewCode ?? "Not recorded"}</Row>
-        <Row label="Photos">{photoCountText(hazard.photoCount)}</Row>
+        <Row label="Crew photos">{photoCountText(hazard.photoCount)}</Row>
         {address ? <Row label="Address">{address}</Row> : null}
         {hazard.comments ? (
           <Row label="Comments">
@@ -43,7 +44,8 @@ export function HazardPopupContent({ hazard }: { hazard: Hazard }) {
           </Row>
         ) : null}
       </dl>
-      <div className="mt-2 border-t border-city-light pt-2.5">
+      <div className="mt-2 space-y-2 border-t border-city-light pt-2.5">
+        <Link href={`/dashboard/hazards/${encodeURIComponent(hazard.assetId)}`} className="flex min-h-11 items-center text-sm font-semibold text-civic-blue hover:underline">View assessment &amp; submissions</Link>
         <CopyLinkButton />
       </div>
     </article>

@@ -74,13 +74,90 @@ the email already belongs to an account, the command stops and changes nothing.
 
 ## Endpoints
 
+### Homeowner completion photos (#38)
+
+On the existing property assessment page, each inspection with `ISSUES` accepts
+completion photos from a resident linked to that property:
+
+- `POST /api/v1/assessments/{assessment_id}/submissions`: multipart `photos` (1–5
+  JPEG/PNG files, at most 5 MiB and 25 megapixels each), plus optional `comment`
+  (2,000 characters). File contents are decoded and checked, not just the extension.
+  Returns 201 with a `pending_review` submission. Only current-season issues accept uploads.
+- `GET /api/v1/assessments/{assessment_id}/submissions`: saved evidence, newest first.
+  Linked residents and administrators can read it.
+- `PATCH /api/v1/assessments/{assessment_id}/submissions/{submission_id}`: submitting
+  resident only, while pending and still linked to a current-season issue. Multipart
+  `comment` updates or clears the comment; optional `photos` replaces the complete
+  saved set. With no new files, existing photos stay. The same record is updated with
+  `updated_at`; failed writes preserve the original evidence. Reviewed evidence is read-only.
+- `GET /api/v1/submission-photos/{photo_id}`: stable, authenticated image link.
+  Every request checks the current session and property access. No session returns
+  401; an unrelated or unlinked resident gets 404. Responses use `private, no-store`.
+
+The UI's **Copy photo link** copies that protected image URL, not a temporary
+browser blob URL. The recipient must sign in on the same host and have access.
+The URL contains no bearer token or filesystem path. See
+[`../docs/homeowner-photo-upload.md`](../docs/homeowner-photo-upload.md) for Docker storage and demo instructions.
+
+Uploads preserve the original crew finding and do not clear the issue. Homeowners see
+green **Submitted** confirmation and **This is your submission**, with **Edit submission**
+for their own pending evidence. The form is hidden once evidence is pending. Read responses
+include `is_own_submission`, `can_edit`, and `updated_at` without exposing uploader identity.
+
+The admin map marks an asset **Pending review** if any current issue's latest submission
+is pending. From a marker, **View assessment & submissions** opens the admin assessment
+view with original crew photos and homeowner evidence. **Review inbox** lists pending
+submissions with homeowner name, property, date, and a sidebar count (refreshes every
+30 seconds). **Review this submission** offers **Approve**, **Send back**, a department
+comment, and **Save decision**. Sending back requires a reason. Homeowners see the decision
+and comment in history; sent-back issues can receive new evidence. Removing a property
+link revokes access but preserves evidence.
+
+- `GET /api/v1/admin/submissions?limit=25&offset=0`: paginated review inbox, oldest first;
+  only the latest pending evidence for current-season issue points is included.
+- `GET /api/v1/admin/submissions/count`: pending-inbox count. Admin-only, as is the inbox.
+- `POST /api/v1/admin/submissions/{id}/review`: admin-only JSON
+  `{decision: "approved"|"rejected", comment: string|null, expected_version: number}`.
+  Records reviewer ID, time, and comment; 409 refuses repeated decisions, stale evidence
+  versions, or superseded submissions. Edits increment the evidence version. Reviewed
+  records are immutable. Duplicate pending uploads are refused in favor of editing.
+
+Map state is Pending review when any issue awaits review, Closed only when every issue's
+latest evidence is approved, and Open otherwise. Crew inspection results remain unchanged.
+The inbox is an in-app notification/work queue; it does not send email or SMS.
+
+### Other endpoints
+
 - `GET /` - API name and version
 - `GET /api/v1/health` - health check
 - `GET /api/v1/health/db` - database + PostGIS check (503 if unreachable)
-- `POST /api/v1/auth/signup` - resident self-signup; verifies `property_address` + `asset_id` against imported assessments, creates the property link, and signs the resident in
-- `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user (401 bad credentials, 403 disabled)
+- `POST /api/v1/auth/signup` - resident self-signup. Body `{full_name, email, password}`; any
+  other field, including `asset_id` and `property_address`, is a 422. Creates the account with
+  no linked properties and signs the resident in
+- `POST /api/v1/auth/login` - sets an HttpOnly JWT cookie and returns the user. A wrong email or
+  password is a 401. A disabled account with the correct password is a 403 with
+  `{"detail": {"code": "account_disabled", "message": "..."}}`, where `message` is the text an
+  admin set (see "Editable messages"). No cookie is set in either case
 - `POST /api/v1/auth/logout` - clears the auth cookie (204)
 - `GET /api/v1/auth/me` - current user from the cookie (401 if not logged in)
+- `GET /api/v1/residents/me/properties` - residents only (401 / 403 otherwise). The signed-in
+  resident's linked properties with their latest inspection result
+- `POST /api/v1/residents/me/properties` - residents only. Body `{asset_id}`. Links the Asset ID
+  from the door tag, ignoring letter case and surrounding spaces, and returns the updated list.
+  An account can have up to 25 properties. An Asset ID already on another account can still be
+  linked (the rule lives in `can_link`, `app/services/resident_property_service.py`). Errors:
+
+  | Status | Code | Field | When |
+  |---|---|---|---|
+  | 404 | `property_not_found` | `asset_id` | Asset ID is not in the inspection data |
+  | 409 | `already_linked` | `asset_id` | Already on this account |
+  | 409 | `too_many_properties` | | Account already has 25 properties |
+  | 422 | | `asset_id` | Empty, too long, or has symbols (standard validation error) |
+
+- `DELETE /api/v1/residents/me/properties/{asset_id}` - residents only. Removes the Asset ID from
+  the signed-in resident and returns the updated list. Removing one that is not linked changes
+  nothing. Assessments, photos and hazards stay. These routes only act on the user in the
+  cookie. Each successful link or unlink logs the user id and the Asset ID
 - `GET /api/v1/assessments/{asset_id}` - latest-season inspection details and safe crew-photo
   metadata. Residents can view their linked assets; administrators can view
   any asset. Missing and unauthorized assets both return 404
@@ -148,7 +225,9 @@ the email already belongs to an account, the command stops and changes nothing.
   with the latest issue row's crew, date, comments and address. Repeatable `state`
   (`open`, `pending_review`, `closed`) and `crew`, plus `property_type` (`naos` /
   `residential`). Not paged; capped at 5000 items, and `total` is the count before the cap.
-  Every hazard is `open` until the review workflow exists. More filters:
+  A hazard is `pending_review` if a current issue's latest evidence is pending,
+  `closed` only when all issue points have approved latest evidence, otherwise `open`.
+  Uploads alone do not clear hazards. More filters:
   - `q` (up to 100 characters): case-insensitive "contains" match on asset ID or address.
     `%` and `_` are plain characters.
   - `inspected_from` / `inspected_to` (`YYYY-MM-DD`, inclusive): compared with the latest
@@ -170,9 +249,56 @@ the email already belongs to an account, the command stops and changes nothing.
 - `GET /api/v1/admin/hazards/filters` - administrators only. The season's crews and
   property types, for the map's filter controls
 
+- `GET /api/v1/admin/settings/messages` - administrators only. `{"items": [...]}` with every
+  editable message
+- `GET /api/v1/admin/settings/messages/{key}` - administrators only. One message
+- `PUT /api/v1/admin/settings/messages/{key}` - administrators only. Body `{message}`. Saves the
+  text and returns the message
+- `DELETE /api/v1/admin/settings/messages/{key}` - administrators only. Resets the message to
+  its default and returns it. Safe to repeat
+
+  All four return 401 signed out and 403 for residents. A message has `key`, `label`,
+  `description`, `message`, `default_message`, `is_default`, `min_length`, `max_length`,
+  `max_lines`, `updated_at` and `updated_by_name` (null if that admin was removed). Errors:
+
+  | Status | Code | Field | When |
+  |---|---|---|---|
+  | 404 | `message_not_found` | | No message has this key |
+  | 422 | `invalid_message` | `message` | The text breaks a rule (see "Editable messages") |
+  | 422 | | | Body is not `{message: string}` (standard validation error) |
+
 Protect an endpoint by adding a `user: CurrentUser` parameter (from `app/api/deps.py`).
 The frontend must send requests with `credentials: "include"` so the cookie is sent.
 Allowed browser origins come from `CORS_ORIGINS` in `.env`.
+
+## Editable messages
+
+Admins can reword messages the portal shows to people, under Settings in the portal. The
+defaults and limits live in `app/services/editable_messages.py`. Edited text is stored in
+`app_settings`, and with no saved row the default applies.
+
+Text rules (`clean_message` in `app/schemas/validators.py`, mirrored in the frontend's
+`features/settings/utils/message.ts`, so change both together):
+
+- Spaces at both ends of the message and of each line are trimmed. Runs of spaces become one.
+- Line breaks are kept. Three or more in a row become two.
+- Control characters (anything below U+0020 except the line break) are removed.
+- More than `max_lines` lines is rejected. Blank lines count.
+- The length after cleaning must be between `min_length` and `max_length`.
+- Plain text only. `<` and `>` are ordinary characters, so every place that shows a message must
+  render it as plain text.
+
+### Add another editable message
+
+1. Add one entry to `EDITABLE_MESSAGES` in `app/services/editable_messages.py` with its key,
+   label, description, default, and limits.
+2. Where the message is shown, call `message_text(db, "<key>")` instead of writing the text in code.
+3. If it needs a custom preview, add one entry to `frontend/src/features/settings/components/previews.tsx`.
+   Otherwise it gets the plain preview.
+4. Run the registry test (`uv run pytest tests/test_editable_messages_registry.py`). It checks
+   the new entry is valid.
+
+No new endpoint, table, migration, or page is needed.
 
 ## Quality checks
 

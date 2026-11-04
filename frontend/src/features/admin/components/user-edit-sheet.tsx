@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConfirmDialog } from "@/features/admin/components/confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { RoleBadge } from "@/features/admin/components/role-badge";
 import { StatusBadge } from "@/features/admin/components/status-badge";
 import { UserAccessFields } from "@/features/admin/components/user-access-fields";

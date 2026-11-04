@@ -20,7 +20,7 @@ An administrator reaches **Department portal** on `/dashboard`.
 | Message | What to do |
 | --- | --- |
 | “Invalid email or password” under “Sign in failed” | Check both fields and try again. |
-| “Account is disabled. Contact the Scottsdale Fire Department.” | Contact the department about account access. |
+| A box titled “Account disabled”, usually with “Account is disabled. Contact the Scottsdale Fire Department.” An administrator can change this wording. | Follow the message, or contact the department about account access. You only see this after entering the correct password. |
 | “We could not reach the service. Check your connection and try again.” | Check your connection, then retry. |
 
 ![C01 — Sign-in form with the invalid-credentials message, November 3, 2026](screenshots/C01-sign-in-2026-11-03.png)
@@ -35,7 +35,7 @@ An administrator reaches **Department portal** on `/dashboard`.
 Expected result: **Saved** appears after a successful save. Before saving, changed
 fields produce **You have unsaved changes**. Email is read-only on your own
 profile; contact the department if it needs correction. A homeowner also sees
-**Your properties** and can select **Go to my homeowner page** to open assessments.
+**Your properties** and can select **Add or remove properties** to open the homeowner page.
 
 | Message | What to do |
 | --- | --- |

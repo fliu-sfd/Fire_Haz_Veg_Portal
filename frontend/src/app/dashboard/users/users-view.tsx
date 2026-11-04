@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader } from "@/components/ui/loader";
 import { ColumnVisibilityMenu } from "@/features/admin/components/column-visibility-menu";
 import { UsersPagination } from "@/features/admin/components/users-pagination";
 import {
@@ -21,7 +22,7 @@ export function UsersView() {
 
   // Render nothing admin-specific until the role check passes, so a redirect never flashes the list.
   if (page.access !== "allowed") {
-    return <p role="status" className="text-city-dark">Checking access…</p>;
+    return <Loader label="Checking access…" />;
   }
 
   const emptyState = page.isPastLastPage ? (

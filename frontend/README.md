@@ -25,6 +25,7 @@ src/
     dashboard/page.tsx          Admin workspace
     dashboard/users/            Admin users list (page.tsx + client wiring)
     dashboard/hazards/          Admin hazard map (page.tsx + client wiring)
+    dashboard/settings/         Admin settings (page.tsx + client wiring)
     loading.tsx                 Shared loading state
     error.tsx                   Shared error boundary
     not-found.tsx               404 page
@@ -45,6 +46,11 @@ src/
       hooks/                    useHazards, useHazardFilters, useHazardQueryState, useHazardSelection,
                                 useHazardList, useHazardViews, useHazardsPage
       components/               Leaflet map, markers, popup, filter bar, legend, states
+    settings/                   Admin settings: editable messages
+      api.ts, types.ts          listMessages, saveMessage, resetMessage and response parsing
+      utils/                    Text rules, cached list update, last-changed text, errors
+      hooks/                    useMessages, useMessageActions, useMessageForm, useSettingsPage
+      components/               Message card, previews, last-changed line, states
     auth/                       Sign-in, sign-up, account hooks and access helpers
     system/                     Health check example
   hooks/                        Generic hooks (useDebouncedValue, useLocalStorage, useUrlSearchInput)
@@ -109,6 +115,56 @@ SWR configuration:
 - **Errors.** `editError` in `utils/errors.ts` puts `email_taken` and `property_not_found` under their field. Other errors show at the top of the panel.
 - **Own account.** Role and Active are locked on the admin's own account. The server enforces this and the last-active-admin rule as well.
 - **First admin.** It is created from the command line. See "Create the first admin" in `backend/README.md`.
+
+## Settings
+
+`/dashboard/settings` lets an admin reword messages the portal shows to people. Notes for anyone changing it:
+
+- **Built from the API.** The page shows one card per item from `GET /admin/settings/messages`. Label, description, text and limits all come from the response, so a new entry in the backend's registry appears as a new card with no change here. See "Add another editable message" in `backend/README.md`.
+- **Previews.** `components/previews.tsx` is a lookup keyed by message `key`. Add an entry when a message needs a custom preview. Any other key gets a plain bordered box. The disabled account preview renders the same `AccountDisabledBox` the sign-in page uses, with `announce` off so it does not take focus while an admin types.
+- **Text rules.** `normalizeMessage` in `utils/message.ts` mirrors `clean_message` in `backend/app/schemas/validators.py`; change both together. Length is counted in code points, as Python does, not with `String.length`.
+- **Saving.** Each card has its own form, so one failing does not affect the others. The response replaces that one item in the cached list with no refetch. The form sends the cleaned text, and an unchanged message is not "dirty" even if only spaces were typed.
+- **Plain text.** Messages are only ever rendered as React text, with `whitespace-pre-line` for line breaks. The sign-in page reads the message from the login error and never calls these admin endpoints.
+
+## Homeowner completion photos
+
+From **Connected properties → View assessment**, residents can submit completion
+photos on each inspection point with an issue. This extends the merged assessment
+page and keeps crew notes/photos, property add/remove controls, and editable messages intact.
+
+`features/submissions/` contains the API parsers, validation helpers, data/form/photo
+hooks, upload form, status badges, and submission history. It uses the shared API
+client and City colors/components. The form includes drag-and-drop, previews, removal,
+an optional comment, validation messages, and a saved confirmation. Upload/history
+columns stack on smaller screens. Evidence caches are scoped to account and inspection.
+
+Each saved photo has **View photo** and **Copy photo link**. The copied URL is the
+protected API URL and rechecks access on every open; preview blob URLs stay in browser
+memory. Links require sign-in and access to the property. Browser clipboard failures
+show a selectable link field instead. Uploading leaves the issue open for department
+review. See [Docker storage and demo](../docs/homeowner-photo-upload.md).
+
+After submission the inspection badge turns green **Submitted**, the next step explains
+that department verification is pending, and the empty upload form is replaced by saved
+evidence. **Edit submission** updates the submitting resident's pending record; keeping
+the picker empty retains photos, while selecting new photos replaces the saved set.
+The assessment summary revalidates after a save so status survives refresh.
+
+Admins open **Hazard map → select an asset → View assessment & submissions** at
+`/dashboard/hazards/[assetId]`. They see crew findings and homeowner evidence without
+homeowner upload/edit controls. The map's pending count includes waiting evidence.
+Admins can select **Review submission**, compare photos, choose **Approve** or **Send back**,
+write a department comment, and **Save decision**. Sending back requires a reason;
+approving can include an optional comment. The homeowner sees the saved decision and
+comment in history. Evidence versions prevent decisions against stale homeowner edits.
+
+**Review inbox** (`/dashboard/reviews`) is the department notification page: homeowner,
+property, date, photo count, and a link to review. It is paginated and polls every 30
+seconds, as does its pending-count sidebar badge. Reviewed items leave the inbox and
+remain in property history. This is an in-app queue, not email/SMS or an unread-message log.
+
+The Docker frontend uses Node 24 to match `package.json`. Compose sets its browser
+API URL and API CORS origin from `API_PORT` and `FRONTEND_PORT` for local development.
 
 ## Profile
 
@@ -190,19 +246,23 @@ The tests cover the API client, the admin users and hazards APIs and their respo
 
 Included: responsive shared layout, navigation, placeholder homeowner and admin pages, common UI components, loading/error/404 states, typed API client, and backend connection example.
 
-Resident signup and sign-in are connected to FastAPI. Signup uses the door tag's Asset ID; the address is optional and omitted when blank. `/homeowner` loads linked properties from `GET /api/v1/residents/me/properties`, including their latest inspection result and date. This requires the backend property-link changes from `feature/42-property-link` until those changes are merged into `dev`. Still to implement as separate tasks: QR access, assessment-detail APIs, homeowner photo workflows, remote reviews, and property history.
+Resident signup and sign-in are connected to FastAPI. Signup asks only for name, email and password. `/homeowner` loads linked properties from `GET /api/v1/residents/me/properties`, including their latest inspection result and date.
+
+The homeowner page also adds and removes properties. The add form takes the Asset ID from the door tag and normalizes it only when sent, so the input keeps what was typed. Remove asks first in the shared `ConfirmDialog` (`src/components/ui/confirm-dialog.tsx`), which stays open and shows the message if the request fails. Both calls return the full list, which `use-property-actions.ts` writes into the SWR cache without a refetch, and `auth/me` is revalidated because its `propertyIds` change. Focus returns to the input after an add or a removal, and to the Remove button after a cancel. The Profile page links here with **Add or remove properties**.
+
+Still to implement as separate tasks: QR access, assessment-detail APIs, homeowner photo workflows, remote reviews, and property history.
 
 ## Homeowner acceptance check with the real stack
 
 The mocked-fetch tests check the API client contract; completion also requires this check against the real API and database.
 
-1. Use a backend containing `feature/42-property-link`. Get `Community_NAOS_Inspections.gdb.zip` from Tejas and place it in the repository's `data/` directory. Do not commit the data file.
+1. Get `Community_NAOS_Inspections.gdb.zip` from Tejas and place it in the repository's `data/` directory. Do not commit the data file.
 2. Start Docker, then run `docker compose up --build` from the repository root. Wait for the import to finish; `docker compose logs api` should report `points: inserted 7040` on the first import. An already imported database may skip the import.
 3. Find a real ID with `docker compose exec db psql -U fhv -d fire_hazard_veg -c "select distinct asset_id from assessments limit 5;"`.
-4. Run `npm run dev` here and open `http://localhost:3000`. Use the keyboard to complete homeowner signup with a fresh email, that Asset ID, and no address. Confirm that `/homeowner` shows the linked property, its latest result, and inspection date. Compare the card with the API response in the browser's Network panel. Repeat with an address filled in.
-5. Sign out and try another fresh email with a made-up Asset ID. Confirm the message is "We could not find that Asset ID. Check the number on your door tag." Verify that the failed signup created no user with `docker compose exec db psql -U fhv -d fire_hazard_veg -c "select count(*) from users where email = 'the-failed-signup-email@example.com';"`.
+4. Run `npm run dev` here and open `http://localhost:3000`. Use the keyboard to complete homeowner signup with a fresh email. Confirm that `/homeowner` shows the empty state and the add form. Add that Asset ID and confirm the card shows its latest result and inspection date. Compare the card with the API response in the browser's Network panel. Add a second Asset ID, then remove one and cancel a removal.
+5. Add a made-up Asset ID. Confirm the message is "We could not find that Asset ID. Check the number on your door tag.", the input keeps what you typed, and no card appears. Add a linked Asset ID again and confirm the message is "This property is already on your account."
 6. Confirm sign-out returns to `/sign-in`, opening `/homeowner` while signed out redirects there, and an admin account opening `/homeowner` goes to `/dashboard`.
-7. Check loading with browser network throttling and the error/retry state by stopping and restarting the API after the account has loaded. Use development database fixtures for a resident with no links and a linked property with no assessment. Confirm "No properties are linked to this account yet." and "Not inspected yet" respectively. These fixtures supplement the imported-data check above.
+7. Check loading with browser network throttling and the error/retry state by stopping and restarting the API after the account has loaded. Use development database fixtures for a resident with no links and a linked property with no assessment. Confirm "No properties on your account yet." and "Not inspected yet" respectively. These fixtures supplement the imported-data check above.
 8. Run `npm run lint`, `npm run typecheck`, and `npm test`. All must pass. Check that every signup field has a label and that the form and retry button work with the keyboard.
 
 At setup, npm audit reported five high-severity findings in the ESLint development dependency chain (`braces` through `micromatch`/`fast-glob`). Its suggested fix downgrades Next.js ESLint configuration to version 14; that incompatible downgrade was not applied. Review patched upstream releases as they become available.

@@ -69,6 +69,16 @@ class Assessment(Base):
         back_populates="assessment", cascade="all, delete-orphan", passive_deletes=True
     )
 
+    submissions: Mapped[list["Submission"]] = relationship(  # noqa: F821
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="(Submission.created_at.desc(), Submission.id)",
+    )
+
+    @property
+    def submission_status(self) -> str | None:
+        return self.submissions[0].status if self.submissions else None
+
     def __repr__(self) -> str:
         return f"<Assessment {self.season_year} asset={self.asset_id} {self.status}>"
 

@@ -29,7 +29,11 @@ Reset: `docker compose down -v && docker compose up -d db`
 erDiagram
     users ||--o| resident_profiles : has
     users ||--o{ resident_assets : can_access
+    users |o--o{ app_settings : last_changed
     assessments ||--o{ crew_photos : has
+    assessments ||--o{ submissions : receives
+    users |o--o{ submissions : submitted_by
+    submissions ||--|{ submission_photos : contains
 
     users {
         uuid id PK
@@ -87,6 +91,12 @@ erDiagram
         varchar storage_key "where the photo store keeps the file"
         timestamptz created_at
     }
+    app_settings {
+        varchar key PK "matches a key in the code's registry"
+        text value
+        timestamptz updated_at
+        uuid updated_by FK "null if that admin was removed"
+    }
 ```
 
 Profiles and resident asset links are deleted with their user. Admins have no profile.
@@ -98,6 +108,12 @@ picture itself is not in the database: `storage_key` points to a file in the pho
 (`PHOTO_STORAGE_DIR`, local disk for now). Staff emails (`sfd_edit_by`) are never read
 or stored.
 
+`resident_profiles` is no longer written at sign-up. Older accounts may still hold an address there.
+
+`app_settings` holds text an admin has edited, one row per key. With no row, the default in
+`app/services/editable_messages.py` applies, so resetting a message deletes its row. Rows whose
+key is not in that registry are ignored and never deleted automatically. No history is kept.
+
 ## Migrations
 
 | Revision | Change |
@@ -108,8 +124,27 @@ or stored.
 | `0004` | `resident_assets`; make resident ZIP optional because the imported address is stored as one value |
 | `0005` | `users.password_changed_at`; tokens issued before it are rejected |
 | `0006` | Limit `user_role` to `resident` and `admin` and drop the third role's profile table; stops with an error if any account still has that role |
+| `0007` | `app_settings` for text admins can edit; inserts no rows |
+| `0008` | `submissions` and `submission_photos` for private homeowner completion evidence |
+| `0009` | Nullable `submissions.updated_at` for edits to pending evidence |
+| `0010` | Evidence version, department review comment, reviewer FK, and review timestamp |
 
 New migration: `uv run alembic revision --autogenerate -m "message"`
+
+`submissions` holds the assessment and submitting homeowner IDs, optional comment,
+`pending_review` / `approved` / `rejected` status, and creation time. `submission_photos`
+holds generated IDs, original display name, MIME type, byte count, and a unique private
+storage key. The image bytes live in the Docker `photos` volume at
+`/app/photo_storage/homeowner/<assessment UUID>/<submission UUID>/<photo UUID>.jpg|png`.
+The API never returns storage keys. Deleting an account keeps its evidence with a null
+homeowner ID; deleting an assessment cascades the submission/photo metadata. There is no
+assessment-deletion API: an operational deletion must also remove that assessment's files
+from the volume. See [photo upload storage](homeowner-photo-upload.md).
+
+`submissions.version` increases on edits and decisions. Department decisions also store
+`reviewed_by` (administrator FK, SET NULL if removed), `reviewed_at`, and `review_comment`.
+Reviewed evidence is immutable. The Review inbox is queried from current latest pending
+submissions rather than duplicating private photo data into a notification table.
 
 ## Importing NAOS inspections
 

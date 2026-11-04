@@ -20,9 +20,9 @@ export class ApiError extends Error {
 }
 
 /** T is a compile-time type; validate external data in feature services. */
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request(path: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers);
-  headers.set("Accept", "application/json");
+  if (!headers.has("Accept")) headers.set("Accept", "application/json");
   if (typeof options.body === "string" && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -40,6 +40,19 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     try { detail = JSON.parse(body); } catch { /* Keep non-JSON error responses. */ }
     throw new ApiError(response.status, detail);
   }
+  return response;
+}
+
+export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await request(path, options);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export async function apiRequestBlob(path: string, options: RequestInit = {}): Promise<Blob> {
+  const response = await request(path, {
+    ...options,
+    headers: { Accept: "image/jpeg, image/png", ...Object.fromEntries(new Headers(options.headers)) },
+  });
+  return response.blob();
 }

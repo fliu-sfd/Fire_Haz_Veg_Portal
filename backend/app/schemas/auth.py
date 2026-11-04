@@ -15,8 +15,6 @@ from app.models import UserRole
 from app.schemas import validators
 from app.schemas.validators import EMAIL_MAX_LENGTH, PASSWORD_MAX_LENGTH
 
-PROPERTY_ADDRESS_MAX_LENGTH = 255
-
 
 class SignupRequest(BaseModel):
     """Public resident signup. Role is not accepted - it's always resident."""
@@ -25,8 +23,6 @@ class SignupRequest(BaseModel):
 
     full_name: str
     email: EmailStr = Field(max_length=EMAIL_MAX_LENGTH)
-    property_address: str | None = None
-    asset_id: str
     password: str
 
     @field_validator("full_name")
@@ -43,27 +39,6 @@ class SignupRequest(BaseModel):
     @classmethod
     def check_password_strength(cls, v: str) -> str:
         return validators.check_password_strength(v)
-
-    @field_validator("property_address")
-    @classmethod
-    def clean_property_address(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
-        v = " ".join(v.split())
-        if not v:
-            return None
-        if len(v) < 5:
-            raise ValueError("Property address must be at least 5 characters")
-        if len(v) > PROPERTY_ADDRESS_MAX_LENGTH:
-            raise ValueError(
-                f"Property address must be at most {PROPERTY_ADDRESS_MAX_LENGTH} characters"
-            )
-        return v
-
-    @field_validator("asset_id")
-    @classmethod
-    def clean_asset_id(cls, v: str) -> str:
-        return validators.clean_asset_id(v)
 
     @model_validator(mode="after")
     def password_not_personal(self) -> Self:

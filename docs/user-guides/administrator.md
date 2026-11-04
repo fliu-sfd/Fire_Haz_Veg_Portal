@@ -6,7 +6,7 @@ This is the separate guide for an **Admin** account. Sign in using
 [C01](account.md#c01--sign-in). You need an existing active administrator account
 (see [A07](#a07--create-an-administrator-account--available));
 homeowner self-registration does not grant administrator access. After signing
-in, open **Users** or **Hazard map** under **Admin** in navigation.
+in, open **Users**, **Hazard map** or **Settings** under **Admin** in navigation.
 
 ## A01 — Find an account — Available
 
@@ -55,7 +55,9 @@ the original sprint proposal; this guide describes the current screen.
 5. To reactivate, find the account using **Disabled** or **All statuses**, turn **Active** on and select **Save changes**.
 
 Expected result: a disabled account cannot sign in and an existing session is
-refused on its next request. Reactivation restores sign-in eligibility. You
+refused on its next request. If that person then signs in with the correct password,
+they see the message set under [A10](#a10-edit-portal-messages-available).
+Reactivation restores sign-in eligibility. You
 cannot disable yourself or the last active administrator; use the error table
 in A02 to resolve those cases. Disabling does not delete the account.
 
@@ -96,13 +98,11 @@ be the exact location of each finding. No-issue-only properties are not hazards.
 | Count | Meaning in the reviewed build |
 | --- | --- |
 | Total | Hazard assets matching all current filters; not a count of all inspection points. |
-| Open / Pending review / Closed | Counts matching the other filters while ignoring the selected state filter, so you can see alternative states. Currently every hazard is assigned Open; pending and closed transitions are not implemented yet. |
+| Open / Pending review / Closed | Counts matching the other filters while ignoring the selected state filter. An asset is Pending review when any current issue's latest submission is pending, Closed when all issues have approved evidence, and Open otherwise. |
 | Needs attention | Hazard assets missing a photo or comment in the map's summarized record. This count follows other filters but ignores the Needs attention toggle. It is a record-quality indicator, not a separate review state. |
 
-Do not treat the current **Open** label as a completed review audit. Once #44
-and #39 merge, recheck counts and describe the final per-issue/combined-asset
-state rules. The proposed combined state is Pending review if any issue is
-pending, Closed only when all issues are closed, and Open otherwise.
+Do not treat a pending submission as an approved resolution. Pending review means
+evidence is waiting for department verification. Closed requires an administrator decision.
 
 The map currently labels non-NAOS records Residential; classification is
 provisional, so confirm property type before relying on it for decisions.
@@ -154,26 +154,30 @@ command line, an email already in use is refused and nothing changes. Promotion
 keeps the existing account. Homeowners continue to self-register with Asset IDs.
 
 ![A07 — Existing account promoted to Admin, November 3, 2026](screenshots/A07-promote-admin-2026-11-03.png)
+sign in using [C01](account.md#c01--sign-in). An email already in use is refused and
+nothing changes. Homeowners continue to self-register and add their own Asset IDs.
 
 The command-line bootstrap has no portal screen.
 
-## A08 — Review homeowner fix submissions — Planned (#39, #38, #44)
+## A08 — Review homeowner fix submissions — Available
 
-1. After release, open the planned **Review queue** under Admin. Check its pending count; this is the planned in-portal alert.
-2. Open the oldest waiting submission and verify the property and inspection point.
+1. Sign in as an administrator and open **Review inbox**. Its sidebar badge shows waiting submissions; the page lists who submitted, property, time, and photo count. It refreshes every 30 seconds; **Refresh** checks immediately.
+2. Select **Review submission** on the notification and verify the property and inspection point. You can also use **Hazard map → select property → View assessment & submissions**.
 3. Compare the original finding and crew photos with the homeowner's photos and comment. Enlarge photos as needed.
-4. If the evidence is sufficient, select the planned **Approve** action. Otherwise select **Send back**, enter a short reason the homeowner can act on and submit the decision.
-5. Confirm the decision and return to the queue. Recheck the issue status and map counts with filters cleared as needed.
+4. Read **Submission history**, the homeowner's comment, and any updated timestamp. **View photo** previews an image; the thumbnail opens the protected image in a new tab. Admins cannot edit the homeowner's evidence.
+5. Under **Review this submission**, select **Approve — completed work verified** or **Send back — more work or evidence needed**. Enter a **Department comment** (required for Send back; optional for Approve).
+6. Select **Save decision**. The decision, comment, and review time appear in history for both the department and homeowner. The reviewed record cannot be edited or decided again.
+7. Return to **Review inbox**; the item is no longer waiting. Sending back lets the homeowner submit new evidence. Map counts update; a property closes only when all issue points are approved.
 
-Expected result after release: approval moves that issue to Closed; sending it
+Expected result: approval moves that issue to Closed; sending it
 back returns it to Open with the reason visible to the homeowner. The decision
 records who acted and when. The original inspection result stays unchanged.
 A second decision on the same submission must be refused; refresh if another
 administrator has already reviewed it.
 
-Exact queue labels, decision confirmations, required-reason errors and concurrent
-review errors must be copied from the released screens. No email or text alert
-is included. The in-portal notification approach still needs sponsor confirmation.
+If the homeowner changed the evidence or another administrator already decided,
+the server refuses the decision. Refresh the assessment, compare the latest evidence,
+and decide only if it is still pending. No email or text alert is included.
 
 Screenshot A08: placeholder for queue/count, side-by-side photos, approve result and required send-back reason.
 
@@ -191,6 +195,19 @@ remain unconfirmed; do not infer a scheduled appointment from a portal status.
 Final action labels, errors and confirmation wording await the released screen.
 
 Screenshot A09: placeholder for Open/Handled lists and a handled request.
+
+## A10: Edit portal messages (Available)
+
+Settings lists the messages you can reword without a developer. Each message has its own card and saves on its own.
+
+1. Open **Settings** under **Admin**.
+2. Edit the text in **Message**. The card shows the allowed length and number of lines, and **Preview** shows what the person will see. Messages are plain text, so links and bold are not available.
+3. Select **Save message** and check for **Saved**. The line under the buttons shows who last changed the message and when.
+4. To go back to the original wording, select **Reset to default**, then confirm **Reset to default** in the **Reset this message to the default?** dialog. The saved text is not kept.
+
+Expected result: the new text is used the next time the message is shown. For the **Disabled account message**, that is the next time a disabled person signs in with the correct password. Someone disabled while already signed in is sent to the sign-in page and sees this message only if they sign in again.
+
+Screenshot A10: pending Settings card with preview.
 
 ## Maintain your own profile and finish
 

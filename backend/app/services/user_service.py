@@ -5,9 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import burn_password_check, hash_password, verify_password
-from app.models import ResidentAsset, ResidentProfile, User, UserRole
+from app.models import User, UserRole
 from app.schemas.auth import LoginRequest, SignupRequest
-from app.services.property_service import resolve_property
 
 
 class EmailAlreadyRegisteredError(Exception):
@@ -22,10 +21,6 @@ class InactiveAccountError(Exception):
     pass
 
 
-class PropertyNotFoundError(Exception):
-    pass
-
-
 def get_user_by_email(db: Session, email: str) -> User | None:
     return db.scalar(select(User).where(func.lower(User.email) == email.lower()))
 
@@ -33,19 +28,13 @@ def get_user_by_email(db: Session, email: str) -> User | None:
 def create_resident(db: Session, data: SignupRequest) -> User:
     if get_user_by_email(db, data.email) is not None:
         raise EmailAlreadyRegisteredError
-    asset_id = resolve_property(db, data.asset_id)
-    if asset_id is None:
-        raise PropertyNotFoundError
 
     user = User(
         email=data.email,
         password_hash=hash_password(data.password),
         full_name=data.full_name,
         role=UserRole.RESIDENT,
-        resident_assets=[ResidentAsset(asset_id=asset_id)],
     )
-    if data.property_address:
-        user.resident_profile = ResidentProfile(street_address=data.property_address)
     db.add(user)
     try:
         db.commit()

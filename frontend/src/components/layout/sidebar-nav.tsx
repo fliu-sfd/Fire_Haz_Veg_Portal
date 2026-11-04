@@ -36,7 +36,7 @@ export function SidebarNav({ groups, pathname, onNavigate }: SidebarNavProps) {
                 </p>
               ) : null}
               <ul className="space-y-1">
-                {group.items.map(({ label, href, icon: Icon }) => {
+                {group.items.map(({ label, href, icon: Icon, badge }) => {
                   const isActive = href === activeHref;
                   return (
                     <li key={href}>
@@ -51,6 +51,7 @@ export function SidebarNav({ groups, pathname, onNavigate }: SidebarNavProps) {
                       >
                         <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
                         {label}
+                        {badge !== undefined && badge > 0 ? <span className="ml-auto rounded-full bg-city-orange px-2 py-0.5 text-xs font-bold tabular-nums text-charcoal" aria-label={`${badge} awaiting review`}>{badge}</span> : null}
                       </Link>
                     </li>
                   );

@@ -10,40 +10,60 @@ For signing in, changing your details/password and signing out, follow the
 numbered [shared account instructions](account.md). Read the
 [portal limitations](README.md#what-the-portal-does-not-do) before starting.
 
-## H01 — Find your Asset ID and create an account — Available
+## H01 — Create an account — Available
 
-1. Find the **Asset ID** printed on your assessment door tag. This is the Property ID used by the portal. Copy it exactly; do not substitute your street address or an inspection-point number. The precise printed location on the tag still needs confirmation against a real tag.
-2. Open the portal and select **Create homeowner account** to open `/sign-up/homeowner`.
-3. Enter **Full name**, **Email address** and **Asset ID**. **Property address** is optional.
-4. Enter **Create a password** and **Confirm password**. Use at least 12 characters with upper- and lowercase letters, a number and a symbol; both entries must match. Follow any additional validation shown by the form.
-5. Select **Create homeowner account** and wait for registration to finish.
+You do not need your door tag to create an account.
 
-Expected result: the portal signs you in and opens your homeowner page. Your
-Asset ID has been checked against the City's imported assessment data and
-linked to the new account. An address alone cannot establish that link.
+1. Open the portal and select **Create homeowner account** to open `/sign-up/homeowner`.
+2. Enter **Full name** and **Email address**.
+3. Enter **Create a password** and **Confirm password**. Use at least 12 characters with upper- and lowercase letters, a number and a symbol; both entries must match. Follow any additional validation shown by the form.
+4. Select **Create homeowner account** and wait for registration to finish.
+
+Expected result: the portal signs you in and opens your homeowner page, which
+shows **No properties on your account yet.** Follow H02 to add your property.
 
 | Message under “We could not create your account” | What to do |
 | --- | --- |
 | “Passwords do not match.” | Re-enter matching passwords. This can also appear beside Confirm password. |
 | “An account with this email already exists.” | Use Sign in if this is your account. |
-| “We could not find that Asset ID. Check the number on your door tag.” | Follow H02 below. |
 
 ![H01 — Homeowner registration using a demonstration Asset ID, November 3, 2026](screenshots/H01-registration-2026-11-03.png)
 
 A real door-tag example was not supplied. The exact printed position of its Asset ID remains unverified.
+Screenshot H01: pending registration screen.
 
-## H02 — If your Asset ID is not accepted — Available
+## H02 — Add or remove a property — Available
 
-1. Compare the entry with the door tag, including every letter and digit, and correct typing mistakes.
-2. Submit the registration form again with the corrected ID.
-3. If **We could not find that Asset ID. Check the number on your door tag.** persists, contact the Scottsdale Fire Department using the contact details supplied with your notice. Have the tag and ID ready. Do not guess another property's ID.
+To add a property:
 
-Expected result: a valid ID permits registration. A rejected ID does not create
-an account. The department may need to check whether the inspection data has
-been loaded; the error alone does not prove the door tag is wrong. No support
-email address or phone number has been confirmed for this guide.
+1. Find the **Asset ID** printed on your assessment door tag. This is the Property ID used by the portal. Copy it exactly; do not substitute your street address or an inspection-point number. The precise printed location on the tag still needs confirmation against a real tag.
+2. On your homeowner page, enter it under **Asset ID** and select **Add property**. Letter case and extra spaces do not matter.
+3. Repeat for each property you own.
+
+Expected result: **Added** and the Asset ID appear, and the property gets a card
+under **Connected properties**. The Asset ID was checked against the City's
+imported assessment data.
+
+| Message | What to do |
+| --- | --- |
+| “We could not find that Asset ID. Check the number on your door tag.” | Compare the entry with the tag, including every letter and digit. If it persists, contact the Scottsdale Fire Department using the contact details supplied with your notice. Have the tag and ID ready. Do not guess another property's ID. |
+| “This property is already on your account.” | Nothing more is needed; the property is already listed. |
+| “You can link up to 25 properties. Contact the Scottsdale Fire Department if you need more.” | Contact the department, or remove a property you no longer need. |
+
+The department may need to check whether the inspection data has been loaded;
+the error alone does not prove the door tag is wrong. No support email address
+or phone number has been confirmed for this guide.
+
+To remove a property:
+
+1. Select **Remove** on its card.
+2. Select **Remove property** to confirm, or **Cancel** to keep it.
+
+Expected result: the card disappears. Inspection records are not changed, and you
+can add the property again later with the same Asset ID.
 
 ![H02 — Rejected Asset ID message, November 3, 2026](screenshots/H02-rejected-asset-2026-11-03.png)
+Screenshot H02: pending add form with a rejected-ID message, and the remove confirmation.
 
 ## H03 — See your connected properties — Available
 
@@ -57,10 +77,8 @@ inspection recorded a concern; **No issues found** means the latest result
 reported none; **Not inspected yet** means no result is available. These are
 inspection results, not confirmation that an administrator has approved a fix.
 
-If **No properties are linked to this account yet.** appears, contact the
-department. If **We could not load your properties** appears, read the error
-and select **Try again**. To link another property, contact the department as
-directed on Profile; there is no homeowner self-service linking action here.
+If **No properties on your account yet.** appears, follow H02. If **We could not load your properties** appears, read the error
+and select **Try again**.
 
 ![H03 — Connected property card and View assessment link, November 3, 2026](screenshots/H03-properties-2026-11-03.png)
 
@@ -90,36 +108,46 @@ An absent photo section means no crew photos are listed for that point.
 
 ![H04 — Unavailable property message, November 3, 2026](screenshots/H04-unavailable-2026-11-03.png)
 
-## H05 — Mark an issue fixed with photos — Planned (#38, #44)
+## H05 — Submit completion photos — Available (#38)
 
-This action is absent from the reviewed build. The following is draft workflow
-text, subject to the merged screens and the team's confirmation of photo limits.
+Open the existing property assessment page to submit evidence for a current-season
+inspection point with an issue. The original inspection result remains unchanged.
 
 1. Open your linked property's assessment and select an **open issue**. A point with **NO ISSUES** is not a fix-submission target.
-2. Select the planned **Mark as fixed** action.
+2. Find **Submit completion photos** below that point's notes and crew photos.
 3. Choose 1–5 JPEG or PNG photos, each no larger than 5 MB. Review previews and remove any wrong file. Add an optional comment.
-4. Submit once and wait for confirmation. If a validation error appears, correct it and retry.
+4. Select **Submit for review** once and wait for the green **Submitted** badge and
+   **Your action is complete — photos submitted** confirmation.
+   If a validation error appears, correct it and retry. After a connection error,
+   reload the property and check history before retrying to avoid a duplicate.
 
-Expected result after release: the submission and photos are saved and the
-issue becomes **Pending review**. Uploading photos does not close an issue.
+Expected result: **Submission history** shows the saved evidence with **Pending review**.
+Uploading photos does not close an issue or change the original inspection finding.
 No-photo submissions, unsupported or disguised file types, oversized files,
 more than five files and submissions for another property must be refused.
-An already pending issue cannot receive another submission.
+The blank upload form is hidden while evidence is pending. To change your evidence,
+select **Edit submission** under **This is your submission**. Change the comment or
+choose replacement photos, then **Save changes**. Leaving the picker empty keeps
+the saved photos; choosing new photos replaces the entire set. Editing updates the
+same submission and displays its updated time. Only the submitting homeowner can
+edit pending evidence; reviewed submissions are read-only.
 
 Pending review means an administrator must inspect the evidence. Check the
-portal for progress; no email or text alert is planned. Actual submit labels,
-confirmation and error messages must be recorded after #38 merges.
+portal for progress; no email or text alert is planned. **View photo** previews an
+image; select its thumbnail to open it in a new tab. **Copy photo link** copies a
+stable private image URL. Anyone opening it must sign in and have access to this
+property. A localhost link only works on the computer running the portal.
 
 Screenshot H05: placeholder for the released picker, previews, limits, errors and successful pending state.
 
-## H06 — Read status history and respond to a sent-back issue — Planned (#44, #39)
+## H06 — Read department decisions and respond to a sent-back issue — Available
 
-1. Open the assessment and find the issue's planned status/history area.
-2. Read changes in date order, including the review decision and any reason.
+1. Open or refresh the assessment and find **Submission history**.
+2. Read **Department decision**, the review time, and the department's comment.
 3. If the administrator sends the issue back, read the reason and address the concern.
 4. Once the issue is open again, follow H05 to submit new photos.
 
-Expected result after release: **Open** awaits a fix, **Pending review** awaits
+Expected result: **Open** awaits a fix, **Pending review** awaits
 administrator review, and **Closed** means an administrator approved the fix.
 “Sent back” is a review event returning the issue to Open, not a fourth status.
 Earlier submissions remain part of the record. A closed issue cannot be reopened

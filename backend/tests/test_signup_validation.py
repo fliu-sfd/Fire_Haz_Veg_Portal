@@ -10,8 +10,6 @@ def signup(**overrides) -> SignupRequest:
     data = {
         "full_name": "Jane Doe",
         "email": "jane@example.com",
-        "property_address": "7575 E Main St",
-        "asset_id": "A-1001",
         "password": GOOD_PASSWORD,
     }
     data.update(overrides)
@@ -32,8 +30,6 @@ def test_valid_signup_minimal() -> None:
     req = signup()
     assert req.full_name == "Jane Doe"
     assert req.email == "jane@example.com"
-    assert req.property_address == "7575 E Main St"
-    assert req.asset_id == "A-1001"
 
 
 # --- full name ---
@@ -117,47 +113,20 @@ def test_password_must_not_contain_email_local_part() -> None:
         signup(email="firewatch@example.com", password="Big#FireWatch2026")
 
 
-# --- property verification fields ---
-
-
-def test_property_address_is_trimmed_and_spaces_collapsed() -> None:
-    assert signup(property_address="  7575   E Main St  ").property_address == "7575 E Main St"
-
-
-@pytest.mark.parametrize("address", ["123", "ab c"])
-def test_property_address_rejects_short_values(address: str) -> None:
-    error_for("property_address", property_address=address)
-
-
-@pytest.mark.parametrize("address", [None, "", "   "])
-def test_property_address_is_optional(address) -> None:
-    assert signup(property_address=address).property_address is None
-
-
-def test_property_address_can_be_left_out_entirely() -> None:
-    data = {
-        "full_name": "Jane Doe",
-        "email": "jane@example.com",
-        "asset_id": "A-1001",
-        "password": GOOD_PASSWORD,
-    }
-    assert SignupRequest(**data).property_address is None
-
-
-def test_asset_id_is_trimmed_and_uppercased() -> None:
-    assert signup(asset_id="  a-1001 ").asset_id == "A-1001"
-
-
-@pytest.mark.parametrize("asset_id", ["", "A 1001", "A/1001", "A.1001"])
-def test_asset_id_rejects_invalid_values(asset_id: str) -> None:
-    error_for("asset_id", asset_id=asset_id)
-
-
 # --- unknown fields ---
 
 
 @pytest.mark.parametrize(
-    "field", ["role", "is_active", "email_verified", "confirm_password", "phone"]
+    "field",
+    [
+        "role",
+        "is_active",
+        "email_verified",
+        "confirm_password",
+        "phone",
+        "asset_id",
+        "property_address",
+    ],
 )
 def test_extra_fields_rejected(field: str) -> None:
     error_for(field, **{field: "admin"})

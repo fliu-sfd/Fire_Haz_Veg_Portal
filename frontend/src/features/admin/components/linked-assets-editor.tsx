@@ -4,7 +4,7 @@ import { Plus, X } from "lucide-react";
 import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
-import { ConfirmDialog } from "@/features/admin/components/confirm-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { Confirmation } from "@/features/admin/utils/user-form";
 
 type LinkedAssetsEditorProps = {

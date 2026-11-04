@@ -113,6 +113,18 @@ asset ID**. The instructions now match those behaviors.
 - Less common errors listed from source, including last-admin protection,
   duplicate-email edits, expired-profile messaging and infrastructure outages,
   need dedicated live checks if they are included in the final acceptance run.
+| C01–C04 | Sign in, personal details, password, sign out/mobile navigation |
+| H01–H04 | Homeowner registration, rejected Asset ID, connected properties, assessment and enlarged crew photo |
+| H05–H07 | Fix submission, status/history with sent-back reason, full-assessment request |
+| A01–A04 | Users list, user edit panel, disable confirmation, linked properties |
+| A05–A06 | Hazard map/list with filters and counts, saved views |
+| A08–A09 | Review queue and decision, full-assessment requests |
+| A10 | Settings card with preview |
+
+Finalization must include an independent teammate running every Available
+procedure and each Planned procedure after release, without coaching. Record
+tester, date, build, role, actual outcome and corrections; do not mark a
+procedure verified just because its source was read.
 
 ## Source review notes for finalization
 

@@ -1,30 +1,49 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Bell, ClipboardList, MapIcon, Settings, Users } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Department portal",
-  description: "Secure access for authorized administrators.",
+  description: "Manage vegetation assessments, homeowner updates, and portal accounts.",
 };
 
+const sections = [
+  { href: "/dashboard/users", label: "Users", description: "Search and review portal accounts.", icon: Users },
+  { href: "/dashboard/hazards", label: "Hazard map", description: "See open and closed vegetation hazards on a map.", icon: MapIcon },
+  { href: "/dashboard/reviews", label: "Review inbox", description: "Homeowner completion submissions awaiting department review.", icon: Bell },
+  { href: "/dashboard/assessment-requests", label: "Assessment requests", description: "Full property assessment requests from homeowners.", icon: ClipboardList },
+  { href: "/dashboard/settings", label: "Settings", description: "Edit the wording of messages the portal shows to people.", icon: Settings },
+];
+
+// Only signed-in admins reach this page: AuthenticatedShell redirects everyone else.
 export default function DashboardPage() {
   return (
-    <div className="mx-auto max-w-4xl overflow-hidden rounded border border-city-light bg-white shadow-[0_12px_32px_rgba(26,35,40,0.1)]">
-      <div className="border-l-4 border-denim p-7 sm:p-12">
-        <div className="flex size-14 items-center justify-center rounded bg-blue-50 text-civic-blue">
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="1.7">
-            <path d="M4 21v-9l8-5 8 5v9M9 21v-5h6v5M8 8V4h8v4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <p className="mt-8 text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">Department portal</p>
-        <h1 className="mt-3 text-4xl font-light tracking-tight text-charcoal sm:text-5xl">Authorized admin access</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-city-dark">
-          Sign in with your admin account to manage vegetation assessments, review homeowner updates, and continue active cases.
+    <div className="space-y-8">
+      <div>
+        <p className="text-sm font-bold uppercase tracking-[0.14em] text-civic-blue">Department portal</p>
+        <h1 className="mt-2 text-3xl font-light tracking-tight text-charcoal sm:text-4xl">Admin home</h1>
+        <p className="mt-3 max-w-2xl leading-7 text-city-dark">
+          Manage vegetation assessments, review homeowner updates, and continue active cases.
         </p>
-        <Link href="/sign-in" className="mt-8 inline-flex rounded bg-denim px-5 py-3 font-bold text-white transition-colors hover:bg-deep-blue">Admin sign in</Link>
-        <div className="mt-10 border-t border-city-light pt-6 text-sm leading-6 text-city-dark">
-          Need admin access? Contact a current administrator.
-        </div>
       </div>
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {sections.map(({ href, label, description, icon: Icon }) => (
+          <li key={href}>
+            <Link
+              href={href}
+              className="flex h-full gap-4 rounded-lg border border-city-light bg-white p-6 transition-colors hover:border-denim"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded bg-blue-50 text-civic-blue">
+                <Icon aria-hidden="true" className="size-5" />
+              </span>
+              <span>
+                <span className="block font-semibold text-charcoal">{label}</span>
+                <span className="mt-1 block text-sm leading-6 text-city-dark">{description}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import useSWR from "swr";
 import { authErrorMessage, getMyProperties } from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 
+export const myPropertiesKey = (accountId: string) => ["residents/me/properties", accountId] as const;
+
 /**
  * Mounted only after the resident guard passes; cache entries belong to the account.
  * Pass null to skip the request, as the profile page does for admins.
@@ -11,7 +13,7 @@ import { ApiError } from "@/lib/api/client";
 export function useMyProperties(accountId: string | null) {
   const router = useRouter();
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    accountId ? ["residents/me/properties", accountId] : null,
+    accountId ? myPropertiesKey(accountId) : null,
     () => getMyProperties(),
   );
   const redirectTo = error instanceof ApiError
