@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Trash2 } from "lucide-react";
 import type { PropertySummary } from "@/features/auth/api";
+import { reviewStateLine } from "@/features/assessments/utils/display";
 
 type PropertyCardProps = {
   property: PropertySummary;
@@ -9,6 +10,8 @@ type PropertyCardProps = {
 };
 
 export function PropertyCard({ property, isSaving, onRemove }: PropertyCardProps) {
+  const stateLine = reviewStateLine(property.reviewState);
+
   return (
     <li className="rounded border border-city-light bg-city-gray p-4">
       <span className="text-xs font-bold uppercase tracking-[0.12em] text-civic-blue">Asset ID</span>
@@ -17,6 +20,7 @@ export function PropertyCard({ property, isSaving, onRemove }: PropertyCardProps
         {property.latestStatus === "ISSUES" ? "Issues found"
           : property.latestStatus === "NO ISSUES" ? "No issues found" : "Not inspected yet"}
       </p>
+      {stateLine ? <p className="mt-1 text-sm text-city-dark">{stateLine}</p> : null}
       <p className="mt-1 text-sm text-city-dark">
         Latest inspection: {property.latestInspectedAt ? (
           <time dateTime={property.latestInspectedAt}>

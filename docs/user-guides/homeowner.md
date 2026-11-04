@@ -77,6 +77,12 @@ inspection recorded a concern; **No issues found** means the latest result
 reported none; **Not inspected yet** means no result is available. These are
 inspection results, not confirmation that an administrator has approved a fix.
 
+A property with an issue also shows one line about your photos for its latest season:
+**Completion photos are still needed.** (nothing submitted yet, or a submission was
+sent back), **Photos submitted. Waiting for department review.** (at least one issue
+is waiting), or **Approved by the department.** (every issue is approved). A property
+with no issue shows no such line.
+
 If **No properties on your account yet.** appears, follow H02. If **We could not load your properties** appears, read the error
 and select **Try again**.
 

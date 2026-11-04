@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -28,3 +29,4 @@ class PropertyOut(BaseModel):
     latest_status: str | None
     latest_inspected_at: datetime | None
     site_address: str | None
+    review_state: Literal["open", "pending_review", "closed"] | None = None

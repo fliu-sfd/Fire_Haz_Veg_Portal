@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PropertySummary } from "@/features/auth/api";
+import { reviewStateLine } from "@/features/assessments/utils/display";
 import { formatDate } from "@/features/admin/utils/format";
 import { ProfileCard } from "@/features/profile/components/profile-card";
 
@@ -51,6 +52,9 @@ function PropertyList({ items, errorMessage, isLoading, isRetrying, onRetry }: L
           <h3 className="mt-1 text-lg font-semibold text-charcoal">{property.assetId}</h3>
           {property.siteAddress ? <p className="text-sm text-city-dark">{property.siteAddress}</p> : null}
           <p className="mt-3 font-semibold text-charcoal">{statusLabel(property.latestStatus)}</p>
+          {reviewStateLine(property.reviewState) ? (
+            <p className="mt-1 text-sm text-city-dark">{reviewStateLine(property.reviewState)}</p>
+          ) : null}
           <p className="mt-1 text-sm text-city-dark">
             Latest inspection:{" "}
             {property.latestInspectedAt ? (

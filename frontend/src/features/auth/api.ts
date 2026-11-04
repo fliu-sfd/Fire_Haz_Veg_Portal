@@ -1,3 +1,4 @@
+import { isReviewState, type ReviewState } from "@/features/assessments/utils/display";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isRecord } from "@/lib/api/guards";
@@ -24,6 +25,8 @@ export type PropertySummary = {
   latestStatus: "ISSUES" | "NO ISSUES" | null;
   latestInspectedAt: string | null;
   siteAddress: string | null;
+  /** Evidence state of the whole property in its latest season; null when it has no issue. */
+  reviewState: ReviewState | null;
 };
 
 export type Login = {
@@ -88,7 +91,8 @@ function parsePropertyList(data: unknown): PropertySummary[] {
       !(value.season_year === null || (typeof value.season_year === "number" && Number.isInteger(value.season_year))) ||
       !(value.latest_status === null || value.latest_status === "ISSUES" || value.latest_status === "NO ISSUES") ||
       !(value.latest_inspected_at === null || (typeof value.latest_inspected_at === "string" && Number.isFinite(Date.parse(value.latest_inspected_at)))) ||
-      !(value.site_address === null || typeof value.site_address === "string")
+      !(value.site_address === null || typeof value.site_address === "string") ||
+      !(value.review_state === null || isReviewState(value.review_state))
     ) throw invalidResponse();
 
     return {
@@ -97,6 +101,7 @@ function parsePropertyList(data: unknown): PropertySummary[] {
       latestStatus: value.latest_status,
       latestInspectedAt: value.latest_inspected_at,
       siteAddress: value.site_address,
+      reviewState: value.review_state,
     };
   });
 }

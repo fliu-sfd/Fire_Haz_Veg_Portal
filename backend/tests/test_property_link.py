@@ -171,6 +171,7 @@ def test_route_shows_a_link_whose_assessments_are_gone(client, db):
             "latest_status": None,
             "latest_inspected_at": None,
             "site_address": None,
+            "review_state": None,
         }
     ]
 
