@@ -1,3 +1,4 @@
+/** Backend status component for the system feature. */
 "use client";
 
 import { useEffect, useRef, useState } from "react";

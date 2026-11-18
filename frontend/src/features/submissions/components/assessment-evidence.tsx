@@ -1,3 +1,4 @@
+/** Assessment evidence component for the submissions feature. */
 "use client";
 
 import { CircleCheck } from "lucide-react";

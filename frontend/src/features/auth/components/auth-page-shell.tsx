@@ -1,3 +1,4 @@
+/** Auth page shell component for the auth feature. */
 import Link from "next/link";
 import type { ReactNode } from "react";
 

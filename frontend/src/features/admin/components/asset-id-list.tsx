@@ -1,3 +1,4 @@
+/** Asset id list component for the admin feature. */
 "use client";
 
 import { useState } from "react";

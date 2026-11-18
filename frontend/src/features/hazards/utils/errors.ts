@@ -1,3 +1,4 @@
+/** Pure helper functions for errors in the hazards feature. */
 import { authErrorMessage } from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";

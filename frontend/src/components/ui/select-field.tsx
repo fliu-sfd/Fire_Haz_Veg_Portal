@@ -1,3 +1,4 @@
+/** Reusable select field UI primitive used across the frontend. */
 import type { ReactNode, SelectHTMLAttributes } from "react";
 
 type SelectFieldProps = Omit<

@@ -1,3 +1,4 @@
+/** Assessment requests view component for the assessment-requests feature. */
 "use client";
 
 import { CheckCircle2, ClipboardList, RefreshCw } from "lucide-react";

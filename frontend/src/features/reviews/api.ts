@@ -1,3 +1,4 @@
+/** Backend service helpers for the reviews feature; validates response data before returning typed values. */
 import { apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isCount, isRecord } from "@/lib/api/guards";

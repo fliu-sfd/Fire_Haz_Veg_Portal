@@ -1,3 +1,4 @@
+/** Shared data and view types for the assessment-requests feature. */
 export type AssessmentRequestStatus = "open" | "handled";
 
 export type AssessmentRequest = {

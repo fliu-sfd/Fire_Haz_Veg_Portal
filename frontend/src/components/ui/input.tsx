@@ -1,3 +1,4 @@
+/** Reusable input UI primitive used across the frontend. */
 import * as React from "react"
 import { cn } from "@/lib/utils"
 

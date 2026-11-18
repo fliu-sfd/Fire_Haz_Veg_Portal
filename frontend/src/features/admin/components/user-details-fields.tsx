@@ -1,3 +1,4 @@
+/** User details fields component for the admin feature. */
 import { TextField } from "@/components/ui/text-field";
 import { userFieldId } from "@/features/admin/hooks/use-user-edit-form";
 import type { UserFormErrors, UserFormField, UserFormValues } from "@/features/admin/utils/user-form";

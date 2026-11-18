@@ -1,3 +1,4 @@
+/** Route entry point for /profile, wiring the page view to its route parameters. */
 import type { Metadata } from "next";
 import { ProfileView } from "./profile-view";
 

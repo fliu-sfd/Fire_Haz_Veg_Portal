@@ -1,3 +1,4 @@
+/** Evidence status component for the submissions feature. */
 import { CircleAlert, CircleCheck, Clock3 } from "lucide-react";
 import type { Submission } from "../types";
 

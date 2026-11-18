@@ -1,3 +1,4 @@
+/** Assessment states component for the assessments feature. */
 import { AlertTriangle, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

@@ -1,3 +1,4 @@
+/** Reusable button UI primitive used across the frontend. */
 import type { ButtonHTMLAttributes } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" };

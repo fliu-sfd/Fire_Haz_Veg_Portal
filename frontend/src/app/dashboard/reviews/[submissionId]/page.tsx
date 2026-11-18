@@ -1,3 +1,4 @@
+/** Route entry point for /dashboard/reviews/[submissionId], wiring the page view to its route parameters. */
 import type { Metadata } from "next";
 import { ReviewDetailView } from "@/features/reviews/components/review-detail-view";
 

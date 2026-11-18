@@ -1,3 +1,4 @@
+/** Password form component for the profile feature. */
 import { CircleCheck } from "lucide-react";
 import type { ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";

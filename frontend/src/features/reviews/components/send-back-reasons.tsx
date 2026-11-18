@@ -1,3 +1,4 @@
+/** Send back reasons component for the reviews feature. */
 import { useId } from "react";
 import { canAddReason, hasReason } from "../utils/send-back-reasons";
 import type { SendBackReason } from "../utils/send-back-reasons";

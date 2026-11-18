@@ -1,3 +1,4 @@
+/** Role badge component for the admin feature. */
 import { Badge } from "@/components/ui/badge";
 import type { UserRole } from "@/features/auth/api";
 import { cn } from "@/lib/utils";

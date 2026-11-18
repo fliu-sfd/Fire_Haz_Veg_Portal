@@ -1,3 +1,4 @@
+/** Linked properties card component for the profile feature. */
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";

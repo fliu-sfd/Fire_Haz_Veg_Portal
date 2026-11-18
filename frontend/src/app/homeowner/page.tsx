@@ -1,3 +1,4 @@
+/** Route entry point for /homeowner, wiring the page view to its route parameters. */
 import type { Metadata } from "next";
 import { HomeownerAccount } from "@/features/auth/components/homeowner-account";
 

@@ -1,3 +1,4 @@
+/** Feature hook that coordinates use admin assessment requests data or UI state. */
 "use client";
 
 import { useState } from "react";

@@ -1,3 +1,4 @@
+/** Review decision form component for the reviews feature. */
 "use client";
 
 import { useId, useState } from "react";

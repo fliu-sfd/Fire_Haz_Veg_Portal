@@ -1,3 +1,4 @@
+/** Account info card component for the profile feature. */
 import { ProfileCard } from "@/features/profile/components/profile-card";
 import type { AccountFact } from "@/features/profile/utils/display";
 

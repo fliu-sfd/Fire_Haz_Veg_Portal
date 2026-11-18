@@ -1,3 +1,4 @@
+/** Hazards states component for the hazards feature. */
 import { AlertTriangle, Info, MapPinOff, SearchX, ShieldAlert, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";

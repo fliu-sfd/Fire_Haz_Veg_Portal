@@ -1,3 +1,4 @@
+/** Calls GET /health for the backend connection indicator. */
 import { apiRequest } from "@/lib/api/client";
 
 export type HealthResponse = { status: string };

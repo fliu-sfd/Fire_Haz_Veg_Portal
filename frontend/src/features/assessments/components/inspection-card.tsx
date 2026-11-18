@@ -1,3 +1,4 @@
+/** Inspection card component for the assessments feature. */
 import { CalendarDays, CircleCheck, CircleAlert, ClipboardCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CrewPhotoGallery } from "@/features/assessments/components/crew-photo-gallery";

@@ -1,3 +1,4 @@
+/** Pure helper functions for utils in the shared feature. */
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

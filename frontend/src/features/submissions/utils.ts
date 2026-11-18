@@ -1,3 +1,4 @@
+/** Pure helper functions for utils in the submissions feature. */
 import { authErrorMessage } from "@/features/auth/api";
 import { ApiError } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";

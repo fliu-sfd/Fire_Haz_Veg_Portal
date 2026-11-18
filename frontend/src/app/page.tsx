@@ -1,3 +1,4 @@
+/** Public landing page with the portal overview and backend connection example. */
 import Link from "next/link";
 
 const steps = [

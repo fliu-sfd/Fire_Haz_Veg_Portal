@@ -1,3 +1,4 @@
+/** Backend service helpers for the settings feature; validates response data before returning typed values. */
 import type { EditableMessage } from "@/features/settings/types";
 import { apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";

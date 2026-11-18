@@ -1,3 +1,4 @@
+/** Review inbox view component for the reviews feature. */
 "use client";
 
 import Link from "next/link";

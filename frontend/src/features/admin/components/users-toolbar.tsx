@@ -1,3 +1,4 @@
+/** Users toolbar component for the admin feature. */
 "use client";
 
 import { RefreshCw, Search, X } from "lucide-react";

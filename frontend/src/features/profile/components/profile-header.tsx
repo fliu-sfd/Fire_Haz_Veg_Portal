@@ -1,3 +1,4 @@
+/** Profile header component for the profile feature. */
 import { AccountAvatar } from "@/components/layout/sidebar-nav";
 import { RoleBadge } from "@/features/admin/components/role-badge";
 import type { UserRole } from "@/features/auth/api";

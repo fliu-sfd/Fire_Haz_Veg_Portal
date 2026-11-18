@@ -1,3 +1,4 @@
+/** Route error boundary that offers a way to retry a failed page. */
 "use client";
 
 import { Button } from "@/components/ui/button";

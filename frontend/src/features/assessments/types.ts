@@ -1,3 +1,4 @@
+/** Shared data and view types for the assessments feature. */
 export type CrewPhoto = {
   id: string;
   fileName: string;
