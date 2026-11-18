@@ -6,12 +6,18 @@ import { saveReview } from "../api";
 import type { ReviewDecision } from "../types";
 import type { Submission } from "@/features/submissions/types";
 import { submissionError } from "@/features/submissions/utils";
+import { addReason as appendReason } from "../utils/send-back-reasons";
+import type { SendBackReason } from "../utils/send-back-reasons";
 
 export function useReviewDecision(submission: Submission, onReviewed: (result: Submission) => void) {
   const [decision, setDecision] = useState<ReviewDecision | "">("");
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
+
+  function addReason(reason: SendBackReason) {
+    setComment((current) => appendReason(current, reason));
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,5 +37,5 @@ export function useReviewDecision(submission: Submission, onReviewed: (result: S
     }
   }
 
-  return { decision, setDecision, comment, setComment, saving, error, submit };
+  return { decision, setDecision, comment, setComment, addReason, saving, error, submit };
 }

@@ -68,7 +68,7 @@ removes it from the pending list. No email, SMS, or browser notification permiss
 
 At the assessment, **Review submission** jumps to evidence. In **Review this submission**,
 choose **Approve** or **Send back**, write a **Department comment**, and **Save decision**.
-A Send back decision requires an explanation; an approval comment is optional. The
+A Send back decision requires an explanation; an approval comment is optional. For Send back, **Quick reasons** chips add ready-made sentences to the comment, which the admin can edit before saving. The
 homeowner sees the decision and comment in history after refreshing their assessment.
 All original inspection results and reviewed submissions are retained.
 
