@@ -1,3 +1,5 @@
+"""Request and response shapes for the user's own profile and password."""
+
 import uuid
 from datetime import datetime
 from typing import Self

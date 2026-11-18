@@ -63,6 +63,7 @@ def _ask_password(email: str, full_name: str) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Command-line entry point. Returns the exit code: 0 when the admin was created."""
     args = build_parser().parse_args(argv)
     taken = "error: an account with this email already exists, nothing was changed"
     try:

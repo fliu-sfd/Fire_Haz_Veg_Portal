@@ -1,3 +1,5 @@
+"""Hazard map data for admins. The rules live in services/admin_hazard_service.py."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Query, status

@@ -1,3 +1,5 @@
+"""Helpers for "contains" searches in the admin lists."""
+
 LIKE_ESCAPE = "\\"
 
 

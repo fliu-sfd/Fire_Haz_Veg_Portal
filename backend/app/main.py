@@ -1,3 +1,8 @@
+"""The FastAPI app: logging, CORS, and the /api/v1 routes.
+
+Run it locally with `uv run fastapi dev app/main.py`.
+"""
+
 import logging
 
 from fastapi import FastAPI
@@ -37,6 +42,7 @@ def create_app() -> FastAPI:
 
     @application.get("/", tags=["meta"])
     async def root() -> dict[str, str]:
+        """API name and version."""
         return {
             "name": settings.app_name,
             "version": settings.app_version,

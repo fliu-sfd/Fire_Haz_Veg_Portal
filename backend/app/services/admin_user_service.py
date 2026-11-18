@@ -1,3 +1,9 @@
+"""Admin user management: list, view and edit users, and link or unlink their properties.
+
+Every rule an edit must follow is checked here. For example, the last active admin cannot
+be demoted or turned off, and admins cannot change their own access.
+"""
+
 import logging
 import uuid
 
@@ -27,30 +33,31 @@ logger = logging.getLogger(__name__)
 
 
 class UserNotFoundError(Exception):
-    pass
+    """No user has this id."""
 
 
 class EmailTakenError(Exception):
-    pass
+    """Another account already uses this email."""
 
 
 class UnlinkAssetsFirstError(Exception):
-    pass
+    """A resident with linked properties cannot be made an admin."""
 
 
 class CannotChangeOwnAccessError(Exception):
-    pass
+    """An admin tried to change their own role or turn off their own account."""
 
 
 class LastAdminError(Exception):
-    pass
+    """The change would leave no active admin."""
 
 
 class AssetsResidentsOnlyError(Exception):
-    pass
+    """Only resident accounts can have linked properties."""
 
 
 def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
+    """Search, role and active filters for the user list."""
     filters: list[ColumnElement[bool]] = []
     if params.role is not None:
         filters.append(User.role == params.role)
@@ -73,6 +80,7 @@ def _filters(params: UserListParams) -> list[ColumnElement[bool]]:
 
 
 def _sort_key(field: UserSortField) -> ColumnElement:
+    """The column or expression the user list sorts by."""
     if field is UserSortField.FULL_NAME:
         return func.lower(User.full_name)
     if field is UserSortField.EMAIL:
@@ -97,6 +105,7 @@ def _sort_key(field: UserSortField) -> ColumnElement:
 
 
 def list_users(db: Session, params: UserListParams) -> AdminUserList:
+    """One page of users, with the total count before paging."""
     filters = _filters(params)
     total = db.scalar(select(func.count()).select_from(User).where(*filters)) or 0
 
@@ -129,6 +138,7 @@ def list_users(db: Session, params: UserListParams) -> AdminUserList:
 
 
 def user_detail(user: User) -> AdminUserDetail:
+    """A user in the shape the admin edit panel uses."""
     return AdminUserDetail(
         id=user.id,
         full_name=user.full_name,
@@ -151,10 +161,16 @@ def _get_user(db: Session, user_id: uuid.UUID) -> User:
 
 
 def get_user_detail(db: Session, user_id: uuid.UUID) -> AdminUserDetail:
+    """One user for the edit panel. Raises UserNotFoundError."""
     return user_detail(_get_user(db, user_id))
 
 
 def _check_access_change(db: Session, admin: User, user: User, data: AdminUserUpdate) -> None:
+    """Block a role or status change that would lock admins out.
+
+    Raises LastAdminError when the user is the only active admin, and
+    CannotChangeOwnAccessError when admins change their own access.
+    """
     sent = data.model_fields_set
     new_role = data.role if "role" in sent else user.role
     new_active = data.is_active if "is_active" in sent else user.is_active
@@ -176,6 +192,7 @@ def _check_access_change(db: Session, admin: User, user: User, data: AdminUserUp
 
 
 def _check_rules(db: Session, user: User, data: AdminUserUpdate) -> None:
+    """Raise UnlinkAssetsFirstError or EmailTakenError when the edit breaks a rule."""
     if user.role is UserRole.RESIDENT and data.role is UserRole.ADMIN and user.resident_assets:
         raise UnlinkAssetsFirstError
 
@@ -198,6 +215,7 @@ def _apply(user: User, data: AdminUserUpdate) -> list[str]:
 def update_user(
     db: Session, admin: User, user_id: uuid.UUID, data: AdminUserUpdate
 ) -> AdminUserDetail:
+    """Apply an admin's edit. Only sent fields change, and each change is logged by name."""
     user = _get_user(db, user_id)
     _check_access_change(db, admin, user, data)
     _check_rules(db, user, data)

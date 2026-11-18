@@ -1,3 +1,9 @@
+"""Reader for the City's NAOS inspection geodatabase (an Esri .gdb folder, zipped or not).
+
+It turns the point layer and its photo attachment layer into PointRecord and PhotoRecord
+objects. Coordinates are converted to WGS84, and staff emails (sfd_edit_by) are never read.
+"""
+
 import struct
 import tempfile
 import uuid
@@ -55,6 +61,7 @@ def clean_text(raw) -> str | None:
 
 
 def yes_no(raw) -> bool | None:
+    """Text YES and NO, in any case, become True and False. Anything else is None."""
     text = clean_text(raw)
     if text is None:
         return None
@@ -112,12 +119,14 @@ class GeodatabaseSource:
         self.close()
 
     def close(self) -> None:
+        """Remove the temporary unzip folder, if there is one."""
         if self._scratch is not None:
             self._scratch.cleanup()
             self._scratch = None
             self._gdb = None
 
     def _open(self) -> Path:
+        """Find the .gdb folder, unzipping first when the path is a .zip file."""
         if self._gdb is not None:
             return self._gdb
         if self.path.suffix.lower() == ".zip":
@@ -134,6 +143,7 @@ class GeodatabaseSource:
         return self._gdb
 
     def _check_layers(self, gdb: Path) -> None:
+        """Stop with a clear message when one of the two expected layers is missing."""
         names = {str(row[0]) for row in list_layers(gdb)}
         for needed in (POINT_LAYER, PHOTO_LAYER):
             if needed not in names:
@@ -142,6 +152,10 @@ class GeodatabaseSource:
     # -- reading -------------------------------------------------------------------
 
     def read_points(self) -> Iterator[PointRecord]:
+        """Yield every inspection point, reading POINT_CHUNK rows at a time.
+
+        A row with no GlobalID or status raises ValueError, which stops the import.
+        """
         gdb = self._open()
         self._check_layers(gdb)
         offset = 0
@@ -192,6 +206,10 @@ class GeodatabaseSource:
             offset += len(geoms)
 
     def read_photos(self) -> Iterator[PhotoRecord]:
+        """Yield every photo attachment, reading PHOTO_CHUNK rows at a time.
+
+        A row missing an id or its data raises ValueError, which stops the import.
+        """
         gdb = self._open()
         self._check_layers(gdb)
         offset = 0

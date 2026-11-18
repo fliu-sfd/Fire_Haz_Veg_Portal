@@ -1,3 +1,8 @@
+"""Sign-up, sign-in, sign-out and the current user.
+
+The session is a JWT kept in an HttpOnly cookie, so the frontend never handles the token.
+"""
+
 from fastapi import APIRouter, HTTPException, Response, status
 
 from app.api.deps import CurrentUser, DbSession
@@ -19,6 +24,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def user_out(user: User) -> UserOut:
+    """The user as the frontend sees it, with the Asset IDs linked to the account."""
     return UserOut(
         id=user.id,
         email=user.email,
@@ -31,6 +37,11 @@ def user_out(user: User) -> UserOut:
 
 
 def set_auth_cookie(response: Response, user: User, *, remember_me: bool = False) -> None:
+    """Put a new access token in the auth cookie.
+
+    remember_me uses REMEMBERED_ACCESS_TOKEN_EXPIRE_MINUTES instead of
+    ACCESS_TOKEN_EXPIRE_MINUTES (30 days instead of 60 minutes by default).
+    """
     max_age = (
         settings.remembered_access_token_expire_minutes
         if remember_me

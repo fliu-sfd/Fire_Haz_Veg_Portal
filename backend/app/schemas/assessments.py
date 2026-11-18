@@ -1,3 +1,5 @@
+"""Response shapes for the property assessment page."""
+
 import uuid
 from datetime import datetime
 from typing import Literal

@@ -10,6 +10,8 @@ DISABLED_ACCOUNT_MESSAGE_KEY = "disabled_account_message"
 
 @dataclass(frozen=True)
 class EditableMessage:
+    """One message admins can reword, with its default text and its limits."""
+
     key: str  # stable id used in the database and URLs, lowercase with underscores
     label: str  # name shown to the admin
     description: str  # one line: where the person sees it

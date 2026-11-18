@@ -1,3 +1,5 @@
+"""The signed-in user's own profile and password. Works for every role."""
+
 from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
@@ -36,6 +38,7 @@ def patch_profile(user: CurrentUser, payload: ProfileUpdate, db: DbSession) -> P
 
 
 def _remembered(request: Request) -> bool:
+    """True when this sign-in used remember me, judged by the current token's lifetime."""
     claims = request.state.token_claims
     lifetime = claims.expires_at - claims.issued_at
     return lifetime > timedelta(minutes=settings.access_token_expire_minutes)

@@ -1,3 +1,5 @@
+"""Photo store that keeps files on local disk, under PHOTO_STORAGE_DIR."""
+
 from pathlib import Path
 
 
@@ -13,6 +15,7 @@ class LocalDiskStore:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _path_for(self, key: str) -> Path:
+        """Full path for a key. Raises ValueError for a key that would leave the folder."""
         if not key or key.startswith(("/", "\\")):
             raise ValueError(f"bad storage key: {key!r}")
         target = (self.root / key).resolve()

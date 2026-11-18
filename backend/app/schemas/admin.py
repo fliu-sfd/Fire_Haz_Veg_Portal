@@ -1,3 +1,5 @@
+"""Request and response shapes for the admin user pages."""
+
 import enum
 import uuid
 from datetime import datetime

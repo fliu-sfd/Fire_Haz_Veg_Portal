@@ -1,3 +1,5 @@
+"""Homeowner requests for a full assessment of a property."""
+
 import uuid
 from datetime import datetime
 
@@ -9,7 +11,10 @@ from app.db.base import Base
 
 
 class FullAssessmentRequest(Base):
-    """A homeowner's request for a department assessment of one property."""
+    """A homeowner's request for a department assessment of one property.
+
+    Only one request per asset can be open at a time (the partial unique index below).
+    """
 
     __tablename__ = "full_assessment_requests"
     __table_args__ = (
@@ -39,4 +44,5 @@ class FullAssessmentRequest(Base):
 
     @property
     def status(self) -> str:
+        """open until an admin handles the request, then handled."""
         return "handled" if self.handled_at is not None else "open"

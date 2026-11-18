@@ -1,3 +1,5 @@
+"""A homeowner's own linked properties: list them, add one by Asset ID, and remove one."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Path, status
@@ -59,6 +61,7 @@ _ERRORS: dict[type[Exception], tuple[int, str, str, str | None]] = {
 
 
 def _http_error(exc: Exception) -> HTTPException:
+    """Turn a service error into the error body the frontend reads: code, message, field."""
     status_code, code, message, field = _ERRORS[type(exc)]
     detail = {"code": code, "message": message}
     if field is not None:

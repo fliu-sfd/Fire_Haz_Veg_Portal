@@ -1,3 +1,5 @@
+"""Admin user management: list, view and edit users, and link or unlink their properties."""
+
 import uuid
 from typing import Annotated
 
@@ -84,6 +86,7 @@ _ERRORS: dict[type[Exception], tuple[int, str, str, str | None]] = {
 
 
 def _http_error(exc: Exception) -> HTTPException:
+    """Turn a service error into the error body the frontend reads: code, message, field."""
     status_code, code, message, field = _ERRORS[type(exc)]
     detail = {"code": code, "message": message}
     if field is not None:

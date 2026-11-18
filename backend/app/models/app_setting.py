@@ -1,3 +1,5 @@
+"""Saved text for the messages admins can edit."""
+
 import uuid
 from datetime import datetime
 

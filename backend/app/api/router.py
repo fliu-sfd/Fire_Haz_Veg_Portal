@@ -1,3 +1,5 @@
+"""Collects every route module under one router. main.py mounts it at /api/v1."""
+
 from fastapi import APIRouter
 
 from app.api.routes import (

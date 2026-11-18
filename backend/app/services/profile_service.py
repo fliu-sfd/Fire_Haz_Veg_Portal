@@ -1,3 +1,5 @@
+"""A user's own profile and password."""
+
 import logging
 from datetime import UTC, datetime
 
@@ -12,11 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class WrongCurrentPasswordError(Exception):
-    pass
+    """The current password given is not correct."""
 
 
 class PasswordUnchangedError(Exception):
-    pass
+    """The new password is the same as the current one."""
 
 
 class PersonalPasswordError(Exception):
@@ -24,6 +26,7 @@ class PersonalPasswordError(Exception):
 
 
 def get_profile(user: User) -> ProfileOut:
+    """The user's own account details."""
     return ProfileOut(
         id=user.id,
         full_name=user.full_name,
@@ -38,6 +41,7 @@ def get_profile(user: User) -> ProfileOut:
 
 
 def update_profile(db: Session, user: User, data: ProfileUpdate) -> ProfileOut:
+    """Change the user's own full name or phone. Only sent fields change."""
     changed = []
     for field in ("full_name", "phone"):
         if field in data.model_fields_set and getattr(data, field) != getattr(user, field):

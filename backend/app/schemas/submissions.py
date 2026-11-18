@@ -1,3 +1,5 @@
+"""Request and response shapes for homeowner evidence and admin review."""
+
 import uuid
 from datetime import datetime
 from typing import Literal
@@ -17,6 +19,8 @@ class SubmissionPhotoOut(BaseModel):
 
 
 class SubmissionOut(BaseModel):
+    """One submission. is_own_submission, can_edit and can_review are set for the caller."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -35,6 +39,11 @@ class SubmissionOut(BaseModel):
 
 
 class ReviewDecision(BaseModel):
+    """An admin's decision. rejected means Send back and needs a comment.
+
+    expected_version is the submission version the admin was looking at.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     decision: Literal["approved", "rejected"]
@@ -54,6 +63,8 @@ class ReviewDecision(BaseModel):
 
 
 class ReviewInboxItem(BaseModel):
+    """One row in the review inbox."""
+
     submission_id: uuid.UUID
     assessment_id: uuid.UUID
     asset_id: str
@@ -67,6 +78,8 @@ class ReviewInboxItem(BaseModel):
 
 
 class ReviewDetailOut(BaseModel):
+    """Everything the review screen shows for one submission."""
+
     asset_id: str
     season_year: int
     homeowner_name: str
