@@ -1,3 +1,4 @@
+/** Hazard views menu component for the hazards feature. */
 "use client";
 
 import { Bookmark, ChevronDown, Trash2 } from "lucide-react";

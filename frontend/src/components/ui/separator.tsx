@@ -1,3 +1,4 @@
+/** Reusable separator UI primitive used across the frontend. */
 "use client"
 
 import * as React from "react"

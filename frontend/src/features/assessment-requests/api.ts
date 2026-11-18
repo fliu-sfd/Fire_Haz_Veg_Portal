@@ -1,3 +1,4 @@
+/** Backend service helpers for the assessment-requests feature; validates response data before returning typed values. */
 import type {
   AdminAssessmentRequest,
   AssessmentRequest,

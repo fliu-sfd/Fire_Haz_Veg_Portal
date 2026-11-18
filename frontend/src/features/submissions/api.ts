@@ -1,3 +1,4 @@
+/** Calls assessment submission endpoints to list, upload, update, and fetch protected homeowner evidence photos. */
 import { apiRequest, apiRequestBlob, apiUrl } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { isRecord } from "@/lib/api/guards";

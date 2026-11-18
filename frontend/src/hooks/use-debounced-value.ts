@@ -1,3 +1,4 @@
+/** Shared hook for use debounced value behavior used across routes. */
 import { useEffect, useState } from "react";
 
 export function useDebouncedValue<T>(value: T, delayMs = 300): T {

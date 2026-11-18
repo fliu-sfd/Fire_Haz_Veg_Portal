@@ -1,3 +1,4 @@
+/** Reusable form alert UI primitive used across the frontend. */
 import type { ReactNode } from "react";
 
 type FormAlertProps = {

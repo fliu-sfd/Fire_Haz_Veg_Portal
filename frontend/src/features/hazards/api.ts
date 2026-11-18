@@ -1,3 +1,4 @@
+/** Backend service helpers for the hazards feature; validates response data before returning typed values. */
 import type { Hazard, HazardFilterOptions, HazardList, HazardSummary, HazardsQuery } from "@/features/hazards/types";
 import {
   hazardsQueryToApiParams,

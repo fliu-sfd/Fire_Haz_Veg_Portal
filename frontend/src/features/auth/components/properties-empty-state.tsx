@@ -1,3 +1,4 @@
+/** Properties empty state component for the auth feature. */
 export function PropertiesEmptyState() {
   return (
     <div className="mt-5">

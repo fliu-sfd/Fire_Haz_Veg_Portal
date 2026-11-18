@@ -1,3 +1,4 @@
+/** Calls GET /admin/users and PATCH /admin/users/{id} to list and update administrator-managed accounts. */
 import type {
   AdminUser,
   AdminUserDetail,

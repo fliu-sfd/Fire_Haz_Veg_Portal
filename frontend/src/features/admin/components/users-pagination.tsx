@@ -1,3 +1,4 @@
+/** Users pagination component for the admin feature. */
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";

@@ -1,3 +1,4 @@
+/** Route entry point for /dashboard/reviews, wiring the page view to its route parameters. */
 import type { Metadata } from "next";
 import { ReviewInboxView } from "@/features/reviews/components/review-inbox-view";
 

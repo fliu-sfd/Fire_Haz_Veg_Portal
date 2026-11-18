@@ -1,3 +1,4 @@
+/** Reusable text field UI primitive used across the frontend. */
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 export type TextFieldProps = Omit<

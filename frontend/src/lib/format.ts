@@ -1,3 +1,4 @@
+/** Shared format helpers used by frontend features. */
 export function initials(fullName: string): string {
   return fullName
     .trim()

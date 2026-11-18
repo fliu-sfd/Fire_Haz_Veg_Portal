@@ -1,3 +1,4 @@
+/** Feature hook that coordinates use review detail data or UI state. */
 "use client";
 
 import { useRouter } from "next/navigation";

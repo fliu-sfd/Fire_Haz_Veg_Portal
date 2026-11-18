@@ -1,3 +1,4 @@
+/** Password checklist component for the profile feature. */
 import { Check, Circle } from "lucide-react";
 import type { PasswordRuleResult } from "@/features/profile/utils/password";
 import { cn } from "@/lib/utils";

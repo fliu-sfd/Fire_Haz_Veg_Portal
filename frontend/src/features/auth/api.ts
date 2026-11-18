@@ -1,3 +1,4 @@
+/** Calls /auth login, logout, signup, and current-account endpoints, plus resident property list and link endpoints. */
 import { isReviewState, type ReviewState } from "@/features/assessments/utils/display";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";

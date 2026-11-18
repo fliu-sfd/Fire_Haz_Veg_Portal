@@ -1,3 +1,4 @@
+/** Status filter component for the admin feature. */
 "use client";
 
 import { useId } from "react";

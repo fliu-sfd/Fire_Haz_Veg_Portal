@@ -59,6 +59,41 @@ src/
 tests/                          node --test suites (tests/setup resolves the @/ alias)
 ```
 
+## Routes and backend services
+
+Route files in `src/app/` stay thin: they provide page metadata, read route parameters, and compose feature views. The feature layer owns data fetching and request parsing.
+
+| Route | Purpose | Feature code |
+| --- | --- | --- |
+| `/` | Public portal overview and backend connection check | `features/system/` |
+| `/sign-in`, `/sign-up/homeowner` | Sign-in and resident registration | `features/auth/` |
+| `/homeowner` | Resident property list and assessment requests | `features/auth/`, `features/assessment-requests/` |
+| `/homeowner/properties/[assetId]` | Property inspection and completion evidence | `features/assessments/`, `features/submissions/` |
+| `/profile` | Signed-in user details, password, and linked properties | `features/profile/` |
+| `/dashboard` | Administrator workspace | `features/admin/`, `features/hazards/` |
+| `/dashboard/users` | User list and account editing | `features/admin/` |
+| `/dashboard/hazards`, `/dashboard/hazards/[assetId]` | Hazard map and assessment/evidence review for a property | `features/hazards/`, `features/assessments/`, `features/submissions/` |
+| `/dashboard/assessment-requests` | Department queue for homeowner assessment requests | `features/assessment-requests/` |
+| `/dashboard/reviews`, `/dashboard/reviews/[submissionId]` | Evidence review inbox and decision detail | `features/reviews/`, `features/submissions/` |
+| `/dashboard/settings` | Editable portal messages | `features/settings/` |
+
+API modules use the shared client in `src/lib/api/client.ts`; they check unknown JSON at runtime and convert API field names to frontend types. These are the backend endpoints each feature calls:
+
+| Feature | Backend calls |
+| --- | --- |
+| `admin` | `GET /admin/users`, `PATCH /admin/users/{id}` |
+| `assessment-requests` | `GET/POST /residents/me/properties/{asset_id}/assessment-requests`, `GET .../open`, `GET /admin/assessment-requests`, `POST /admin/assessment-requests/{id}/handle` |
+| `assessments` | `GET /assessments/{asset_id}`, `GET /assessments/photos/{photo_id}` |
+| `auth` | `/auth/login`, `/auth/logout`, `/auth/me`, `/auth/signup`, `/residents/me/properties` |
+| `hazards` | `GET /admin/hazards`, `GET /admin/hazards/filters` |
+| `profile` | `GET/PATCH /me/profile`, `POST /me/password` |
+| `reviews` | `/admin/submissions`, `/admin/submissions/count`, `/admin/submissions/{id}`, `/admin/submissions/{id}/review` |
+| `settings` | `/admin/settings/messages` and `/admin/settings/messages/{key}` |
+| `submissions` | `/assessments/{id}/submissions`, `/assessments/{id}/submissions/{submission_id}`, protected photo URLs under `/submission-photos/{photo_id}` |
+| `system` | `GET /health` |
+
+Keep comments close to the code they explain: describe a component or hook's role, and name the backend endpoint for service helpers. Remove obsolete commented-out code when changing a file; do not use comments to preserve old implementations.
+
 ## Team conventions
 
 - Add routes under `src/app/<route>/page.tsx`. Pages are Server Components by default; add `"use client"` only when you need state, effects, events, or browser APIs.

@@ -1,3 +1,4 @@
+/** Route entry point for /sign-in, wiring the page view to its route parameters. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthPageShell } from "@/features/auth/components/auth-page-shell";

@@ -1,3 +1,4 @@
+/** Profile states component for the profile feature. */
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

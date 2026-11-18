@@ -1,3 +1,4 @@
+/** Homeowner sign up form component for the auth feature. */
 "use client";
 
 import { useState, type FormEvent } from "react";

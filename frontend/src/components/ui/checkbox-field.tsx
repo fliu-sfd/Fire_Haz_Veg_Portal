@@ -1,3 +1,4 @@
+/** Reusable checkbox field UI primitive used across the frontend. */
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 type CheckboxFieldProps = Omit<

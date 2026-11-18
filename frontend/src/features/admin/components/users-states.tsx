@@ -1,3 +1,4 @@
+/** Users states component for the admin feature. */
 import { AlertTriangle, SearchX, ShieldAlert, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";

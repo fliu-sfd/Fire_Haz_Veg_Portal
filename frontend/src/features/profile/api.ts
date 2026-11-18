@@ -1,3 +1,4 @@
+/** Calls GET/PATCH /me/profile and POST /me/password for the signed-in user profile. */
 import { isUserRole } from "@/features/admin/utils/query-params";
 import type { PasswordChangeInput, Profile, ProfileUpdateInput } from "@/features/profile/types";
 import { apiRequest } from "@/lib/api/client";

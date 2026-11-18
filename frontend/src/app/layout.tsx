@@ -1,3 +1,4 @@
+/** Root layout that loads shared fonts, styles, metadata, and page content. */
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import "@fontsource-variable/public-sans";

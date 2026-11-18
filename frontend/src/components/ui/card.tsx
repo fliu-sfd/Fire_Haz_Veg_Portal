@@ -1,3 +1,4 @@
+/** Reusable card UI primitive used across the frontend. */
 import type { ReactNode } from "react";
 
 export function Card({ title, children }: { title: string; children: ReactNode }) {

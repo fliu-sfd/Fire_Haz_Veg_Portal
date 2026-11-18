@@ -1,3 +1,4 @@
+/** Shared sidebar nav component used by application routes. */
 "use client";
 
 import type { LucideIcon } from "lucide-react";

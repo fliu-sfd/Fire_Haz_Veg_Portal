@@ -1,3 +1,4 @@
+/** Last changed line component for the settings feature. */
 import type { EditableMessage } from "@/features/settings/types";
 import { lastChangedText } from "@/features/settings/utils/message";
 

@@ -1,3 +1,4 @@
+/** Not-found page shown when a route or record does not exist. */
 import Link from "next/link";
 
 export default function NotFound() {

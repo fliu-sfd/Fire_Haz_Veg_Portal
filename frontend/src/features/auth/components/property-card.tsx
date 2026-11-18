@@ -1,3 +1,4 @@
+/** Property card component for the auth feature. */
 import Link from "next/link";
 import { ArrowRight, Trash2 } from "lucide-react";
 import type { PropertySummary } from "@/features/auth/api";

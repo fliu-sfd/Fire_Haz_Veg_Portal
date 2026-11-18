@@ -1,3 +1,4 @@
+/** Pure helper functions for format in the admin feature. */
 export { initials } from "@/lib/format";
 
 export function formatDate(iso: string, timeZone?: string): string {

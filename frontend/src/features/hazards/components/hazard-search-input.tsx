@@ -1,3 +1,4 @@
+/** Hazard search input component for the hazards feature. */
 "use client";
 
 import { Search, X } from "lucide-react";

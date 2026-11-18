@@ -1,3 +1,4 @@
+/** Map skeleton component for the hazards feature. */
 import { MapPinned } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 

@@ -1,3 +1,4 @@
+/** Personal details form component for the profile feature. */
 import { CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-alert";

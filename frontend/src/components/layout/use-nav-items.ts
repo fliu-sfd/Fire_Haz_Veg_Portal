@@ -1,3 +1,4 @@
+/** Shared use nav items component used by application routes. */
 import type { LucideIcon } from "lucide-react";
 import { useMemo } from "react";
 import { navGroupsFor, type ResolvedNavGroup } from "@/components/layout/nav";

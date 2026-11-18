@@ -1,3 +1,4 @@
+/** Homeowner assessment request component for the assessment-requests feature. */
 "use client";
 
 import { useState } from "react";

@@ -1,3 +1,4 @@
+/** Shared data and view types for the submissions feature. */
 export type SubmissionPhoto = {
   id: string;
   fileName: string;

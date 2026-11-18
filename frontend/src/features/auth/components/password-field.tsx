@@ -1,3 +1,4 @@
+/** Password field component for the auth feature. */
 "use client";
 
 import { useState } from "react";

@@ -1,3 +1,4 @@
+/** Feature hook that coordinates use private photo data or UI state. */
 "use client";
 
 import { useEffect, useRef, useState } from "react";

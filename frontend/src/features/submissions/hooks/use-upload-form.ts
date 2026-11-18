@@ -1,3 +1,4 @@
+/** Feature hook that coordinates use upload form data or UI state. */
 "use client";
 
 import { useEffect, useId, useRef, useState, type DragEvent, type FormEvent } from "react";

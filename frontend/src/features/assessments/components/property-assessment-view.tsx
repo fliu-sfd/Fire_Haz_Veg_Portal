@@ -1,3 +1,4 @@
+/** Property assessment view component for the assessments feature. */
 "use client";
 
 import Link from "next/link";

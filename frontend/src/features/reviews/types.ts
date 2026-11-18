@@ -1,3 +1,4 @@
+/** Shared data and view types for the reviews feature. */
 import type { InspectionPoint } from "@/features/assessments/types";
 import type { Submission } from "@/features/submissions/types";
 

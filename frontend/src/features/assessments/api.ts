@@ -1,3 +1,4 @@
+/** Backend service helpers for the assessments feature; validates response data before returning typed values. */
 import type { CrewPhoto, InspectionPoint, PropertyAssessment } from "@/features/assessments/types";
 import { ApiError, apiRequest, apiUrl } from "@/lib/api/client";
 import { ResponseFormatError } from "@/lib/api/errors";
