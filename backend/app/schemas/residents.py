@@ -1,3 +1,5 @@
+"""Request and response shapes for a homeowner's linked properties."""
+
 from datetime import datetime
 from typing import Literal
 

@@ -1,3 +1,5 @@
+"""Accounts, roles, and the properties a resident is linked to."""
+
 import enum
 import uuid
 from datetime import datetime
@@ -20,6 +22,8 @@ from app.db.base import Base
 
 
 class UserRole(enum.StrEnum):
+    """The two roles. resident is a homeowner; admin is department staff."""
+
     RESIDENT = "resident"
     ADMIN = "admin"
 
@@ -77,7 +81,11 @@ class User(Base):
 
 
 class ResidentProfile(Base):
-    """Extra info collected at resident signup."""
+    """Address details for a resident.
+
+    The table exists, but nothing in the app writes to it yet: sign-up only asks for a
+    name, an email and a password.
+    """
 
     __tablename__ = "resident_profiles"
 

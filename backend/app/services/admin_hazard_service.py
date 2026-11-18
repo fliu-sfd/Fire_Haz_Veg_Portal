@@ -1,3 +1,9 @@
+"""Hazard map data for admins: one marker per asset with an issue in the latest season.
+
+A marker sits at the centre of the asset's issue points. Its state comes from the newest
+homeowner submission on each point (see derive_state). Filters and counts run in SQL.
+"""
+
 from collections.abc import Callable
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -53,10 +59,12 @@ ATTENTION_CHECKS: list[tuple[AttentionReason, Callable[[Subquery], ColumnElement
 
 
 def today_in_reporting_zone() -> date:
+    """Today's date in Scottsdale."""
     return datetime.now(REPORTING_ZONE).date()
 
 
 def age_in_days(inspected_at: datetime | None, today: date) -> int | None:
+    """Whole days since the inspection, never below 0. None with no inspection time."""
     if inspected_at is None:
         return None
     # a clock that runs ahead in the field must not give a negative age
@@ -64,6 +72,11 @@ def age_in_days(inspected_at: datetime | None, today: date) -> int | None:
 
 
 def derive_state(submission_status: ColumnElement[str | None]) -> ColumnElement[str]:
+    """State of an asset from the newest submission status of each of its issue points.
+
+    pending_review if any point is waiting, closed only if every point is approved, and
+    open otherwise. review_state.property_review_state is the same rule in Python.
+    """
     # Surface waiting evidence without clearing the original crew finding.
     return case(
         (
@@ -79,6 +92,7 @@ def derive_state(submission_status: ColumnElement[str | None]) -> ColumnElement[
 
 
 def property_type_of(site_type: ColumnElement[str | None]) -> ColumnElement[str]:
+    """naos for Community sites, residential for everything else."""
     # the Residential site_type is unconfirmed until that data arrives
     return case(
         (site_type == NAOS_SITE_TYPE, PropertyType.NAOS.value),
@@ -87,6 +101,7 @@ def property_type_of(site_type: ColumnElement[str | None]) -> ColumnElement[str]
 
 
 def latest_season(db: Session) -> int | None:
+    """The newest season in the data, or None when nothing has been imported."""
     return db.scalar(select(func.max(Assessment.season_year)))
 
 
@@ -172,6 +187,7 @@ def _hazards(season: int) -> Subquery:
 
 
 def needs_attention(hazards: Subquery) -> ColumnElement[bool]:
+    """True when any attention check matches (no crew photo, or no comment)."""
     return or_(*(check(hazards) for _, check in ATTENTION_CHECKS))
 
 
@@ -208,6 +224,8 @@ def _conditions(hazards: Subquery, params: HazardListParams) -> dict[str, Column
 def _summary(
     db: Session, hazards: Subquery, conditions: dict[str, ColumnElement[bool]]
 ) -> HazardSummary:
+    """Counts for the summary tiles. Each count leaves out its own filter."""
+
     def all_but(name: str) -> list[ColumnElement[bool]]:
         return [condition for key, condition in conditions.items() if key != name]
 
@@ -226,6 +244,7 @@ def _summary(
 
 
 def list_hazards(db: Session, params: HazardListParams) -> HazardList:
+    """Map markers that match the filters, with the summary counts. Capped at HAZARD_LIMIT."""
     season = latest_season(db)
     if season is None:
         empty = HazardSummary(by_state=HazardStateCounts(), needs_attention=0)
@@ -261,6 +280,7 @@ def list_hazards(db: Session, params: HazardListParams) -> HazardList:
 
 
 def hazard_filter_options(db: Session) -> HazardFilterOptions:
+    """Crews and property types in the latest season, for the map's filter controls."""
     season = latest_season(db)
     if season is None:
         return HazardFilterOptions(season_year=None, crews=[], property_types=[])

@@ -1,3 +1,5 @@
+"""The interface for where photo files are kept."""
+
 from typing import Protocol
 
 

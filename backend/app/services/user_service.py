@@ -1,3 +1,5 @@
+"""Accounts: sign-up, sign-in, and creating admins."""
+
 from datetime import UTC, datetime
 
 from sqlalchemy import func, select
@@ -10,22 +12,24 @@ from app.schemas.auth import LoginRequest, SignupRequest
 
 
 class EmailAlreadyRegisteredError(Exception):
-    pass
+    """An account already uses this email (letter case ignored)."""
 
 
 class InvalidCredentialsError(Exception):
-    pass
+    """Wrong email or password. The two cases are not told apart."""
 
 
 class InactiveAccountError(Exception):
-    pass
+    """The password was right, but the account is turned off."""
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
+    """Find a user by email, ignoring letter case."""
     return db.scalar(select(User).where(func.lower(User.email) == email.lower()))
 
 
 def create_resident(db: Session, data: SignupRequest) -> User:
+    """Create a resident from the sign-up form. Raises EmailAlreadyRegisteredError."""
     if get_user_by_email(db, data.email) is not None:
         raise EmailAlreadyRegisteredError
 

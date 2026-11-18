@@ -1,3 +1,5 @@
+"""Password hashing (Argon2id) and the JWT access tokens kept in the auth cookie."""
+
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -13,10 +15,12 @@ _password_hash = PasswordHash.recommended()
 
 
 def hash_password(plain: str) -> str:
+    """Hash a password for storing in users.password_hash."""
     return _password_hash.hash(plain)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
+    """True when the password matches the stored hash."""
     return _password_hash.verify(plain, hashed)
 
 
@@ -31,6 +35,7 @@ def burn_password_check() -> None:
 
 
 def create_access_token(user_id: uuid.UUID, expire_minutes: int | None = None) -> str:
+    """Sign a token for the user. Without expire_minutes it uses the normal lifetime."""
     now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
@@ -43,6 +48,8 @@ def create_access_token(user_id: uuid.UUID, expire_minutes: int | None = None) -
 
 @dataclass(frozen=True)
 class TokenClaims:
+    """The parts of an access token the API uses."""
+
     user_id: uuid.UUID
     # whole seconds, as JWT stores them
     issued_at: datetime

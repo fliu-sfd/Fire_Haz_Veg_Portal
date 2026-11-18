@@ -17,6 +17,10 @@ RETRY_SECONDS = 2
 
 
 def main() -> int:
+    """Try to connect up to MAX_TRIES times, RETRY_SECONDS apart.
+
+    Returns 0 once connected and 1 when it gives up.
+    """
     for attempt in range(1, MAX_TRIES + 1):
         try:
             engine.connect().close()

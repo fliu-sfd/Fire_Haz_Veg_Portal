@@ -1,3 +1,5 @@
+"""Full assessment requests from homeowners, and admins marking them handled."""
+
 import uuid
 from datetime import UTC, datetime
 from typing import Literal
@@ -15,6 +17,7 @@ from app.schemas.assessment_requests import (
 
 
 def linked_asset_id(db: Session, user: User, asset_id: str) -> str:
+    """The Asset ID as stored on the homeowner's account. 404 if it is not linked."""
     stored_id = db.scalar(
         select(ResidentAsset.asset_id).where(
             ResidentAsset.user_id == user.id,
@@ -28,6 +31,7 @@ def linked_asset_id(db: Session, user: User, asset_id: str) -> str:
 
 
 def open_request(db: Session, asset_id: str) -> FullAssessmentRequest | None:
+    """The request for this asset that is not handled yet, or None."""
     return db.scalar(
         select(FullAssessmentRequest).where(
             func.lower(FullAssessmentRequest.asset_id) == asset_id.lower(),
@@ -37,12 +41,18 @@ def open_request(db: Session, asset_id: str) -> FullAssessmentRequest | None:
 
 
 def homeowner_open_request(db: Session, user: User, asset_id: str) -> FullAssessmentRequest | None:
+    """The open request for one of the homeowner's linked properties, or None."""
     return open_request(db, linked_asset_id(db, user, asset_id))
 
 
 def create_request(
     db: Session, user: User, asset_id: str, note: str | None
 ) -> FullAssessmentRequest:
+    """Open a request for a linked property, or return the one already open.
+
+    The database allows one open request per asset, so two requests sent at the same
+    moment still end with one row.
+    """
     stored_id = linked_asset_id(db, user, asset_id)
     existing = open_request(db, stored_id)
     if existing is not None:
@@ -71,6 +81,7 @@ def list_requests(
     limit: int,
     offset: int,
 ) -> AssessmentRequestListOut:
+    """One page of requests, open first and then newest first, with the people's names."""
     homeowner = aliased(User)
     handler = aliased(User)
     conditions = []
@@ -116,6 +127,7 @@ def list_requests(
 
 
 def handle_request(db: Session, admin: User, request_id: uuid.UUID) -> AdminAssessmentRequestOut:
+    """Mark a request handled by this admin. 404 if unknown, 409 if already handled."""
     row = db.scalar(
         select(FullAssessmentRequest)
         .where(FullAssessmentRequest.id == request_id)

@@ -1,3 +1,5 @@
+"""The property assessment page: an asset's latest season and its crew photos."""
+
 import uuid
 from dataclasses import dataclass
 
@@ -18,6 +20,8 @@ class CrewPhotoNotFoundError(Exception):
 
 @dataclass(frozen=True)
 class PropertyAssessment:
+    """An asset's latest season. Issue points come first, then newest first."""
+
     asset_id: str
     season_year: int
     site_address: str | None

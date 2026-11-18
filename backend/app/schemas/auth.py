@@ -1,3 +1,5 @@
+"""Request and response shapes for sign-up, sign-in and the current user."""
+
 import uuid
 from datetime import datetime
 from typing import Self
@@ -63,6 +65,8 @@ class LoginRequest(BaseModel):
 
 
 class UserOut(BaseModel):
+    """The signed-in user. property_ids are the Asset IDs linked to the account."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID

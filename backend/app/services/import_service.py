@@ -1,3 +1,9 @@
+"""Loads one season of inspection data into the database from any InspectionSource.
+
+Points go in first, in batches, then photos one at a time. Running the same import again
+skips what is already there.
+"""
+
 import uuid
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
@@ -19,6 +25,8 @@ PHOTO_EXTENSIONS = {"image/jpeg": "jpg", "image/png": "png"}
 
 @dataclass
 class ImportSummary:
+    """The counts printed at the end of an import."""
+
     points_read: int = 0
     points_inserted: int = 0
     points_skipped: int = 0
@@ -31,12 +39,14 @@ class ImportSummary:
 
 
 def photo_key(assessment_id: uuid.UUID, photo_id: uuid.UUID, content_type: str) -> str:
+    """Storage key for a crew photo: crew/<assessment id>/<photo id>.<jpg or png>."""
     # never built from the original file name, so odd names cannot cause trouble
     ext = PHOTO_EXTENSIONS.get(content_type, "jpg")
     return f"crew/{assessment_id}/{photo_id}.{ext}"
 
 
 def _chunks(items: Iterable, size: int) -> Iterator[list]:
+    """Split items into lists of at most size items."""
     it = iter(items)
     while chunk := list(islice(it, size)):
         yield chunk
@@ -68,6 +78,7 @@ def _point_row(rec: PointRecord, season_year: int) -> dict:
 
 
 def import_points(db: Session, source: InspectionSource, season_year: int, summary: ImportSummary):
+    """Insert the points in batches. A point already loaded for this season is skipped."""
     for batch in _chunks(source.read_points(), BATCH_SIZE):
         stmt = (
             pg_insert(Assessment)
@@ -89,6 +100,11 @@ def import_photos(
     photo_store: PhotoStore,
     summary: ImportSummary,
 ):
+    """Save each photo to the store and add its row.
+
+    Photos already loaded are skipped, and photos with no matching point are counted as
+    orphaned. If anything fails, the files saved so far are deleted again.
+    """
     saved_keys: list[str] = []
     try:
         for rec in source.read_photos():

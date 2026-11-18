@@ -1,3 +1,9 @@
+"""Homeowner completion photos for an issue point, and the protected link to each photo.
+
+The upload routes read the request body themselves instead of using File(), so the size
+limits apply while the body streams in and access is checked before any file is parsed.
+"""
+
 import uuid
 from collections.abc import AsyncIterator
 
@@ -78,6 +84,11 @@ async def post_submission(
     db: DbSession,
     store: PhotoStoreDep,
 ) -> SubmissionOut:
+    """Upload 1 to 5 JPEG or PNG photos, and an optional comment, to show an issue is fixed.
+
+    Only a linked homeowner can upload, only for an ISSUES point in the latest season, and
+    not while the newest evidence is pending or approved. The submission waits for review.
+    """
     # Authentication and assessment access precede parsing or decoding any upload.
     assessment = await run_in_threadpool(evidence_assessment, db, user, assessment_id)
     await run_in_threadpool(require_uploadable, db, assessment)
@@ -96,6 +107,11 @@ async def patch_submission(
     db: DbSession,
     store: PhotoStoreDep,
 ) -> SubmissionOut:
+    """Edit your own submission while it waits for review.
+
+    Sending photos replaces the whole set; with no photos the saved ones stay. The comment
+    is always replaced, so leaving it out clears it.
+    """
     submission = await run_in_threadpool(
         editable_submission, db, user, assessment_id, submission_id
     )
@@ -104,6 +120,12 @@ async def patch_submission(
 
 
 async def read_upload(request: Request, *, require_photos: bool = True):
+    """Read the multipart body into checked photos and a cleaned comment.
+
+    Rejects a body that is not multipart (415), a body over the total size (413), extra
+    fields, the wrong number of photos and a comment over 2,000 characters (422). Each
+    photo also goes through validate_photo.
+    """
     if request.headers.get("content-type", "").split(";", 1)[0].lower() != "multipart/form-data":
         raise HTTPException(415, "Send photos using multipart/form-data.")
     length = request.headers.get("content-length")
@@ -146,6 +168,7 @@ async def read_upload(request: Request, *, require_photos: bool = True):
 
 @router.get("/assessments/{assessment_id}/submissions", response_model=list[SubmissionOut])
 def get_submissions(assessment_id: uuid.UUID, user: CurrentUser, db: DbSession):
+    """Evidence for one inspection point, newest first. Linked homeowners and admins only."""
     evidence_assessment(db, user, assessment_id)
     return [
         submission_out(row, user, is_latest=index == 0)
@@ -160,6 +183,10 @@ def get_submission_photo(
     db: DbSession,
     store: PhotoStoreDep,
 ) -> Response:
+    """Serve one homeowner photo if the signed-in user may view its assessment.
+
+    Unknown photos and photos the user may not see both give 404.
+    """
     photo = db.get(SubmissionPhoto, photo_id)
     submission = db.get(Submission, photo.submission_id) if photo else None
     if submission is None:

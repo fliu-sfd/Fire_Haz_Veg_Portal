@@ -1,3 +1,5 @@
+"""Admin editing of the messages listed in services/editable_messages.py."""
+
 from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import AdminUser, DbSession

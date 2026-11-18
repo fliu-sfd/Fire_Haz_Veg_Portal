@@ -1,3 +1,7 @@
+"""The records every inspection source hands to the import service, whatever file or API
+they come from.
+"""
+
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass

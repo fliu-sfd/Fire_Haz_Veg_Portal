@@ -1,3 +1,5 @@
+"""Property assessment page data and the protected crew photos."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException, Response, status

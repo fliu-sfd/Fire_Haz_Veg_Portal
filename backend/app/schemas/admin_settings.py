@@ -1,3 +1,5 @@
+"""Request and response shapes for the editable messages page."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
@@ -6,6 +8,8 @@ __all__ = ["MessageList", "MessageOut", "MessageUpdate"]
 
 
 class MessageOut(BaseModel):
+    """An editable message with its current text, its default and its limits."""
+
     model_config = ConfigDict(from_attributes=True)
 
     key: str

@@ -1,3 +1,9 @@
+"""Homeowner completion photos (evidence) for an issue point.
+
+Photos are checked by decoding them, not by their file name. Files are saved before the
+database commit and removed again if it fails, so no file is left without a row.
+"""
+
 import logging
 import uuid
 import warnings
@@ -26,6 +32,8 @@ IMAGE_TYPES = {"JPEG": ("image/jpeg", "jpg"), "PNG": ("image/png", "png")}
 
 @dataclass(frozen=True)
 class ValidatedPhoto:
+    """A photo that passed validate_photo, ready to save."""
+
     data: bytes
     file_name: str
     content_type: str
@@ -33,6 +41,11 @@ class ValidatedPhoto:
 
 
 def validate_photo(data: bytes, content_type: str | None, file_name: str | None) -> ValidatedPhoto:
+    """Check one uploaded photo and return it with a safe display name.
+
+    Only JPEG and PNG up to 5 MB and 25 megapixels are accepted, and the contents must
+    match the declared type. Raises HTTPException (413, 415 or 422) with the message to show.
+    """
     if len(data) > MAX_PHOTO_BYTES:
         raise HTTPException(413, "Each photo must be 5 MB or smaller.")
     if not data:
@@ -66,6 +79,7 @@ def validate_photo(data: bytes, content_type: str | None, file_name: str | None)
 
 
 def evidence_assessment(db: Session, user: User, assessment_id: uuid.UUID) -> Assessment:
+    """The assessment, if the user may view it. Otherwise 404, so its existence is not revealed."""
     assessment = db.get(Assessment, assessment_id)
     if assessment is None or not can_view_assessment(db, user, assessment):
         raise HTTPException(404, "Assessment not found.")
@@ -73,6 +87,7 @@ def evidence_assessment(db: Session, user: User, assessment_id: uuid.UUID) -> As
 
 
 def require_uploadable(db: Session, assessment: Assessment) -> None:
+    """409 unless the point has issues and belongs to the asset's latest season."""
     if assessment.status != "ISSUES":
         raise HTTPException(409, "Photos can only be submitted for an assessment with issues.")
     latest = db.scalar(
@@ -85,6 +100,7 @@ def require_uploadable(db: Session, assessment: Assessment) -> None:
 
 
 def latest_submission_id(db: Session, assessment_id: uuid.UUID) -> uuid.UUID | None:
+    """Id of the newest submission on a point, or None."""
     return db.scalar(
         select(Submission.id)
         .where(Submission.assessment_id == assessment_id)
@@ -94,6 +110,7 @@ def latest_submission_id(db: Session, assessment_id: uuid.UUID) -> uuid.UUID | N
 
 
 def list_submissions(db: Session, assessment_id: uuid.UUID) -> list[Submission]:
+    """Every submission on a point, with its photos, newest first."""
     return list(
         db.scalars(
             select(Submission)
@@ -105,6 +122,11 @@ def list_submissions(db: Session, assessment_id: uuid.UUID) -> list[Submission]:
 
 
 def submission_out(submission: Submission, user: User, *, is_latest: bool = True) -> SubmissionOut:
+    """A submission for the user asking, with is_own_submission, can_edit and can_review.
+
+    Only the newest pending submission can be edited (by its homeowner) or reviewed (by
+    an admin).
+    """
     own = submission.homeowner_id == user.id
     return SubmissionOut.model_validate(submission).model_copy(
         update={
@@ -123,6 +145,11 @@ def submission_out(submission: Submission, user: User, *, is_latest: bool = True
 def editable_submission(
     db: Session, user: User, assessment_id: uuid.UUID, submission_id: uuid.UUID
 ) -> Submission:
+    """The homeowner's own submission, locked so it can be edited.
+
+    404 if it is not theirs. 409 if it was already reviewed, a newer one exists, or the
+    point no longer takes uploads.
+    """
     assessment = evidence_assessment(db, user, assessment_id)
     db.execute(select(Assessment.id).where(Assessment.id == assessment_id).with_for_update())
     row = db.scalar(
@@ -204,6 +231,10 @@ def create_submission(
     photos: list[ValidatedPhoto],
     comment: str | None,
 ) -> SubmissionOut:
+    """Save a new pending submission and its photos.
+
+    409 if the newest evidence on the point is pending or approved.
+    """
     # Serialize creation and decisions for the same inspection point.
     db.execute(select(Assessment.id).where(Assessment.id == assessment.id).with_for_update())
     require_uploadable(db, assessment)

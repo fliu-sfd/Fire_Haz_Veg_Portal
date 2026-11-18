@@ -1,8 +1,10 @@
+"""The declarative base every model inherits from."""
+
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 
-# Explicit constraint names keep future Alembic migrations stable
-# across SQLite (local dev) and PostgreSQL.
+# Explicit constraint names keep Alembic migrations stable: a constraint gets
+# the same name every time, so a later migration can find it by name.
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",

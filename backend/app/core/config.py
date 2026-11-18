@@ -1,3 +1,8 @@
+"""App settings, read from environment variables and backend/.env.
+
+Each field can be set with its name in upper case, for example DATABASE_URL.
+"""
+
 from functools import lru_cache
 from typing import Literal
 
@@ -8,6 +13,12 @@ DEV_JWT_SECRET = "dev-only-insecure-secret-change-me"
 
 
 class Settings(BaseSettings):
+    """Every setting has a development default.
+
+    With ENVIRONMENT=production the app refuses to start if the JWT secret is the dev one
+    or shorter than 32 characters, or if the auth cookie is not secure-only.
+    """
+
     app_name: str = "Fire Hazardous Vegetation Portal API"
     app_version: str = "0.1.0"
     api_v1_prefix: str = "/api/v1"
@@ -50,6 +61,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Read the settings once and reuse them."""
     return Settings()
 
 

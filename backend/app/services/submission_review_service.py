@@ -25,6 +25,11 @@ from app.services.submission_service import (
 
 
 def pending_conditions():
+    """Filters for evidence that belongs in the inbox.
+
+    The submission is pending, it is the newest on its point, and the point is an issue in
+    the asset's latest season.
+    """
     other_point = aliased(Assessment)
     latest_year = (
         select(func.max(other_point.season_year))
@@ -49,6 +54,7 @@ def pending_conditions():
 
 
 def pending_count(db: Session) -> int:
+    """Number of submissions in the review inbox."""
     return (
         db.scalar(
             select(func.count())
@@ -61,6 +67,7 @@ def pending_count(db: Session) -> int:
 
 
 def review_inbox(db: Session, limit: int, offset: int) -> ReviewInboxOut:
+    """One page of the review inbox, oldest first."""
     rows = db.execute(
         select(Submission, Assessment, User.full_name)
         .join(Assessment, Assessment.id == Submission.assessment_id)
@@ -94,6 +101,11 @@ def review_inbox(db: Session, limit: int, offset: int) -> ReviewInboxOut:
 
 
 def review_detail(db: Session, user: User, submission_id: uuid.UUID) -> ReviewDetailOut:
+    """One submission with its inspection point and history. 404 if unknown.
+
+    can_review is only true for the newest submission on a current issue, and only while
+    it is pending.
+    """
     row = db.get(Submission, submission_id)
     if row is None:
         raise HTTPException(404, "Submission not found.")
@@ -133,6 +145,11 @@ def review_submission(
     submission_id: uuid.UUID,
     decision: ReviewDecision,
 ) -> SubmissionOut:
+    """Approve or send back a submission, recording who decided and when.
+
+    404 if unknown. 409 if it was already reviewed, a newer one exists, the point no longer
+    takes uploads, or the homeowner changed it after the admin opened it (expected_version).
+    """
     original = db.get(Submission, submission_id)
     if original is None:
         raise HTTPException(404, "Submission not found.")

@@ -1,3 +1,9 @@
+"""Shared FastAPI dependencies: database session, photo store, and who is signed in.
+
+Add `user: CurrentUser` to a route to require sign-in, or AdminUser / ResidentUser to
+also require a role.
+"""
+
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
@@ -41,6 +47,7 @@ def get_current_user(request: Request, db: DbSession) -> User:
 
 
 def _issued_before_password_change(claims: TokenClaims, user: User) -> bool:
+    """True when the token was made before the user's last password change."""
     if user.password_changed_at is None:
         return False
     # iat is whole seconds, so a token made in the same second as the change is still valid

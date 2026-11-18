@@ -50,7 +50,34 @@ fastapi dev app/main.py
 ```
 
 The API is available at `http://127.0.0.1:8000`. Interactive API
-documentation is available at `http://127.0.0.1:8000/docs`.
+documentation is available at `http://127.0.0.1:8000/docs`. Each route's description there
+comes from its docstring.
+
+## Code layout
+
+```
+backend/
+  app/
+    main.py        FastAPI app: logging, CORS, and the /api/v1 routes
+    api/
+      deps.py      shared dependencies: DbSession, PhotoStoreDep, CurrentUser, AdminUser, ResidentUser
+      router.py    collects the route modules
+      routes/      one module per area (auth, me, residents, assessments, submissions, admin...)
+    services/      business rules; routes call these and turn their errors into HTTP responses
+    schemas/       request and response shapes (Pydantic); validators.py holds shared field rules
+    models/        database tables (SQLAlchemy)
+    importers/     readers for inspection data; geodatabase.py reads the City's NAOS file
+    storage/       where photo files are kept (local disk today)
+    cli/           command-line tools: create_admin, import_naos, wait_for_db
+    core/          settings (config.py) and passwords and tokens (security.py)
+    db/            engine, sessions and the model base class
+  migrations/      Alembic migrations
+  tests/           pytest tests
+```
+
+Every module starts with a docstring that says what it is for. A new route goes in
+`app/api/routes/`, keeps its rules in a service in `app/services/`, and is added to
+`app/api/router.py`.
 
 ## Create the first admin
 
@@ -275,6 +302,18 @@ The inbox is an in-app notification/work queue; it does not send email or SMS.
   | 404 | `message_not_found` | | No message has this key |
   | 422 | `invalid_message` | `message` | The text breaks a rule (see "Editable messages") |
   | 422 | | | Body is not `{message: string}` (standard validation error) |
+
+- `GET /api/v1/residents/me/properties/{asset_id}/assessment-requests/open` - residents only.
+  The open full assessment request for one of your linked properties, or `null`. An Asset ID
+  that is not on your account is a 404
+- `POST /api/v1/residents/me/properties/{asset_id}/assessment-requests` - residents only. Body
+  `{note}` (optional, up to 2,000 characters). Asks the department for a full assessment. If a
+  request for the property is already open, that one is returned; only one can be open per asset
+- `GET /api/v1/admin/assessment-requests` - administrators only. `status` (`open` / `handled`),
+  `limit` (1-100, default 25) and `offset`. Open requests first, then newest first. A homeowner
+  whose account was removed shows as "Former homeowner"
+- `POST /api/v1/admin/assessment-requests/{request_id}/handle` - administrators only. Marks the
+  request handled and records the admin. 404 if unknown, 409 if already handled
 
 Protect an endpoint by adding a `user: CurrentUser` parameter (from `app/api/deps.py`).
 The frontend must send requests with `credentials: "include"` so the cookie is sent.

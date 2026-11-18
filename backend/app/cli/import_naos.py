@@ -54,6 +54,7 @@ def count_only(source: InspectionSource) -> ImportSummary:
 
 
 def print_summary(summary: ImportSummary, dry_run: bool, out: TextIO) -> None:
+    """Print a warning for each orphaned photo, then the counts."""
     for photo_id in summary.orphan_photo_ids:
         print(f"warning: photo {photo_id} has no matching inspection point", file=out)
     if dry_run:
@@ -85,6 +86,7 @@ def run_import(
     photo_store: PhotoStore,
     out: TextIO,
 ) -> ImportSummary:
+    """Import the source, or only count it for a dry run, and print the summary."""
     if dry_run:
         summary = count_only(source)
     else:
@@ -95,6 +97,7 @@ def run_import(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Command-line entry point. Returns the exit code: 0 on success, 1 on an error."""
     args = build_parser().parse_args(argv)
     try:
         with GeodatabaseSource(args.path) as source:

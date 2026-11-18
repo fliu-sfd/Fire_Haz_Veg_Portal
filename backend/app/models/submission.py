@@ -11,6 +11,13 @@ from app.db.base import Base
 
 
 class Submission(Base):
+    """Evidence a homeowner sends to show an issue point is fixed.
+
+    status is pending_review, approved or rejected (rejected is Send back in the portal).
+    version goes up on every edit and every decision, so a reviewer cannot decide on
+    evidence that changed after they opened it.
+    """
+
     __tablename__ = "submissions"
     __table_args__ = (
         CheckConstraint("status IN ('pending_review', 'approved', 'rejected')", name="status"),
@@ -43,6 +50,8 @@ class Submission(Base):
 
 
 class SubmissionPhoto(Base):
+    """One photo in a submission. The file itself is in the photo store under storage_key."""
+
     __tablename__ = "submission_photos"
     __table_args__ = (CheckConstraint("size_bytes > 0", name="positive_size"),)
 

@@ -1,3 +1,5 @@
+"""Crew inspection data imported from the City's file: inspection points and their photos."""
+
 import uuid
 from datetime import datetime
 
@@ -77,6 +79,7 @@ class Assessment(Base):
 
     @property
     def submission_status(self) -> str | None:
+        """Status of the newest homeowner submission on this point, or None if there is none."""
         return self.submissions[0].status if self.submissions else None
 
     def __repr__(self) -> str:

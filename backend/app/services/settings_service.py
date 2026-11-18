@@ -1,3 +1,5 @@
+"""Reading and saving the messages admins can edit. The list of them is in editable_messages.py."""
+
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -14,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class UnknownMessageError(Exception):
-    pass
+    """No editable message has this key."""
 
 
 class InvalidMessageError(Exception):
@@ -23,6 +25,8 @@ class InvalidMessageError(Exception):
 
 @dataclass(frozen=True)
 class MessageSetting:
+    """A message with its text in effect and who last changed it."""
+
     key: str
     label: str
     description: str
@@ -37,6 +41,7 @@ class MessageSetting:
 
 
 def _spec(key: str) -> EditableMessage:
+    """The registry entry for key. Raises UnknownMessageError."""
     try:
         return EDITABLE_MESSAGES[key]
     except KeyError:
@@ -44,6 +49,7 @@ def _spec(key: str) -> EditableMessage:
 
 
 def _load(db: Session, specs: list[EditableMessage]) -> list[MessageSetting]:
+    """Settings for the given messages, using the default where nothing is saved."""
     # Asking by registry key is what leaves out rows whose key is no longer in the registry.
     rows = db.execute(
         select(
@@ -81,14 +87,17 @@ def _load(db: Session, specs: list[EditableMessage]) -> list[MessageSetting]:
 
 
 def list_messages(db: Session) -> list[MessageSetting]:
+    """Every editable message."""
     return _load(db, list(EDITABLE_MESSAGES.values()))
 
 
 def get_message(db: Session, key: str) -> MessageSetting:
+    """One editable message. Raises UnknownMessageError."""
     return _load(db, [_spec(key)])[0]
 
 
 def save_message(db: Session, admin: User, key: str, text: str) -> MessageSetting:
+    """Clean and save new text. Raises InvalidMessageError when it breaks a rule."""
     spec = _spec(key)
     try:
         cleaned = clean_message(text, spec)

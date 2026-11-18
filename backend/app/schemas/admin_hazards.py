@@ -1,3 +1,5 @@
+"""Request and response shapes for the admin hazard map."""
+
 import enum
 import re
 from datetime import date, datetime

@@ -1,3 +1,5 @@
+"""Health checks for the API process and the database."""
+
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, status
