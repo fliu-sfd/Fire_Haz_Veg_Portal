@@ -1,9 +1,9 @@
 # Test plan
 
-Task #49 · Test plan and system test scripts · Author: Tejas Shah · Updated November 20, 2026
+Task #49 · Test plan and system test scripts · Author: Tejas Shah · Updated November 4, 2026
 
 This plan says what is tested in the Fire Hazardous Vegetation Portal, how each kind of test
-is run, and the results of the recorded test runs. The step-by-step system
+is run, and what the results were the last time everything was run. The step-by-step system
 tests are in [system-test-scripts.md](system-test-scripts.md).
 
 ## 1. What is tested
@@ -78,7 +78,7 @@ Notes for a clean run:
 - Four tests (3 in `test_geodatabase_reader.py`, 1 in `test_naos_import.py`) are skipped unless
   `NAOS_GDB_PATH` points to a real City inspection file. The file is not in the repository.
 
-## 4. Recorded test results
+## 4. Results of the last full run
 
 ### Backend, November 19, 2026 (#46)
 
