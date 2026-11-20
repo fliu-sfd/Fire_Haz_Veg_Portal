@@ -80,12 +80,31 @@ Notes for a clean run:
 
 ## 4. Results of the last full run
 
+### Backend, November 19, 2026 (#46)
+
+Run on branch `dev` at the merge of pull request #44, with `NAOS_GDB_PATH` set to the City's
+sample file (`data/Community_NAOS_Inspections.gdb.zip`), so no test was skipped.
+
+| Check | Result |
+| --- | --- |
+| Backend tests (`pytest`, PostgreSQL 16 with PostGIS) | 689 passed, 0 skipped, 0 failed |
+| Backend style (`ruff check`) | no problems |
+| Backend formatting (`ruff format --check`) | no changes needed |
+| Line coverage (`uv run --with pytest-cov pytest --cov=app`) | 99% (29 of 2,379 lines not run) |
+
+The lines not run are mostly the command-line entry points, the production-only settings
+checks, and error branches for damaged City files.
+
+This run added 11 tests: two requests writing the same row at once (`test_write_conflicts.py`),
+and in `test_submissions_api.py`, editing or reviewing evidence that a newer submission has
+replaced and photo files that cannot be saved or deleted.
+
+### Frontend and system tests, November 4, 2026
+
 Run on November 4, 2026 on branch `dev` at the merge of pull request #39.
 
 | Check | Result |
 | --- | --- |
-| Backend tests (`pytest`, PostgreSQL 16 with PostGIS) | 674 passed, 4 skipped (no City sample file), 0 failed |
-| Backend style (`ruff check`) | no problems |
 | Frontend logic tests (`npm test`) | 500 passed, 0 failed |
 | ESLint (`npm run lint`) | no problems |
 | TypeScript (`npm run typecheck`) | no errors |
@@ -118,7 +137,6 @@ These have not been tested and should not be reported as passing:
 
 - Real phones and tablets. System tests ran in desktop Chromium only; other browsers were
   not run.
-- Import of the City's real NAOS file (the four skipped tests above).
 - Load and performance testing.
 - A formal accessibility audit.
 - Email or text notifications. The portal does not send them.

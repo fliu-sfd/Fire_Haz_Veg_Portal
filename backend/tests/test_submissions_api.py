@@ -1,6 +1,7 @@
+import logging
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from threading import Barrier
 
@@ -795,3 +796,116 @@ def test_two_administrators_cannot_decide_the_same_submission(test_engine):
             for admin_id in admin_ids:
                 cleanup.delete(cleanup.get(User, admin_id))
             cleanup.commit()
+
+
+def add_newer_submission(db, evidence):
+    newer = Submission(
+        id=uuid.uuid4(),
+        assessment_id=evidence["issue"].id,
+        homeowner_id=evidence["owner"].id,
+        status="pending_review",
+        created_at=datetime.now(UTC) + timedelta(minutes=5),
+    )
+    db.add(newer)
+    db.commit()
+    return newer
+
+
+def test_owner_cannot_edit_a_submission_that_is_no_longer_the_newest(client, db, evidence):
+    saved = submit(client, evidence).json()
+    add_newer_submission(db, evidence)
+
+    response = edit(client, evidence, saved)
+    assert response.status_code == 409
+    assert "newer submission" in response.json()["detail"]
+
+
+def test_admin_cannot_review_a_submission_that_is_no_longer_the_newest(client, db, evidence):
+    saved = submit(client, evidence).json()
+    add_newer_submission(db, evidence)
+    login(client, evidence["admin"])
+
+    response = review(client, saved)
+    assert response.status_code == 409
+    assert "newer submission" in response.json()["detail"]
+    assert db.get(Submission, uuid.UUID(saved["id"])).status == "pending_review"
+
+
+def test_reviewing_an_unknown_submission_is_404(client, evidence):
+    login(client, evidence["admin"])
+    missing = {"id": str(uuid.uuid4()), "version": 1}
+    assert review(client, missing).status_code == 404
+
+
+def test_failed_upload_still_fails_cleanly_when_cleanup_cannot_delete(
+    client, db, evidence, monkeypatch, caplog
+):
+    original_save = evidence["store"].save
+    saved_keys = []
+
+    def save_then_fail(key, data, content_type):
+        original_save(key, data, content_type)
+        saved_keys.append(key)
+        if len(saved_keys) == 2:
+            raise OSError("disk full")
+        return key
+
+    def cannot_delete(key):
+        raise OSError("read-only disk")
+
+    monkeypatch.setattr(evidence["store"], "save", save_then_fail)
+    monkeypatch.setattr(evidence["store"], "delete", cannot_delete)
+    photos = [("photos", (f"p{n}.png", image_bytes(), "image/png")) for n in range(2)]
+
+    with caplog.at_level(logging.ERROR, logger="app.services.submission_service"):
+        with pytest.raises(OSError, match="disk full"):
+            submit(client, evidence, files=photos)
+
+    assert db.scalar(select(func.count()).select_from(Submission)) == 0
+    cleanup_lines = [r for r in caplog.records if "failed homeowner upload" in r.getMessage()]
+    assert len(cleanup_lines) == 2
+
+
+def test_failed_edit_still_fails_cleanly_when_cleanup_cannot_delete(
+    client, db, evidence, monkeypatch, caplog
+):
+    saved = submit(client, evidence).json()
+    original_save = evidence["store"].save
+
+    def save_then_fail(key, data, content_type):
+        original_save(key, data, content_type)
+        raise OSError("disk full")
+
+    def cannot_delete(key):
+        raise OSError("read-only disk")
+
+    monkeypatch.setattr(evidence["store"], "save", save_then_fail)
+    monkeypatch.setattr(evidence["store"], "delete", cannot_delete)
+    new_photo = [("photos", ("new.png", image_bytes(), "image/png"))]
+
+    with caplog.at_level(logging.ERROR, logger="app.services.submission_service"):
+        with pytest.raises(OSError, match="disk full"):
+            edit(client, evidence, saved, photos=new_photo)
+
+    shown = client.get(f"{BASE}/assessments/{evidence['issue'].id}/submissions").json()
+    assert shown == [saved]
+    assert any("failed evidence update" in r.getMessage() for r in caplog.records)
+
+
+def test_edit_succeeds_even_when_the_old_photo_file_cannot_be_removed(
+    client, db, evidence, monkeypatch, caplog
+):
+    saved = submit(client, evidence).json()
+
+    def cannot_delete(key):
+        raise OSError("read-only disk")
+
+    monkeypatch.setattr(evidence["store"], "delete", cannot_delete)
+    new_photo = [("photos", ("new.png", image_bytes(), "image/png"))]
+
+    with caplog.at_level(logging.ERROR, logger="app.services.submission_service"):
+        response = edit(client, evidence, saved, photos=new_photo)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["photos"][0]["id"] != saved["photos"][0]["id"]
+    assert any("superseded homeowner photo" in r.getMessage() for r in caplog.records)
