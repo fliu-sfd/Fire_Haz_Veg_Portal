@@ -16,3 +16,10 @@ The [test plan](testing/test-plan.md) lists what is tested, how to run each kind
 the results of the last full run (task #49). The [system test scripts](testing/system-test-scripts.md)
 are step-by-step browser checks for homeowners and administrators, with the seed data
 (`testing/system-test-seed.sql`) and an automated runner (`testing/run_system_tests.py`).
+
+## Theory of operations
+
+The [Theory of operations](requirements/theory-of-operations.md) explains the
+architecture, shared terms, data and photo workflows, access checks, startup,
+configuration, backup and recovery, and City IT handover for task #84. It also
+cross-references the companion scope and requirements draft in PR #45.
