@@ -1,8 +1,13 @@
 # Dependencies
 node_modules/
 venv/
+.venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Environment variables
 .env
@@ -21,3 +26,9 @@ build/
 # Logs
 *.log
 npm-debug.log*
+
+# Crew photos saved by the local photo store
+photo_storage/
+
+# City sample data (large and not ours to publish); the Docker import reads it from here
+data/*.zip

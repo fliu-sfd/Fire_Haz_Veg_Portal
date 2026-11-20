@@ -1,0 +1,197 @@
+"use client";
+
+import { ArrowDown, ArrowUp, ArrowUpDown, Pencil } from "lucide-react";
+import type { ReactNode } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AssetIdList } from "@/features/admin/components/asset-id-list";
+import { RoleBadge } from "@/features/admin/components/role-badge";
+import { StatusBadge } from "@/features/admin/components/status-badge";
+import type { AdminUser, SortOrder, UserSortField } from "@/features/admin/types";
+import type { ColumnConfig, UserColumnId } from "@/features/admin/utils/columns";
+import { formatDate, formatTimestamp, initials } from "@/features/admin/utils/format";
+import { cn } from "@/lib/utils";
+
+type OpenUser = (id: string, trigger: HTMLElement) => void;
+
+const CELLS: Record<UserColumnId, (user: AdminUser, onOpenUser: OpenUser) => ReactNode> = {
+  name: (user, onOpenUser) => (
+    <div className="flex items-center gap-3">
+      <span
+        aria-hidden="true"
+        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-civic-blue"
+      >
+        {initials(user.fullName)}
+      </span>
+      <button
+        type="button"
+        onClick={(event) => onOpenUser(user.id, event.currentTarget)}
+        className="rounded text-left font-semibold text-charcoal underline-offset-4 hover:text-deep-blue hover:underline"
+      >
+        {user.fullName}
+      </button>
+    </div>
+  ),
+  email: (user) => <span className="text-city-dark">{user.email}</span>,
+  role: (user) => <RoleBadge role={user.role} />,
+  status: (user) => <StatusBadge isActive={user.isActive} />,
+  assetIds: (user) => <AssetIdList ids={user.assetIds} />,
+  lastLoginAt: (user) =>
+    user.lastLoginAt ? (
+      <time dateTime={user.lastLoginAt} title={formatTimestamp(user.lastLoginAt)} className="text-city-dark">
+        {formatDate(user.lastLoginAt)}
+      </time>
+    ) : (
+      <span className="text-muted-foreground">Never</span>
+    ),
+  createdAt: (user) => (
+    <time dateTime={user.createdAt} title={formatTimestamp(user.createdAt)} className="text-city-dark">
+      {formatDate(user.createdAt)}
+    </time>
+  ),
+};
+
+const SKELETON_WIDTHS: Record<UserColumnId, string> = {
+  name: "w-40",
+  email: "w-48",
+  role: "w-20",
+  status: "w-16",
+  assetIds: "w-28",
+  lastLoginAt: "w-24",
+  createdAt: "w-24",
+};
+
+type UsersTableProps = {
+  columns: readonly ColumnConfig<UserColumnId>[];
+  visibleColumns: readonly UserColumnId[];
+  rows: AdminUser[];
+  selectedUserId: string | null;
+  onOpenUser: OpenUser;
+  sort: UserSortField;
+  order: SortOrder;
+  onSortChange: (field: UserSortField) => void;
+  isLoading: boolean;
+  isRefreshing: boolean;
+  skeletonRows: number;
+  /** Rendered across the full width when there are no rows to show. */
+  emptyState?: ReactNode;
+};
+
+function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
+  if (!active) return <ArrowUpDown aria-hidden="true" className="size-3.5 opacity-40" />;
+  return order === "asc" ? (
+    <ArrowUp aria-hidden="true" className="size-3.5" />
+  ) : (
+    <ArrowDown aria-hidden="true" className="size-3.5" />
+  );
+}
+
+export function UsersTable({
+  columns,
+  visibleColumns,
+  rows,
+  selectedUserId,
+  onOpenUser,
+  sort,
+  order,
+  onSortChange,
+  isLoading,
+  isRefreshing,
+  skeletonRows,
+  emptyState,
+}: UsersTableProps) {
+  const shown = columns.filter((column) => visibleColumns.includes(column.id));
+
+  return (
+    <div className="relative">
+      <div
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-x-0 top-0 z-20 h-0.5 overflow-hidden transition-opacity",
+          isRefreshing ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <div className="h-full w-1/3 animate-indeterminate bg-denim motion-reduce:w-full motion-reduce:animate-none" />
+      </div>
+      <Table aria-busy={isLoading || isRefreshing} containerClassName="max-h-[70vh] overflow-auto">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            {shown.map((column) => {
+              const active = column.sortField === sort;
+              return (
+                <TableHead
+                  key={column.id}
+                  scope="col"
+                  aria-sort={active ? (order === "asc" ? "ascending" : "descending") : undefined}
+                  className="sticky top-0 z-10 h-11 bg-city-gray px-4 text-xs font-bold uppercase tracking-[0.08em] text-city-dark shadow-[inset_0_-1px_0_var(--color-city-light)]"
+                >
+                  {column.sortField ? (
+                    <button
+                      type="button"
+                      onClick={() => onSortChange(column.sortField!)}
+                      className={cn(
+                        "-mx-2 inline-flex items-center gap-1.5 rounded px-2 py-1 uppercase hover:bg-accent hover:text-deep-blue",
+                        active && "text-deep-blue",
+                      )}
+                    >
+                      {column.label}
+                      <SortIcon active={active} order={order} />
+                    </button>
+                  ) : (
+                    column.label
+                  )}
+                </TableHead>
+              );
+            })}
+            <TableHead className="sticky top-0 z-10 h-11 w-14 bg-city-gray px-4 shadow-[inset_0_-1px_0_var(--color-city-light)]">
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className={cn("transition-opacity", isRefreshing && "opacity-60")}>
+          {isLoading
+            ? Array.from({ length: skeletonRows }, (_, index) => (
+                <TableRow key={index} className="hover:bg-transparent">
+                  {shown.map((column) => (
+                    <TableCell key={column.id} className="h-14 px-4">
+                      <Skeleton className={cn("h-4 bg-city-light", SKELETON_WIDTHS[column.id])} />
+                    </TableCell>
+                  ))}
+                  <TableCell className="h-14 px-4" />
+                </TableRow>
+              ))
+            : rows.map((user) => (
+                <TableRow
+                  key={user.id}
+                  data-state={user.id === selectedUserId ? "selected" : undefined}
+                  className={cn(!user.isActive && "bg-city-gray/60 text-muted-foreground")}
+                >
+                  {shown.map((column) => (
+                    <TableCell key={column.id} className="h-14 px-4">
+                      {CELLS[column.id](user, onOpenUser)}
+                    </TableCell>
+                  ))}
+                  <TableCell className="h-14 px-4 text-right">
+                    <button
+                      type="button"
+                      aria-label={`Edit ${user.fullName}`}
+                      onClick={(event) => onOpenUser(user.id, event.currentTarget)}
+                      className="inline-flex size-8 items-center justify-center rounded text-city-dark hover:bg-accent hover:text-deep-blue"
+                    >
+                      <Pencil aria-hidden="true" className="size-4" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+          {!isLoading && rows.length === 0 && emptyState ? (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={shown.length + 1} className="p-0 whitespace-normal">
+                {emptyState}
+              </TableCell>
+            </TableRow>
+          ) : null}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

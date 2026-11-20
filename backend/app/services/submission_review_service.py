@@ -1,0 +1,188 @@
+"""Department review of the current evidence for an inspection point."""
+
+import uuid
+from datetime import UTC, datetime
+
+from fastapi import HTTPException
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, aliased, selectinload
+
+from app.models import Assessment, Submission, User
+from app.schemas.assessments import InspectionPointOut
+from app.schemas.submissions import (
+    ReviewDecision,
+    ReviewDetailOut,
+    ReviewInboxItem,
+    ReviewInboxOut,
+    SubmissionOut,
+)
+from app.services.submission_service import (
+    latest_submission_id,
+    list_submissions,
+    require_uploadable,
+    submission_out,
+)
+
+
+def pending_conditions():
+    """Filters for evidence that belongs in the inbox.
+
+    The submission is pending, it is the newest on its point, and the point is an issue in
+    the asset's latest season.
+    """
+    other_point = aliased(Assessment)
+    latest_year = (
+        select(func.max(other_point.season_year))
+        .where(func.lower(other_point.asset_id) == func.lower(Assessment.asset_id))
+        .correlate(Assessment)
+        .scalar_subquery()
+    )
+    latest_id = (
+        select(Submission.id)
+        .where(Submission.assessment_id == Assessment.id)
+        .order_by(Submission.created_at.desc(), Submission.id)
+        .limit(1)
+        .correlate(Assessment)
+        .scalar_subquery()
+    )
+    return (
+        Submission.status == "pending_review",
+        Submission.id == latest_id,
+        Assessment.season_year == latest_year,
+        Assessment.status == "ISSUES",
+    )
+
+
+def pending_count(db: Session) -> int:
+    """Number of submissions in the review inbox."""
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(Submission)
+            .join(Assessment, Assessment.id == Submission.assessment_id)
+            .where(*pending_conditions())
+        )
+        or 0
+    )
+
+
+def review_inbox(db: Session, limit: int, offset: int) -> ReviewInboxOut:
+    """One page of the review inbox, oldest first."""
+    rows = db.execute(
+        select(Submission, Assessment, User.full_name)
+        .join(Assessment, Assessment.id == Submission.assessment_id)
+        .outerjoin(User, User.id == Submission.homeowner_id)
+        .options(selectinload(Submission.photos))
+        .where(*pending_conditions())
+        .order_by(Submission.created_at, Submission.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return ReviewInboxOut(
+        items=[
+            ReviewInboxItem(
+                submission_id=row.id,
+                assessment_id=row.assessment_id,
+                asset_id=assessment.asset_id,
+                site_address=assessment.site_address,
+                homeowner_name=name or "Former homeowner",
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+                photo_count=len(row.photos),
+                inspected_at=assessment.inspected_at,
+                inspection_comments=assessment.comments,
+            )
+            for row, assessment, name in rows
+        ],
+        total=pending_count(db),
+        limit=limit,
+        offset=offset,
+    )
+
+
+def review_detail(db: Session, user: User, submission_id: uuid.UUID) -> ReviewDetailOut:
+    """One submission with its inspection point and history. 404 if unknown.
+
+    can_review is only true for the newest submission on a current issue, and only while
+    it is pending.
+    """
+    row = db.get(Submission, submission_id)
+    if row is None:
+        raise HTTPException(404, "Submission not found.")
+    assessment = db.scalar(
+        select(Assessment)
+        .where(Assessment.id == row.assessment_id)
+        .options(selectinload(Assessment.photos))
+    )
+    history = list_submissions(db, row.assessment_id)
+    latest_id = history[0].id
+    latest_year = db.scalar(
+        select(func.max(Assessment.season_year)).where(
+            func.lower(Assessment.asset_id) == assessment.asset_id.lower()
+        )
+    )
+    current_issue = assessment.status == "ISSUES" and assessment.season_year == latest_year
+    items = [
+        submission_out(item, user, is_latest=item.id == latest_id and current_issue)
+        for item in history
+    ]
+    name = db.scalar(select(User.full_name).where(User.id == row.homeowner_id))
+    return ReviewDetailOut(
+        asset_id=assessment.asset_id,
+        season_year=assessment.season_year,
+        homeowner_name=name or "Former homeowner",
+        inspection=InspectionPointOut.model_validate(assessment).model_copy(
+            update={"submission_status": history[0].status}
+        ),
+        submission=next(item for item in items if item.id == submission_id),
+        history=items,
+    )
+
+
+def review_submission(
+    db: Session,
+    user: User,
+    submission_id: uuid.UUID,
+    decision: ReviewDecision,
+) -> SubmissionOut:
+    """Approve or send back a submission, recording who decided and when.
+
+    404 if unknown. 409 if it was already reviewed, a newer one exists, the point no longer
+    takes uploads, or the homeowner changed it after the admin opened it (expected_version).
+    """
+    original = db.get(Submission, submission_id)
+    if original is None:
+        raise HTTPException(404, "Submission not found.")
+    assessment_id = original.assessment_id
+    # All evidence writes lock the assessment before locking/updating a submission.
+    assessment = db.scalar(
+        select(Assessment).where(Assessment.id == assessment_id).with_for_update()
+    )
+    row = db.scalar(
+        select(Submission)
+        .where(Submission.id == submission_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if row is None or row.status != "pending_review":
+        raise HTTPException(
+            409, "This submission has already been reviewed. Refresh the assessment."
+        )
+    if latest_submission_id(db, assessment_id) != row.id:
+        raise HTTPException(409, "A newer submission exists. Review the latest evidence instead.")
+    require_uploadable(db, assessment)
+    if row.version != decision.expected_version:
+        raise HTTPException(
+            409,
+            "The homeowner changed this evidence. "
+            "Refresh and review the updated submission before deciding.",
+        )
+    row.status = decision.decision
+    row.review_comment = decision.comment
+    row.reviewed_by = user.id
+    row.reviewed_at = datetime.now(UTC)
+    row.version += 1
+    db.flush()
+    result = submission_out(row, user)
+    db.commit()
+    return result
