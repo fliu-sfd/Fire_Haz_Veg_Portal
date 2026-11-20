@@ -1,9 +1,9 @@
 # Test plan
 
-Task #49 · Test plan and system test scripts · Author: Tejas Shah · Updated November 4, 2026
+Task #49 · Test plan and system test scripts · Author: Tejas Shah · Updated November 20, 2026
 
 This plan says what is tested in the Fire Hazardous Vegetation Portal, how each kind of test
-is run, and what the results were the last time everything was run. The step-by-step system
+is run, and the results of the recorded test runs. The step-by-step system
 tests are in [system-test-scripts.md](system-test-scripts.md).
 
 ## 1. What is tested
@@ -78,7 +78,7 @@ Notes for a clean run:
 - Four tests (3 in `test_geodatabase_reader.py`, 1 in `test_naos_import.py`) are skipped unless
   `NAOS_GDB_PATH` points to a real City inspection file. The file is not in the repository.
 
-## 4. Results of the last full run
+## 4. Recorded test results
 
 ### Backend, November 19, 2026 (#46)
 
@@ -98,6 +98,38 @@ checks, and error branches for damaged City files.
 This run added 11 tests: two requests writing the same row at once (`test_write_conflicts.py`),
 and in `test_submissions_api.py`, editing or reviewing evidence that a newer submission has
 replaced and photo files that cannot be saved or deleted.
+
+### Frontend, November 20, 2026 (#88)
+
+Verified by Hruday Pabbisetty on `feature/88-frontend-tests`, based on `dev` commit
+`2809d39d723293ed913266ce9cd0694b8217c320`. The tested frontend files are in commit
+`0108c8096397c95c3d152fd84ba25a1eb5ca8600`. Environment: Windows, Node.js 24.12.0,
+npm 11.6.2. Commands ran from `frontend/` after installing the locked dependencies.
+
+| Check | Result |
+| --- | --- |
+| Dependency installation (`npm ci --no-audit --no-fund`) | passed |
+| Frontend logic tests (`npm test`) | 510 passed, 0 failed, 0 skipped |
+| ESLint (`npm run lint`) | no errors or warnings |
+| TypeScript (`npm run typecheck`: `next typegen && tsc --noEmit`) | no errors |
+| Production build (`npm run build`) | passed on retry, with a Next.js security warning |
+| Dependency audit (`npm audit --json`) | 9 vulnerabilities: 8 moderate, 1 high; exit code 1 |
+
+All 505 existing tests passed before adding five regression tests. The new tests cover the
+default 2,000-character limit for every quick reason, trailing whitespace at that limit,
+editing or removing an inserted reason, sending quick reasons and custom text together,
+and approving with a blank optional comment. The review request tests use mocked fetch
+responses and check the decision, evidence version, and comment sent to the API.
+
+Next.js stopped the build at its security reminder. The documented retry completed
+with the same dependencies and configuration, and kept the warning. Next.js 16.4.2 has
+[published security advisories](https://github.com/vercel/next.js/releases/tag/v16.4.5).
+The dependency findings remain open; upgrade the affected packages and rerun validation
+before deployment. No dependency versions were changed for this task.
+
+All requested frontend checks passed without application code changes. This run checked
+frontend logic, static checks, and the build; it did not rerun backend tests or browser
+system tests. Those results keep their original dates in this section.
 
 ### Frontend and system tests, November 4, 2026
 
