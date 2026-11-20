@@ -216,6 +216,10 @@ Uploading photos alone never clears a hazard. An issue without coordinates
 still counts when deciding whether the property is closed, even though a map
 marker needs located points.
 
+The assessment detail header summarizes outstanding work differently: if one
+point is pending but another still needs work, it shows Work needed. The map
+and property card use the API's aggregate Pending review state in that case.
+
 ### 5.5 Full assessment requests
 
 This is a separate workflow. From a linked property's assessment page, a
@@ -287,3 +291,370 @@ is not activated by selecting production settings. The application currently
 has no email verification, forgotten-password reset, or self-service proof of
 property ownership. An existing signed-in user can change their password by
 providing the current one.
+
+## 8 Running and configuring the system
+
+### 8.1 Configuration boundaries
+
+The command examples use PowerShell 7.3 or later and Docker Compose v2. Use
+Standard native argument passing so quoted shell/SQL strings reach the
+container intact:
+
+```powershell
+$PSNativeCommandArgumentPassing = 'Standard'
+```
+
+Run Compose commands from the repository root. A root `.env` supplies Compose
+substitutions. A directly started backend reads `backend/.env` when its working
+directory is `backend`; the Docker image does not copy that file. A directly
+started frontend uses `frontend/.env.local`.
+
+| Setting | Where it takes effect |
+| --- | --- |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Compose database initialization and the API connection string. Defaults are for local development. Changing them on an existing `pgdata` volume does not recreate accounts, change passwords, or rename databases. |
+| `POSTGRES_PORT`, `API_PORT`, `FRONTEND_PORT` | Host-published ports, defaulting to 5432, 8000, and 3000. Containers reach PostgreSQL at `db:5432`, regardless of its published host port. |
+| `NAOS_DATA_DIR` | Compose's host input directory, default `./data`, mounted read-only at `/data` in the API container. |
+| `AUTO_IMPORT`, `NAOS_SEASON_YEAR` | API entrypoint import switch and supplied export's season. Defaults are `true` and `2026`. Automatic import requires the literal value `true`. |
+| `DATABASE_URL` | Backend database connection. Compose constructs it from the database settings; a direct backend needs the correct host address and port. |
+| `PHOTO_STORAGE_DIR` | Backend private file root. Compose sets `/app/photo_storage` and mounts `photos` there; direct execution defaults to `./photo_storage`. |
+| `CORS_ORIGINS` | JSON list of browser origins allowed to make credentialed API requests. Compose supplies `http://localhost:<FRONTEND_PORT>`. |
+| `NEXT_PUBLIC_API_URL` | Browser-reachable API address, including `/api/v1`. Compose supplies `http://localhost:<API_PORT>/api/v1`. This is public configuration, not a place for credentials. |
+| `ENVIRONMENT`, `JWT_SECRET_KEY`, `AUTH_COOKIE_SECURE` | Backend deployment settings. Production mode requires a nondefault secret of at least 32 characters and HTTPS-only cookies. |
+
+The browser must be able to resolve its API address. Docker's service hostname
+`api` is not a substitute for a browser-visible hostname. Use a consistent host
+name: switching between `localhost` and `127.0.0.1` can break CORS or sign-in
+cookies. Production frontend builds capture `NEXT_PUBLIC_*` values when built.
+
+### 8.2 Start the development stack
+
+Install Docker Desktop with Linux containers, obtain the approved City export,
+and place it in `data/` or the configured host input directory. Choose the
+correct season for that export. Keep an existing configuration rather than
+overwriting it with example files.
+
+```powershell
+docker compose config --quiet
+docker compose up --build -d
+docker compose ps
+docker compose logs --tail 100 api
+```
+
+Stop and inspect any failed command before continuing. On every API container
+start, the entrypoint:
+
+1. Waits for a database connection.
+2. Runs `alembic upgrade head`. A migration failure stops startup.
+3. If import is enabled, imports the first sorted top-level `.gdb.zip` or
+   `.gdb` input from `/data`. No file means import is skipped. An import failure
+   logs a warning and still allows API startup.
+4. Starts Uvicorn.
+
+The database init SQL runs only when `pgdata` is first initialized. It enables
+PostGIS and pgcrypto and creates the separate `fire_hazard_veg_test` database.
+That test database name is fixed in the init script, even if `POSTGRES_DB` is
+customized. Migration `0006` refuses unresolved old firefighter accounts;
+agree on a migration of those accounts rather than deleting or promoting them
+without authorization.
+
+With the default local ports, verify:
+
+```powershell
+Invoke-RestMethod 'http://localhost:8000/api/v1/health'
+Invoke-RestMethod 'http://localhost:8000/api/v1/health/db'
+docker compose exec api python -m alembic current
+docker compose exec -T db sh -ec 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT season_year, count(*) FROM assessments GROUP BY season_year ORDER BY season_year;"'
+```
+
+The health endpoints check the API process and database/PostGIS respectively.
+They do not verify the migration revision, expected import counts, or photo
+files. Compare the import summary with the approved input, check orphaned-photo
+warnings, and open both a crew photo and resident evidence through an
+authorized account. Current migration head is `0011`.
+
+Open `http://localhost:3000` and use `/api/v1` endpoints or
+`http://localhost:8000/docs` for API diagnostics. The frontend can start before
+the API is ready; its Compose dependency is not an API readiness check.
+
+### 8.3 First administrator and portal settings
+
+Residents register through the portal. Bootstrap the first local administrator
+from the server command line, replacing the example identity:
+
+```powershell
+docker compose exec api python -m app.cli.create_admin --email admin@example.com --name "Portal Administrator"
+```
+
+The command prompts twice for a password and refuses an existing email. Do not
+put a password in a command argument or commit credentials. Afterwards an admin
+can promote an eligible existing resident from Users; linked assets must first
+be removed before changing that resident to an admin.
+
+The Settings page changes registered portal messages, currently the
+disabled-account sign-in message. Defaults and limits are in
+`backend/app/services/editable_messages.py`, with overrides in `app_settings`.
+Settings does not manage infrastructure configuration or the quick-reason
+sentences used by Send back.
+
+For direct development outside Docker, follow the
+[backend setup](../../backend/README.md#setup-with-uv) and
+[frontend setup](../../frontend/README.md#run-locally). Create a backend `.env`
+from `.env.example` only when it does not already exist.
+
+### 8.4 Production deployment decisions
+
+The checked-in Compose stack is a development environment. Its frontend runs
+`npm run dev`, mounts source directories, and the database, API, and frontend
+ports are published on the host. Production needs a reviewed deployment
+configuration, built frontend, HTTPS ingress, appropriate network exposure,
+and City-approved storage and access controls.
+
+Compose currently forwards only its declared API environment entries. Adding
+`ENVIRONMENT=production`, `JWT_SECRET_KEY`, or `AUTH_COOKIE_SECURE` to the root
+`.env` alone does not pass them into the API container. City IT must explicitly
+configure those values in the API process or deployment manifest, together with
+the real CORS origins and browser API URL. Verify the effective environment
+without logging secret values. Use nondefault database credentials and encode
+reserved characters correctly when constructing a database URL; the development
+Compose file concatenates its password directly into that URL.
+
+Keep the API image, migration revision, database, and photo volume compatible
+during upgrades. Take a matching backup before migrations and stop for a failed
+migration rather than restarting repeatedly. Restoring the previous application
+image alone does not reverse a database migration. HTTPS settings do not supply
+the still-unimplemented Microsoft administrator sign-in integration.
+
+## 9 Backup and recovery
+
+### 9.1 What must be preserved
+
+Back up the application database and photo volume as one set while application
+writes are stopped. A database dump contains image metadata, not image bytes;
+an archive of photos contains no accounts, property links, submissions,
+decisions, settings, or requests. Re-importing the City file cannot rebuild
+resident activity or recover files skipped because their metadata already exists.
+
+Keep the approved source export, application release and image identifiers,
+migration revision, and deployment configuration with the recovery record.
+Store secrets separately in City-approved secret storage. Backups contain
+private account information, comments, and photos: restrict access and copy
+the verified set to approved storage outside the application host.
+
+The following PowerShell example is for the checked-in single-host Docker
+layout. The operator must first stop any manual importer, maintenance job, or
+other database/photo writer. Production scheduling, retention, backup ownership,
+and recovery targets must be agreed with City IT.
+
+### 9.2 Capture a matching set
+
+This helper stops a command sequence when Docker returns an error. It avoids
+depending on PowerShell's treatment of native-command failures.
+
+```powershell
+function Invoke-PortalDocker {
+    $PSNativeCommandArgumentPassing = 'Standard'
+    & docker @args
+    if ($LASTEXITCODE -ne 0) { throw "Docker failed; inspect the error before continuing." }
+}
+
+$backupDir = Join-Path $env:USERPROFILE ("fhv-backups\" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$backupDir = (New-Item -ItemType Directory -Path $backupDir -ErrorAction Stop).FullName
+$dbId = (Invoke-PortalDocker compose ps -q db).Trim()
+$apiId = (Invoke-PortalDocker compose ps -q api).Trim()
+$apiImage = (Invoke-PortalDocker inspect --format '{{.Image}}' $apiId).Trim()
+$mounts = Invoke-PortalDocker inspect --format '{{json .Mounts}}' $apiId | ConvertFrom-Json
+$photoMount = @($mounts | Where-Object { $_.Type -eq 'volume' -and $_.Destination -eq '/app/photo_storage' })
+if ($photoMount.Count -ne 1) { throw 'Expected one Docker photo volume; inspect this deployment.' }
+$photoVolume = $photoMount[0].Name
+
+Invoke-PortalDocker compose stop frontend api
+Invoke-PortalDocker compose exec -T db sh -ec 'pg_dump --format=custom --no-owner --no-acl -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /tmp/portal-database.dump'
+Invoke-PortalDocker cp "${dbId}:/tmp/portal-database.dump" (Join-Path $backupDir 'database.dump')
+Invoke-PortalDocker run --rm --network none --entrypoint python --mount "type=volume,src=$photoVolume,dst=/photos,readonly" --mount "type=bind,src=$backupDir,dst=/backup" $apiImage -c "import tarfile; a=tarfile.open('/backup/photos.tar.gz','w:gz'); a.add('/photos',arcname='.'); a.close()"
+Get-FileHash -Algorithm SHA256 (Join-Path $backupDir 'database.dump'), (Join-Path $backupDir 'photos.tar.gz') | Format-List | Out-File (Join-Path $backupDir 'checksums.txt') -Encoding utf8
+```
+
+The API container and actual photo mount are inspected before the services are
+stopped. Volume names depend on the Compose project; do not assume a particular
+prefix. The helper uses the existing API image's Python and bypasses its normal
+entrypoint, so it does not run migrations or imports. A deployment using a bind
+mount or a different photo root needs its corresponding backup procedure.
+
+`pg_dump` writes its custom-format file inside the database container;
+`docker cp` transfers the bytes. Do not replace this with a binary stdout pipe
+or `>` redirection in Windows PowerShell.
+
+While writes remain stopped, record the repository release, database and API
+image IDs, migration revision, import season/counts, photo counts, and UTC
+backup time beside both files. For example, the revision can be read with:
+
+```powershell
+Invoke-PortalDocker compose exec -T db sh -ec 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT version_num FROM alembic_version;"'
+```
+
+Check both archive files, the hashes, and the recovery record before resuming
+the same installation with `Invoke-PortalDocker compose start api frontend`.
+Startup runs the entrypoint again. If any backup step fails, leave writers
+stopped until the failure is understood and a recovery decision is made.
+
+### 9.3 Restore on a fresh destination
+
+Rehearse recovery on an isolated destination before handover. These steps are
+for a new, empty installation, not for overwriting the live database or merging
+old and new photo trees. The Compose file has fixed container names, so an
+unchanged second Compose project cannot run beside the original stack on the
+same Docker host. Use a separate host or an independently reviewed override.
+
+1. Recover the exact application release and approved configuration recorded
+   with the backup. Verify the two file hashes against the recovery record.
+   Use only the matching, trusted database and photo archives.
+2. Set `AUTO_IMPORT=false`, build/recover the API image, and start only the
+   database. Create the API container without starting it so its empty photo
+   volume can be inspected. Keep the API and frontend stopped.
+3. Restore the database dump before running application migrations: the dump
+   already includes the schema and `alembic_version`. The `--clean` example
+   below belongs only on this fresh destination; it removes objects being
+   restored.
+4. Restore the matching photos into the new empty photo volume. Do not overlay
+   files from another installation or pair archives from different backups.
+5. Check the recovered revision and counts before starting the matching API.
+   Leave automatic import disabled for the initial recovery check. A later
+   upgrade is a separate migration and backup decision.
+
+Use the checked-command helper from Section 9.2. Replace `$restoreDir` with the
+approved backup directory on this fresh host. The archive helper uses a patched
+Python 3.11 image, version 3.11.8 or later, for safe tar extraction.
+
+```powershell
+$restoreDir = (Resolve-Path 'C:\fhv-backups\approved-backup').Path
+$env:AUTO_IMPORT = 'false'
+Invoke-PortalDocker compose build api
+Invoke-PortalDocker compose up -d db
+Invoke-PortalDocker compose create api
+Invoke-PortalDocker compose run --rm --no-deps --entrypoint python api -m app.cli.wait_for_db
+
+$dbId = (Invoke-PortalDocker compose ps -q db).Trim()
+$apiId = (Invoke-PortalDocker compose ps -a -q api).Trim()
+$apiImage = (Invoke-PortalDocker inspect --format '{{.Image}}' $apiId).Trim()
+$mounts = Invoke-PortalDocker inspect --format '{{json .Mounts}}' $apiId | ConvertFrom-Json
+$photoMount = @($mounts | Where-Object { $_.Type -eq 'volume' -and $_.Destination -eq '/app/photo_storage' })
+if ($photoMount.Count -ne 1) { throw 'Expected one empty photo volume; inspect this deployment.' }
+$photoVolume = $photoMount[0].Name
+
+Invoke-PortalDocker cp (Join-Path $restoreDir 'database.dump') "${dbId}:/tmp/portal-database.dump"
+Invoke-PortalDocker compose exec -T db sh -ec 'pg_restore --clean --if-exists --exit-on-error --single-transaction --no-owner --no-privileges -U "$POSTGRES_USER" -d "$POSTGRES_DB" /tmp/portal-database.dump'
+Invoke-PortalDocker run --rm --network none --entrypoint python --mount "type=volume,src=$photoVolume,dst=/photos" --mount "type=bind,src=$restoreDir,dst=/backup,readonly" $apiImage -c "from pathlib import Path; import tarfile; p=Path('/photos'); assert not any(p.iterdir()), 'Restore needs an empty photo volume'; a=tarfile.open('/backup/photos.tar.gz'); a.extractall(p,filter='data'); a.close()"
+```
+
+The one-off `wait_for_db` command checks the configured database over TCP
+before `pg_restore`, retrying up to 30 times. Its entrypoint is overridden, so
+it runs neither migrations nor an import. Configure the API to use this
+restored database and this photo volume together. Compare
+table counts, season data, and revision with the backup record, then start the
+API and frontend at the recovered release. Use `compose up -d api frontend`
+only after those checks; rebuilding or recreating containers must retain
+`AUTO_IMPORT=false` during recovery.
+
+### 9.4 Recovery and upgrade checks
+
+Check more than a successful process start:
+
+- Database/PostGIS health and the expected Alembic revision.
+- Account and property-link counts, submission/review history, settings, and
+  open/handled assessment requests against the recovery record.
+- A permitted crew photo and resident photo from the recovered file store.
+  Also confirm that a signed-out or unrelated resident cannot fetch them.
+- Resident and admin sign-in, one linked assessment, the review inbox, and
+  request handling on synthetic data in the rehearsal environment.
+
+Record the release, tester, date, actual results, and any corrections. Run the
+[system test scripts](../testing/system-test-scripts.md) before a release
+cutover; seed data belongs in a test environment, not the restored live database.
+Do not claim a tested restore or handover approval from a successful dump alone.
+Docker's [volume backup guidance](https://docs.docker.com/engine/storage/volumes/#back-up-restore-or-migrate-data-volumes)
+and PostgreSQL's [pg_dump](https://www.postgresql.org/docs/16/app-pgdump.html)
+and [pg_restore](https://www.postgresql.org/docs/16/app-pgrestore.html) references
+describe the underlying tools.
+
+## 10 Troubleshooting and known limits
+
+| Symptom | First checks |
+| --- | --- |
+| Database is unavailable | Docker Desktop/Linux engine, `compose ps`, database logs, port conflicts, and the configured database name/user. Changing bootstrap variables does not alter existing database credentials. |
+| API exits during startup | API logs and migration revision. Resolve a failed migration, including any legacy-role issue, before retrying. |
+| API is healthy but inspections/photos are missing | Input mount, selected file and season, import counts, orphan warnings, photo metadata, and matching files. Re-import skips existing records and does not repair missing file bytes. |
+| Browser requests fail or sign-in does not persist | Browser-visible API URL, matching hostname/port, CORS allowlist, and cookie HTTPS settings. A container hostname is not a browser API hostname. |
+| Photo returns 404 | Current account/property link, photo metadata, and file availability. Do not make a private directory public to bypass the error. |
+| Review returns 409 | Evidence was changed, reviewed, superseded, or became ineligible. Refresh before making a new decision. |
+
+The current limits and deployment decisions are:
+
+- **Administrator identity:** Microsoft sign-in is planned in SRS FR-03.
+  Local accounts still implement current admin authentication; City IT must
+  supply the integration and account-lifecycle rules.
+- **Property access assumption:** A valid Asset ID is accepted without proof
+  of ownership, as described in CON-03. Extra identity/claim verification is
+  excluded from the current version, not silently supplied by authentication.
+- **Parent and historical IDs:** Parent/prior IDs are stored but are not used
+  for hierarchy lookup, inherited access, or reconciliation between seasons.
+  Supporting those behaviors would need an agreed change of scope and rules.
+- **Hosting and storage:** Development uses one host and private disk storage.
+  Production hosting, basemap provider, approved photo storage, retention, and
+  backup/recovery ownership require City IT decisions. Multiple API hosts need
+  a deliberately shared store or another `PhotoStore` implementation and a
+  verified file migration.
+- **Follow-up boundaries:** There is no appointment scheduler, email/SMS
+  delivery, live City-data synchronization, automated hazard clearance, or
+  firefighter portal. A stored field or a valid signup does not imply these
+  capabilities exist.
+- **Guide and test coverage:** Some user-guide sections describe an earlier
+  build and still mark implemented features as Planned. Use the current code,
+  requirements, and test scripts to finalize them. The test plan records its
+  own run date and coverage; desktop Chromium results are not a full mobile,
+  accessibility, performance, or production recovery assessment.
+
+## 11 Requirements cross references
+
+The companion SRS snapshot linked in Section 1 uses requirement identifiers
+rather than numbered sections. These references pair those identifiers with
+this document's numbered operating sections without inventing SRS section
+numbers.
+
+| Companion requirement or heading | Operating explanation |
+| --- | --- |
+| [Users and roles](https://github.com/fliu-sfd/Fire_Haz_Veg_Portal/blob/9f765f1d83ea264bf6127182de07e20caf046a35/docs/requirements/project-scope.md#users-and-roles), FR-01 to FR-03 | [Section 2](#2-shared-terms), [Section 7](#7-access-control-and-privacy), and [Section 8.3](#83-first-administrator-and-portal-settings); current local login is distinct from planned SSO. |
+| FR-02, FR-04, FR-05; CON-01 to CON-04 | [Sections 4.1 to 4.3](#4-data-entering-the-portal); import, explicit property links, and per-asset season selection. |
+| FR-06 to FR-10 | [Sections 5.1 to 5.4](#5-resident-evidence-and-department-review); evidence, editing, review decisions, and derived state. |
+| FR-11 to FR-13 | [Sections 4.3](#43-assessment-display-and-the-map), [7](#7-access-control-and-privacy), and [8.3](#83-first-administrator-and-portal-settings); map, user management, and supported settings. |
+| FR-14 | [Section 5.5](#55-full-assessment-requests); one open request per asset, handling, and scheduling boundary. |
+| NFR-01, NFR-02, NFR-04, NFR-05 | [Section 7](#7-access-control-and-privacy) and [Section 9](#9-backup-and-recovery); permissions, private files, and paired recovery. |
+| NFR-03, NFR-07 | [Section 5.1](#51-upload-and-storage); actual image validation and the 5 MiB limit underlying the interface's 5 MB label. |
+| NFR-06 | [Sections 5.2 to 5.3](#52-pending-edits-and-history); pending edits, feedback, quick reasons, and stale-review handling. |
+| [Out of scope](https://github.com/fliu-sfd/Fire_Haz_Veg_Portal/blob/9f765f1d83ea264bf6127182de07e20caf046a35/docs/requirements/project-scope.md#out-of-scope) | [Section 10](#10-troubleshooting-and-known-limits); explicit boundaries and production decisions. |
+
+## 12 City IT handover checks
+
+Before accepting the deployment, the team and City IT should record:
+
+- The chosen release and matching image identifiers, migration revision,
+  approved dataset/season, and deployment configuration.
+- The service owner, host, HTTPS/DNS and network configuration, database
+  account responsibilities, and the browser API/CORS configuration.
+- The initial administrator process and the decision/implementation status
+  of Microsoft sign-in.
+- Photo storage location, permissions, capacity, retention/deletion policy,
+  and how database and photo backups are protected off-host.
+- Backup frequency, recovery objectives, restore owner, and a completed
+  recovery rehearsal with authorized photo reads.
+- A walkthrough by someone who did not write the operating instructions,
+  covering startup, login, property access, upload/review, assessment requests,
+  troubleshooting, and recovery.
+- Updated user guides and the recorded release-test results, with the
+  remaining limits and responsibility for follow-up work.
+
+Use the [database guide](../database.md),
+[backend instructions](../../backend/README.md),
+[photo storage decision](../decisions/0001-photo-storage.md), and
+[test plan](../testing/test-plan.md) alongside these checks. Handover is complete
+when the receiving team has recorded successful operation and recovery of the
+agreed deployment.
