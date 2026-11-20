@@ -34,6 +34,39 @@ test("sentence that would pass the max length is not added", () => {
   assert.ok(canAddReason(fits, blurry, max));
 });
 
+test("default comment limit accepts 2,000 characters and rejects 2,001", () => {
+  for (const reason of SEND_BACK_REASONS) {
+    const fits = "x".repeat(2000 - reason.text.length - 1);
+    assert.equal(addReason(fits, reason), `${fits}\n${reason.text}`);
+    assert.equal(addReason(fits, reason).length, 2000);
+    assert.ok(canAddReason(fits, reason));
+
+    const tooLong = `${fits}x`;
+    assert.equal(addReason(tooLong, reason), tooLong);
+    assert.ok(!canAddReason(tooLong, reason));
+  }
+});
+
+test("trailing whitespace leaves room for a reason at the default limit", () => {
+  const existing = "x".repeat(2000 - blurry.text.length - 1);
+  const comment = `${existing} \t\n`;
+  assert.equal(addReason(comment, blurry), `${existing}\n${blurry.text}`);
+  assert.equal(addReason(comment, blurry).length, 2000);
+  assert.ok(canAddReason(comment, blurry));
+});
+
+test("editing or removing an inserted sentence makes the reason available again", () => {
+  const original = addReason("See the back fence.", blurry);
+  const edited = original.replace(blurry.text, "Please retake the fence photo.");
+  assert.ok(!hasReason(edited, blurry));
+  assert.ok(canAddReason(edited, blurry));
+  assert.equal(addReason(edited, blurry), `See the back fence.\nPlease retake the fence photo.\n${blurry.text}`);
+
+  const removed = original.replace(`\n${blurry.text}`, "");
+  assert.ok(canAddReason(removed, blurry));
+  assert.equal(addReason(removed, blurry), original);
+});
+
 test("every reason has a unique id, a label and a short sentence", () => {
   const ids = SEND_BACK_REASONS.map((reason) => reason.id);
   assert.equal(new Set(ids).size, ids.length);
