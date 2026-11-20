@@ -79,6 +79,23 @@ export default function HazardMap({
     if (map && isVisible) map.invalidateSize();
   }, [map, isVisible]);
 
+  // CSS can reveal the map at the desktop breakpoint while "List" remains selected.
+  // Observe the container too: changing viewport size does not change isVisible.
+  useEffect(() => {
+    if (!map) return;
+    let frame = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry || !entry.contentRect.width || !entry.contentRect.height) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    });
+    observer.observe(map.getContainer());
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (!map || fitKey === null || fitKey === lastFitKey.current) return;
     const isFirstFit = lastFitKey.current === null;

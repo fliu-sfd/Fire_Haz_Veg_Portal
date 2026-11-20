@@ -58,7 +58,7 @@ export function PropertyAssessmentView({ assetId, departmentView = false }: { as
             </div>
             <Badge
               variant={needsAction ? "destructive" : "secondary"}
-              className={`px-3 py-1.5 text-sm ${needsAction ? "bg-city-orange text-charcoal" : waiting && departmentView ? "bg-blue-50 text-civic-blue" : "bg-success-green text-white"}`}
+              className={`px-3 py-1.5 text-sm ${needsAction ? "bg-city-orange text-charcoal" : waiting && departmentView ? "bg-blue-50 text-civic-blue" : "bg-success-dark text-white"}`}
             >
               <StatusIcon aria-hidden="true" />
               {label}

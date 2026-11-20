@@ -33,7 +33,7 @@ export function InspectionCard({ inspection, number, departmentView = false }: I
           </div>
           <Badge
             variant={actionRequired ? "destructive" : "secondary"}
-            className={actionRequired ? "bg-city-orange text-charcoal" : waiting && departmentView ? "bg-blue-50 text-civic-blue" : "bg-success-green text-white"}
+            className={actionRequired ? "bg-city-orange text-charcoal" : waiting && departmentView ? "bg-blue-50 text-civic-blue" : "bg-success-dark text-white"}
           >
             <StatusIcon aria-hidden="true" />
             {label}

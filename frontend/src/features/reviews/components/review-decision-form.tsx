@@ -10,10 +10,12 @@ import { REVIEW_COMMENT_MAX_LENGTH, SEND_BACK_REASONS } from "../utils/send-back
 import type { SendBackReason } from "../utils/send-back-reasons";
 import { SendBackReasons } from "./send-back-reasons";
 
-export function ReviewDecisionForm({ submission, onReviewed }: {
+export function ReviewDecisionForm({ submission, onReviewed, headingLevel = "h4" }: {
   submission: Submission;
   onReviewed: (result: Submission) => void;
+  headingLevel?: "h2" | "h4";
 }) {
+  const Heading = headingLevel;
   const id = useId();
   const form = useReviewDecision(submission, onReviewed);
   const [lastAdded, setLastAdded] = useState<string>();
@@ -27,7 +29,7 @@ export function ReviewDecisionForm({ submission, onReviewed }: {
   return (
     <form onSubmit={form.submit} aria-busy={form.saving} aria-labelledby={`${id}-title`} className="mt-5 space-y-4 rounded-lg border border-denim/30 bg-blue-50/40 p-4 sm:p-5">
       <div>
-        <h4 id={`${id}-title`} className="text-base font-semibold text-charcoal">Review this submission</h4>
+        <Heading id={`${id}-title`} className="text-base font-semibold text-charcoal">Review this submission</Heading>
         <p className="mt-1 text-sm leading-6 text-city-dark">Compare the homeowner photos with the original inspection before saving a decision. Your comment will be visible to the homeowner.</p>
       </div>
       <fieldset disabled={form.saving} className="space-y-2">

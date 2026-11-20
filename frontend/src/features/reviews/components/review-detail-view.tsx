@@ -51,7 +51,7 @@ export function ReviewDetailView({ submissionId }: { submissionId: string }) {
         </section>
       </div>
 
-      {submission.canReview ? <ReviewDecisionForm key={`${submission.id}:${submission.version}`} submission={submission} onReviewed={page.reviewed} /> : (
+      {submission.canReview ? <ReviewDecisionForm key={`${submission.id}:${submission.version}`} submission={submission} onReviewed={page.reviewed} headingLevel="h2" /> : (
         <div role="status" className="rounded-lg border border-city-light bg-white p-5 text-sm text-city-dark">
           {submission.reviewedAt ? <><p className="font-semibold">Decision recorded {evidenceDate(submission.reviewedAt)}</p><p className="mt-2 whitespace-pre-wrap [overflow-wrap:anywhere]">{submission.reviewComment || "The department approved this evidence."}</p></> : <p>This submission is no longer available for review. Open the inbox to review current evidence.</p>}
         </div>
