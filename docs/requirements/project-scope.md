@@ -125,3 +125,35 @@ The following items are explicitly outside the portal scope:
 - automatically clearing a hazard when a resident uploads photos;
 - email or text notifications for submissions and review decisions; and
 - scheduling a home-assessment appointment inside the portal.
+
+## Traceability to Taiga
+
+This table uses only story numbers supported by repository documentation or
+public pull-request metadata. A task number is shown when the repository records
+the implementation task but does not identify its parent user story. Items
+marked **Not recorded** need their Taiga story number added after confirmation;
+no number has been guessed.
+
+| Requirement | Taiga user story | Related implementation task or evidence |
+| --- | --- | --- |
+| FR-01 — Resident registration | Not recorded | `feature/signup`, `feature/login`, and `feature/connect-frontend-backend` |
+| FR-02 — Property linking | #42 | `feature/42-property-link` and `feature/link-properties-after-signup` |
+| FR-03 — Microsoft admin sign-in | Not recorded; planned | Production integration is not implemented in the repository |
+| FR-04 — Inspection details | Not recorded | Tasks #71 (assessment API) and #72 (property assessment page) |
+| FR-05 — Original crew photos | Not recorded | Task #71 includes protected crew-photo access; task #72 displays the photos |
+| FR-06 — Completion-photo submission | #38 and #43 | #43 defines the evidence requirements; #38 implements upload and editing |
+| FR-07 — Optional comment | #43 | Photo-evidence acceptance criteria |
+| FR-08 — Edit pending evidence | #38 | Homeowner photo upload and editing workflow |
+| FR-09 — Review inbox | #39 | Administrator review workflow |
+| FR-10 — Approve or send back | #39 | Administrator review decision and reason workflow |
+| FR-11 — Admin hazard map and filters | Not recorded | `feature/admin-hazard-map` and `feature/hazard-map-triage` |
+| FR-12 — Users page | Not recorded | `feature/admin-user-list`, `feature/admin-users-ui`, and `feature/admin-edit-deactivate-user` |
+| FR-13 — Disabled-account message setting | Not recorded | `feature/editable-portal-messages` |
+| FR-14 — Full home assessment request | #45 | Tasks #80 (API) and #81 (resident and admin pages) |
+| NFR-01 and NFR-02 — Role and property access | #38, #39, and #43 where applicable | Two-role decision from the October 29 meeting; task #71 protects assessments and crew photos |
+| NFR-03 and NFR-07 — Image validation and limits | #43 | #38 implements the validation rules |
+| NFR-04 and NFR-05 — Protected links and privacy | #38, #41, and #43 | #41 records the private photo-storage decision |
+| NFR-06 — Usability and feedback | Not recorded | Covered across the resident and admin feature implementations |
+| CON-01 and CON-02 — NAOS/imported data | Not recorded | `feature/data` and `feature/33-assessment-tables` |
+| CON-03 — Asset-ID assumption | #42 | Property-linking workflow; ownership proof remains out of scope |
+| CON-04 — Existing firefighter workflow | #43 where photo evidence is concerned | October 29 two-role decision and `feature/two-roles-resident-admin` |
