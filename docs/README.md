@@ -3,6 +3,12 @@
 This folder holds meeting notes, requirements documents, and sponsor
 communication relevant to the project.
 
+## Project requirements
+
+The [project scope and requirements](requirements/project-scope.md) define the
+portal's purpose, users, functional and non-functional requirements, limits,
+assumptions, exclusions, and Taiga traceability.
+
 ## User guides
 
 The [user guide index](user-guides/README.md) links to the homeowner and
