@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { getReviewDetail, getReviewInbox, parseReviewInbox, pendingReviewCount, saveReview } from "@/features/reviews/api";
 import { ResponseFormatError } from "@/lib/api/errors";
 import { ApiError } from "@/lib/api/client";
+import { SEND_BACK_REASONS, addReason } from "@/features/reviews/utils/send-back-reasons";
 
 const item = {
   submission_id: "submission-1", assessment_id: "assessment-1", asset_id: "A-1",
@@ -74,6 +75,31 @@ test("save decision sends the exact evidence version and returns the department 
   assert.equal(result.status, "approved");
   assert.equal(result.reviewComment, "Verified");
   assert.equal(result.canEdit, false);
+});
+
+test("send back preserves quick reasons and custom text in the review request", async (t) => {
+  const comment = addReason(addReason("Please check the back fence.", SEND_BACK_REASONS[0]), SEND_BACK_REASONS[1]);
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.match(url, /\/admin\/submissions\/submission-1\/review$/);
+    assert.equal(options.method, "POST");
+    assert.equal(options.credentials, "include");
+    assert.deepEqual(JSON.parse(options.body), { decision: "rejected", expected_version: 3, comment });
+    return Response.json({ ...approved, status: "rejected", review_comment: comment });
+  });
+  const result = await saveReview(submission, "rejected", ` \n${comment}\n `);
+  assert.equal(result.status, "rejected");
+  assert.equal(result.reviewComment, comment);
+});
+
+test("approval sends a blank optional comment as null", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    assert.match(url, /\/admin\/submissions\/submission-1\/review$/);
+    assert.deepEqual(JSON.parse(options.body), { decision: "approved", expected_version: 3, comment: null });
+    return Response.json({ ...approved, review_comment: null });
+  });
+  const result = await saveReview(submission, "approved", " \t\n ");
+  assert.equal(result.status, "approved");
+  assert.equal(result.reviewComment, null);
 });
 
 test("stale decisions preserve the 409 conflict for a useful refresh message", async (t) => {
