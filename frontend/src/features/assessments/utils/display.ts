@@ -23,14 +23,14 @@ export function nextStep(inspection: InspectionPoint): string {
     return "Completion photos have been submitted. The homeowner's submission step is complete; department verification is pending.";
   }
   if (inspection.submissionStatus === "approved") {
-    return "The department approved the submitted evidence. The original crew finding is preserved below for reference.";
+    return "The department approved the submitted evidence. The original crew finding is preserved for reference.";
   }
   if (inspection.submissionStatus === "rejected") {
     return "The department needs more work or evidence. Review the finding and submit updated completion photos.";
   }
   if (inspection.status === "ISSUES") {
     return inspection.comments?.trim()
-      ? "Complete the work described in the inspection notes below. Contact Fire Prevention if any instruction is unclear."
+      ? "Complete the work described in the inspection notes. Contact Fire Prevention if any instruction is unclear."
       : "Contact Fire Prevention for the corrective work required at this inspection point.";
   }
   return "No corrective work is listed for this inspection point. Continue routine vegetation maintenance.";

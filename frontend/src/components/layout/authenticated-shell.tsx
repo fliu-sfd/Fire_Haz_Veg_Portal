@@ -97,7 +97,7 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
           <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
             <SheetTrigger
               aria-label="Open navigation"
-              className="-ml-1 flex size-10 shrink-0 items-center justify-center rounded text-blue-50 transition-colors hover:bg-white/10"
+              className="-ml-1 flex size-11 shrink-0 items-center justify-center rounded text-blue-50 transition-colors hover:bg-white/10"
             >
               <Menu aria-hidden="true" className="size-6" />
             </SheetTrigger>
@@ -112,7 +112,7 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
                 <div className="min-w-0 flex-1">
                   <SidebarBrand href={homeHref} onNavigate={closeDrawer} />
                 </div>
-                <SheetClose className="flex size-9 shrink-0 items-center justify-center rounded text-blue-50 transition-colors hover:bg-white/10">
+                <SheetClose className="flex size-11 shrink-0 items-center justify-center rounded text-blue-50 transition-colors hover:bg-white/10">
                   <X aria-hidden="true" className="size-5" />
                   <span className="sr-only">Close navigation</span>
                 </SheetClose>
@@ -130,7 +130,7 @@ export function AuthenticatedShell({ children }: AuthenticatedShellProps) {
             href={PROFILE_HREF}
             aria-label="Your profile"
             aria-current={isProfileActive ? "page" : undefined}
-            className="shrink-0 rounded-full"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full"
           >
             <AccountAvatar
               fullName={account.fullName}

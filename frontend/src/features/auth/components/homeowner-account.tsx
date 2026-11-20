@@ -53,7 +53,7 @@ function ConnectedProperties({ accountId }: { accountId: string }) {
       <p role="status" className="mt-3 min-h-5 text-sm font-semibold text-success-dark">{page.notice}</p>
       {isEmpty ? null : (
         <>
-          <p className="mt-3 leading-7 text-city-dark">These Asset IDs were verified against the City assessment data.</p>
+          <p className="mt-3 leading-7 text-city-dark">These Asset IDs match records in the City assessment data. Linking a property does not verify ownership.</p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
             {properties.map((property) => (
               <PropertyCard
